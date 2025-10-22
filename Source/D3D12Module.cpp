@@ -22,5 +22,5 @@ bool D3D12Module::init()
     infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
     infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
 
-    return false;
+    return true;
 }
