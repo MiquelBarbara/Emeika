@@ -1,0 +1,8 @@
+{
+  "OutputFoldersPerTargetSystem": {
+    "M\u00E1quina local": [
+      "Source\\3rdParty\\tinygltf\\out\\build\\x64-Debug",
+      "Source\\3rdParty\\tinygltf\\out\\install\\x64-Debug"
+    ]
+  }
+}

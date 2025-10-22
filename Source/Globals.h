@@ -55,3 +55,27 @@ inline size_t alignUp(size_t value, size_t alignment)
 
 #include <imgui.h>
 #include <imgui_internal.h>
+
+//Assert that COM call to D3D API succeeded
+#ifdef _DEBUG
+#ifndef DXCall
+#define DXCall(x)												\
+if(FAILED(x)) {													\
+	char line_number[32];										\
+	sprintf_s(line_number, "%u", __LINE__);						\
+    OutputDebugStringA("Error in: ");							\
+	OutputDebugStringA(__FILE__);								\
+	OutputDebugStringA("\nLine: ");							\
+	OutputDebugStringA(line_number);							\
+	OutputDebugStringA("\n");									\
+	OutputDebugStringA(#x);										\
+	OutputDebugStringA("\n");									\
+	__debugbreak();												\
+} 
+#endif
+#else
+#ifndef DXCall
+#define DXCall(x) x
+#endif
+
+#endif // DEBUG

@@ -1,0 +1,4 @@
+{
+  "enableCMake": true,
+  "sourceDirectory": "source\\3rdparty\\tinygltf"
+}
