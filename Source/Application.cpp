@@ -8,6 +8,7 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
     modules.push_back(new InputModule((HWND)hWnd));
     modules.push_back(new D3D12Module);
+    hwnd = hWnd
 }
 
 Application::~Application()
@@ -70,4 +71,9 @@ bool Application::cleanUp()
 		ret = (*it)->cleanUp();
 
 	return ret;
+}
+
+HWND Application::getWindowHandle()
+{
+    return _hWnd;
 }
