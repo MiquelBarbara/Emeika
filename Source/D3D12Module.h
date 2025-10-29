@@ -9,17 +9,27 @@
 class D3D12Module : public Module
 {
 public:
+	D3D12Module(HWND hwnd);
+
 	bool init() override;
 	void preRender() override;
 	void render() override;
 	void postRender() override;
+
 	bool cleanUp() override;
 	void loadPipeline();
+	void createSwapChain();
+	void createDescriptorHeap();
+	void createDescriptorHandle();
 	void populateCommandList();
 	void waitForFence(UINT64& fenceValue);
+
+	void getWindowSize(unsigned& width, unsigned& height);
+	void resize();
 private:
 	static const UINT FrameCount = 2;
 
+	ComPtr<IDXGIFactory6> m_dxgiFactory;
 	// The main Direct3D 12 device interface used to create resources and command objects
 	ComPtr<ID3D12Device5> m_device;
 	//Provides methods for submitting command lists, synchronizing command list execution, 
@@ -39,4 +49,8 @@ private:
 	HANDLE m_fenceEvent;
 	ComPtr<ID3D12Fence> m_fence;
 	UINT64 m_fenceValues[FrameCount] = {};
+
+	HWND _hwnd = nullptr;
+	LONG windowWidth = 0;
+	LONG windowHeight = 0;
 };
