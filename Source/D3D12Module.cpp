@@ -89,6 +89,13 @@ void D3D12Module::getWindowSize(unsigned& width, unsigned& height) {
     height = unsigned(rect.bottom - rect.top);
 }
 
+void D3D12Module::flush() {
+    m_commandQueue->Signal(m_fence.Get(), ++m_fenceValues[m_frameIndex]);
+
+    m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent);
+    WaitForSingleObject(m_fenceEvent, INFINITE);
+}
+
 void D3D12Module::resize()
 {
     unsigned width, height;
@@ -98,11 +105,16 @@ void D3D12Module::resize()
         // Wait until all previous GPU work is complete.
         waitForFence(m_fenceValues[m_frameIndex]);
         
+        flush();
+
         // Release the render targets
         for (UINT n = 0; n < FrameCount; n++)
         {
-            m_renderTargets[n].Reset();
-            m_fenceValues[n] = m_fenceValues[m_frameIndex];
+            m_renderTargets[n]->AddRef();
+            m_renderTargets[n]->Release();
+            m_renderTargets[n] = nullptr;
+            
+            //m_fenceValues[n] = 0;
         }
 
         // Resize the swap chain
@@ -188,47 +200,17 @@ void D3D12Module::createDescriptorHandle() {
     }
 }
 
-void D3D12Module::populateCommandList() {
-
-	// Set necessary state.
-	m_commandList->SetGraphicsRootSignature(nullptr);
-
-	// Indicate that the back buffer will be used as a render target.
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        m_renderTargets[m_frameIndex].Get(),
-        D3D12_RESOURCE_STATE_PRESENT,
-        D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-    m_commandList->ResourceBarrier(1, &barrier);
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
-    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-
-	// Record commands.
-	const float clearColor[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-	m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-	m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-
-	// Indicate that the back buffer will now be used to present.
-    barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        m_renderTargets[m_frameIndex].Get(),
-        D3D12_RESOURCE_STATE_RENDER_TARGET,
-        D3D12_RESOURCE_STATE_PRESENT);
-
-    m_commandList->ResourceBarrier(1, &barrier);
-
-	// Close the command list.
-	m_commandList->Close();
-}
-
 // Wait for pending GPU work to complete.
 void D3D12Module::waitForFence(UINT64& fenceValue) {
+
     // Schedule a Signal command in the queue.
     m_commandQueue->Signal(m_fence.Get(), fenceValue);
 
     // Wait until the fence has been processed.
-    m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent);
-    WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
+    if (m_frameIndex != 0) {
+        m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent);
+        WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
+    }
 
     // Increment the fence value for the current frame.
     fenceValue++;
@@ -242,11 +224,41 @@ void D3D12Module::preRender()
     // Reset command list and allocator
     m_commandAllocators[m_frameIndex]->Reset();
     m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
+
+    // Set necessary state.
+    m_commandList->SetGraphicsRootSignature(nullptr);
+
+    // Indicate that the back buffer will be used as a render target.
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        m_renderTargets[m_frameIndex].Get(),
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET);
+
+    m_commandList->ResourceBarrier(1, &barrier);
+
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
+    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+    // Record commands.
+    const float clearColor[] = { 1.0f, 0.0f, 0.0f, 1.0f };
+    m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 }
 
 void D3D12Module::render()
 {
-    populateCommandList();
+
+    // Indicate that the back buffer will now be used to present.
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        m_renderTargets[m_frameIndex].Get(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PRESENT);
+
+    m_commandList->ResourceBarrier(1, &barrier);
+
+    // Close the command list.
+    m_commandList->Close();
+
     // Execute the command list.
     ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
     m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);

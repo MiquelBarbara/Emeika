@@ -56,6 +56,7 @@
     <ClCompile Include="Globals.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="EditorModule.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DebugDrawPass.h" />
@@ -116,6 +117,7 @@
     <ClInclude Include="Module.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="EditorModule.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Engine.ico">
@@ -149,6 +151,9 @@
     </Filter>
     <Filter Include="Core\Application">
       <UniqueIdentifier>{3252bbe7-16a5-413a-a214-af6112ee63b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="imgui\Module">
+      <UniqueIdentifier>{8cc6243a-d67f-4193-a480-fd4634d7b0b9}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

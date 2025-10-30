@@ -26,6 +26,11 @@ public:
 
 	void getWindowSize(unsigned& width, unsigned& height);
 	void resize();
+	void flush();
+
+	ID3D12Device5* getDevice() { return m_device.Get(); }
+	HWND getWindowHandle() { return _hwnd; }
+	ID3D12GraphicsCommandList* getCommandList() { return m_commandList.Get(); }
 private:
 	static const UINT FrameCount = 2;
 

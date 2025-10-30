@@ -1,6 +1,5 @@
 #pragma once
 
-
 class ImGuiPass
 {
     ComPtr<ID3D12DescriptorHeap> heap;

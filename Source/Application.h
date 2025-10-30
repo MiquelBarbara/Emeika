@@ -8,6 +8,7 @@
 
 class Module;
 class D3D12Module;
+class EditorModule;
 
 class Application
 {
@@ -17,6 +18,7 @@ public:
 	~Application();
 
 	bool         init();
+    bool         postInit();
 	void         update();
 	bool         cleanUp();
 
@@ -33,6 +35,7 @@ private:
 
     std::vector<Module*> modules;
     D3D12Module* _d3d12 = nullptr;
+    EditorModule* _editorModule = nullptr;
 
     uint64_t  lastMilis = 0;
     TickList  tickList;

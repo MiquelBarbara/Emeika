@@ -2,11 +2,13 @@
 #include "Application.h"
 #include "InputModule.h"
 #include "D3D12Module.h"
+#include "EditorModule.h"
 
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
     modules.push_back(new InputModule((HWND)hWnd));
+    modules.push_back(_editorModule = new EditorModule());
     modules.push_back(_d3d12 = new D3D12Module((HWND)hWnd));
 }
 
@@ -30,6 +32,12 @@ bool Application::init()
     lastMilis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
 	return ret;
+}
+
+bool Application::postInit()
+{
+    _editorModule->postInit();
+    return true;
 }
 
 void Application::update()
