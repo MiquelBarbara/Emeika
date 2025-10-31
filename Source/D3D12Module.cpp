@@ -103,18 +103,16 @@ void D3D12Module::resize()
 
     if (width != windowWidth || height != windowHeight) {
         // Wait until all previous GPU work is complete.
-        waitForFence(m_fenceValues[m_frameIndex]);
+        //waitForFence(m_fenceValues[m_frameIndex]);
         
         flush();
 
         // Release the render targets
         for (UINT n = 0; n < FrameCount; n++)
         {
-            m_renderTargets[n]->AddRef();
-            m_renderTargets[n]->Release();
-            m_renderTargets[n] = nullptr;
-            
-            //m_fenceValues[n] = 0;
+            m_renderTargets[n].Reset();
+
+            m_fenceValues[n] = 0;
         }
 
         // Resize the swap chain

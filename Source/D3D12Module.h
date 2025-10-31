@@ -51,9 +51,9 @@ private:
 
 	// Synchronization objects.
 	UINT m_frameIndex = 0;
-	HANDLE m_fenceEvent;
+	HANDLE m_fenceEvent = nullptr;
 	ComPtr<ID3D12Fence> m_fence;
-	UINT64 m_fenceValues[FrameCount] = {};
+	UINT64 m_fenceValues[FrameCount] = {0,0};
 
 	HWND _hwnd = nullptr;
 	LONG windowWidth = 0;
