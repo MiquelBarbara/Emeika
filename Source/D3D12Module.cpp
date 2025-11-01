@@ -33,7 +33,7 @@ void D3D12Module::loadPipeline() {
 #if defined(_DEBUG)
     CreateDXGIFactory2(DXGI_CREATE_FACTORY_DEBUG, IID_PPV_ARGS(&m_dxgiFactory));
 #else
-    CreateDXGIFactory2(0, IID_PPV_ARGS(&factory));
+    CreateDXGIFactory2(0, IID_PPV_ARGS(&m_dxgiFactory));
 #endif
     ComPtr<IDXGIAdapter1> adapter;
     DXCall(m_dxgiFactory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&adapter)));
@@ -68,8 +68,7 @@ void D3D12Module::loadPipeline() {
 
     // Create synchronization objects and wait until assets have been uploaded to the GPU.
     {
-        DXCall(m_device->CreateFence(m_fenceValues[m_frameIndex], D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
-        m_fenceValues[m_frameIndex]++;
+        DXCall(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
 
         // Create an event handle to use for frame synchronization.
         m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -77,7 +76,6 @@ void D3D12Module::loadPipeline() {
         {
             DXCall(HRESULT_FROM_WIN32(GetLastError()));
         }
-        waitForFence(m_fenceValues[m_frameIndex]);
     }
 }
 
@@ -90,9 +88,12 @@ void D3D12Module::getWindowSize(unsigned& width, unsigned& height) {
 }
 
 void D3D12Module::flush() {
-    m_commandQueue->Signal(m_fence.Get(), ++m_fenceValues[m_frameIndex]);
+    // Signal a new fence value
+    const UINT64 fenceToSignal = ++m_currentFenceValue;
+    m_commandQueue->Signal(m_fence.Get(), fenceToSignal);
 
-    m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent);
+    // Wait until GPU reaches it
+    m_fence->SetEventOnCompletion(fenceToSignal, m_fenceEvent);
     WaitForSingleObject(m_fenceEvent, INFINITE);
 }
 
@@ -111,8 +112,6 @@ void D3D12Module::resize()
         for (UINT n = 0; n < FrameCount; n++)
         {
             m_renderTargets[n].Reset();
-
-            m_fenceValues[n] = 0;
         }
 
         // Resize the swap chain
@@ -142,7 +141,7 @@ void D3D12Module::createSwapChain() {
     swapChainDesc.Stereo = FALSE; // Set to TRUE for stereoscopic 3D rendering (VR/3D Vision)
     swapChainDesc.SampleDesc = { 1, 0 }; // Multisampling { Count, Quality } // Count=1: No multisampling (1 sample per pixel)
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // This buffer will be used as a render target
-    swapChainDesc.BufferCount = 2; // Double buffering:
+    swapChainDesc.BufferCount = FrameCount; // Double buffering:
     // - 1 front buffer (displayed)
    // - 1 back buffer (rendering)
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH; // How to scale when window size doesn't match buffer size:
@@ -151,9 +150,9 @@ void D3D12Module::createSwapChain() {
     // - FLIP: Uses page flipping (no copying)
    // - DISCARD: Discard previous back buffer contents
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // Alpha channel behavior for window blending UNSPECIFIED = Use default behavior
-    swapChainDesc.Flags = 0; // Additional swap chain options: 0 = No special flags
+    swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING; // Additional swap chain options: 0 = No special flags
     // DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH: Allow full-screen mode switches
-   // DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING: Allow tearing in windowed mode (VSync off)
+   //DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING: Allow tearing in windowed mode (VSync off)
 
     ComPtr<IDXGISwapChain1> swapChain;
 
@@ -199,32 +198,22 @@ void D3D12Module::createDescriptorHandle() {
 }
 
 // Wait for pending GPU work to complete.
-void D3D12Module::waitForFence(UINT64& fenceValue) {
+void D3D12Module::waitForFence() {
 
-    // Schedule a Signal command in the queue.
-    m_commandQueue->Signal(m_fence.Get(), fenceValue);
-
-    // Wait until the fence has been processed.
-    if (m_frameIndex != 0) {
-        m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent);
-        WaitForSingleObjectEx(m_fenceEvent, INFINITE, FALSE);
+    // If the GPU has not finished processing the commands of the current frame
+    if (m_fence->GetCompletedValue() < m_fenceValues[m_frameIndex])
+    {
+        m_fence->SetEventOnCompletion(m_fenceValues[m_frameIndex], m_fenceEvent);
+        WaitForSingleObject(m_fenceEvent, INFINITE);
     }
-
-    // Increment the fence value for the current frame.
-    fenceValue++;
 }
 
 void D3D12Module::preRender()
 {
-    m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-    waitForFence(m_fenceValues[m_frameIndex]); // SetEventOnCompletion + WaitForSingleObject
-
+    waitForFence();
     // Reset command list and allocator
     m_commandAllocators[m_frameIndex]->Reset();
     m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
-
-    // Set necessary state.
-    m_commandList->SetGraphicsRootSignature(nullptr);
 
     // Indicate that the back buffer will be used as a render target.
     auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -262,21 +251,25 @@ void D3D12Module::render()
     m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
     // Present the frame.
-    m_swapChain->Present(1, 0);
+    m_swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
 }
 
 void D3D12Module::postRender()
 {
-    UINT64 fenceValue = m_fenceValues[m_frameIndex];
+    // Advance fence value for this frame
+    const UINT64 fenceToSignal = ++m_currentFenceValue;
+    m_commandQueue->Signal(m_fence.Get(), fenceToSignal);
 
-    m_commandQueue->Signal(m_fence.Get(), ++fenceValue);
+    // Store the fence value associated with this back buffer index
+    m_fenceValues[m_frameIndex] = fenceToSignal;
+
+    // Move swap chain index to next frame
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-    m_fenceValues[m_frameIndex] = fenceValue; // Store the fence for this buffer
 }
 
 bool D3D12Module::cleanUp()
 {
-    waitForFence(m_fenceValues[m_frameIndex]);
+    waitForFence();
 
     CloseHandle(m_fenceEvent);
 

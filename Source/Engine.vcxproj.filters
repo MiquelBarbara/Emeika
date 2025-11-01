@@ -56,7 +56,9 @@
     <ClCompile Include="Globals.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="EditorModule.cpp" />
+    <ClCompile Include="EditorModule.cpp">
+      <Filter>imgui\Module</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DebugDrawPass.h" />
@@ -117,7 +119,9 @@
     <ClInclude Include="Module.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="EditorModule.h" />
+    <ClInclude Include="EditorModule.h">
+      <Filter>imgui\Module</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Engine.ico">
