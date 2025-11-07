@@ -2,6 +2,7 @@
 #include "D3D12Module.h"
 #include "Application.h"
 #include <d3d12.h>
+#include <DebugDrawPass.cpp>
 
 D3D12Module::D3D12Module(HWND hwnd) 
 {
@@ -10,11 +11,12 @@ D3D12Module::D3D12Module(HWND hwnd)
 
 bool D3D12Module::init()
 {
-    loadPipeline();
+    LoadPipeline();
+    LoadAssets();
     return true;
 }
 
-void D3D12Module::loadPipeline() {
+void D3D12Module::LoadPipeline() {
 
     UINT dxgiFactoryFlags = 0;
 
@@ -56,12 +58,62 @@ void D3D12Module::loadPipeline() {
 
     DXCall(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)));
 
-    createSwapChain();
-    createDescriptorHeap();
-    createRTVs();
-    createCommandAllocators();
+    CreateSwapChain();
+    CreateDescriptorHeap();
+    CreateRTVs();
+    CreateCommandAllocators();
+}
 
-    // Create the command list.
+void D3D12Module::CreateRootSignature() {
+    CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+    rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+    ComPtr<ID3DBlob> signature;
+    ComPtr<ID3DBlob> error;
+    DXCall(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+    DXCall(m_device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_rootSignature)));
+}
+
+void D3D12Module::CreatePipelineStateObject() {
+    ComPtr<ID3DBlob> vertexShader;
+    ComPtr<ID3DBlob> pixelShader;
+
+#if defined(_DEBUG)
+    // Enable better shader debugging with the graphics debugging tools.
+    UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+    UINT compileFlags = 0;
+#endif
+
+    DXCall(D3DCompileFromFile(LPCWSTR("shaders.hlsl"), nullptr, nullptr, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
+    DXCall(D3DCompileFromFile(LPCWSTR("shaders.hlsl"), nullptr, nullptr, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+
+    // Define the vertex input layout.
+    D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+    {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+    };
+
+    // Describe and create the graphics pipeline state object (PSO).
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+    psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+    psoDesc.pRootSignature = m_rootSignature.Get();
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
+    psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState.DepthEnable = FALSE;
+    psoDesc.DepthStencilState.StencilEnable = FALSE;
+    psoDesc.SampleMask = UINT_MAX;
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    psoDesc.NumRenderTargets = 1;
+    psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+    psoDesc.SampleDesc.Count = 1;
+    DXCall(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
+}
+
+void D3D12Module::CreateCommandList() {
     DXCall(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
     DXCall(m_commandList->Close());
 
@@ -78,7 +130,34 @@ void D3D12Module::loadPipeline() {
     }
 }
 
-void D3D12Module::getWindowSize(unsigned& width, unsigned& height) {
+void D3D12Module::LoadAssets()
+{
+    // Create an empty root signature.
+    CreateRootSignature();
+
+    // Create the pipeline state, which includes compiling and loading shaders.
+    CreatePipelineStateObject();
+
+    // Create the command list.
+    CreateCommandList();
+
+    // Create the vertex buffer.
+    {
+        // Define the geometry for a triangle.
+        Vertex triangleVertices[] =
+        {
+            { { 0.0f, 0.25f , 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
+            { { 0.25f, -0.25f , 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
+            { { -0.25f, -0.25f , 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
+        };
+
+        const UINT vertexBufferSize = sizeof(triangleVertices);
+
+        //Add code from resource module to create buffers
+    }
+}
+
+void D3D12Module::GetWindowSize(unsigned& width, unsigned& height) {
     RECT rect = {};
     GetClientRect(_hwnd, &rect);
 
@@ -86,7 +165,7 @@ void D3D12Module::getWindowSize(unsigned& width, unsigned& height) {
     height = unsigned(rect.bottom - rect.top);
 }
 
-void D3D12Module::flush() {
+void D3D12Module::Flush() {
     // Signal a new fence value
     const UINT64 fenceToSignal = ++m_currentFenceValue;
     m_commandQueue->Signal(m_fence.Get(), fenceToSignal);
@@ -96,15 +175,15 @@ void D3D12Module::flush() {
     WaitForSingleObject(m_fenceEvent, INFINITE);
 }
 
-void D3D12Module::resize()
+void D3D12Module::Resize()
 {
     unsigned width, height;
-    getWindowSize(width, height);
+    GetWindowSize(width, height);
 
     if (width != windowWidth || height != windowHeight) {
 
         // Ensure GPU is finished with ALL pending work
-        flush();
+        Flush();
 
         // Release the render targets
         for (UINT n = 0; n < FrameCount; n++)
@@ -122,14 +201,14 @@ void D3D12Module::resize()
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
         // Recreate the render target views
-		createRTVs();
+		CreateRTVs();
 
 		windowWidth = width;
 		windowHeight = height;
     }
 }
 
-void D3D12Module::createSwapChain() {
+void D3D12Module::CreateSwapChain() {
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.Width = windowWidth; 
@@ -169,7 +248,7 @@ void D3D12Module::createSwapChain() {
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 }
 
-void D3D12Module::createDescriptorHeap() {
+void D3D12Module::CreateDescriptorHeap() {
 
     // Describe and create a render target view (RTV) descriptor heap.
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
@@ -181,7 +260,7 @@ void D3D12Module::createDescriptorHeap() {
     m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
-void D3D12Module::createCommandAllocators()
+void D3D12Module::CreateCommandAllocators()
 {
     for (UINT n = 0; n < FrameCount; n++)
     {
@@ -192,7 +271,7 @@ void D3D12Module::createCommandAllocators()
     }
 }
 
-void D3D12Module::createRTVs()
+void D3D12Module::CreateRTVs()
 {
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
         m_rtvHeap->GetCPUDescriptorHandleForHeapStart()
@@ -213,7 +292,7 @@ void D3D12Module::createRTVs()
 }
 
 // Wait for pending GPU work to complete.
-void D3D12Module::waitForFence() {
+void D3D12Module::WaitForFence() {
 
     // If the GPU has not finished processing the commands of the current frame
     if (m_fence->GetCompletedValue() < m_fenceValues[m_frameIndex])
@@ -225,7 +304,7 @@ void D3D12Module::waitForFence() {
 
 void D3D12Module::preRender()
 {
-    waitForFence();
+    WaitForFence();
     // Reset command list and allocator
     m_commandAllocators[m_frameIndex]->Reset();
     m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), nullptr);
@@ -284,9 +363,11 @@ void D3D12Module::postRender()
 
 bool D3D12Module::cleanUp()
 {
-    waitForFence();
+    WaitForFence();
 
     CloseHandle(m_fenceEvent);
 
     return true;
 }
+
+

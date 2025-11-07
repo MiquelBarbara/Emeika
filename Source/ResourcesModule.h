@@ -5,8 +5,8 @@
 class ResourcesModule : public Module
 {
 public:
-	void CreateUploadBuffer(ID3D12Device10* _device);
-	void CreateDefaultBuffer(ID3D12Device10* _device, ID3D12GraphicsCommandList* _commandList);
+	void CreateUploadBuffer(ID3D12Device10* _device, UINT16 bufferSize);
+	void CreateDefaultBuffer(ID3D12Device10* device, ID3D12GraphicsCommandList* commandList);
 private:
 	UINT16 _bufferSize;
 

@@ -292,6 +292,9 @@
   <ItemGroup>
     <None Include="SimpleMath.inl" />
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\..\..\Downloads\shaders.hlsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

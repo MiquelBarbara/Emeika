@@ -165,6 +165,9 @@
     <Filter Include="imgui\Module">
       <UniqueIdentifier>{8cc6243a-d67f-4193-a480-fd4634d7b0b9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="D3D12\Shaders">
+      <UniqueIdentifier>{5c66ace0-41d4-4137-b5f9-ab9952d19522}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Engine.rc">
@@ -175,5 +178,10 @@
     <None Include="SimpleMath.inl">
       <Filter>Maths</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\..\..\Downloads\shaders.hlsl">
+      <Filter>D3D12\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

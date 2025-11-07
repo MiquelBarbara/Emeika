@@ -15,25 +15,36 @@ public:
 	void preRender() override;
 	void render() override;
 	void postRender() override;
-
 	bool cleanUp() override;
-	void loadPipeline();
-	void createSwapChain();
-	void createDescriptorHeap();
-	void createCommandAllocators();
-	void createRTVs();
-	void waitForFence();
 
-	void getWindowSize(unsigned& width, unsigned& height);
-	void resize();
-	void flush();
+	void LoadPipeline();
+	void LoadAssets();
+	void CreateSwapChain();
+	void CreateDescriptorHeap();
+	void CreateCommandAllocators();
+	void CreateRTVs();
+	void CreateRootSignature();
+	void CreatePipelineStateObject();
+	void CreateCommandList();
+	void WaitForFence();
 
-	ID3D12Device5* getDevice() { return m_device.Get(); }
-	HWND getWindowHandle() { return _hwnd; }
-	ID3D12GraphicsCommandList* getCommandList() { return m_commandList.Get(); }
+	void GetWindowSize(unsigned& width, unsigned& height);
+	void Resize();
+	void Flush();
+
+	ID3D12Device5* GetDevice() { return m_device.Get(); }
+	HWND GetWindowHandle() { return _hwnd; }
+	ID3D12GraphicsCommandList* GetCommandList() { return m_commandList.Get(); }
 private:
 	static const UINT FrameCount = 2;
 
+	struct Vertex
+	{
+		XMFLOAT3 position;
+		XMFLOAT4 color;
+	};
+
+	// The DXGI factory used to create the swap chain and other DXGI objects
 	ComPtr<IDXGIFactory6> m_dxgiFactory;
 	// The main Direct3D 12 device interface used to create resources and command objects
 	ComPtr<ID3D12Device5> m_device;
@@ -43,11 +54,18 @@ private:
 	//Encapsulates a list of graphics commands for rendering. 
 	// Includes APIs for instrumenting the command list execution, and for setting and clearing the pipeline state.
 	ComPtr<ID3D12GraphicsCommandList> m_commandList;
+	//The swap chain interface manages the buffers that are used for displaying frames to the screen.
 	ComPtr<IDXGISwapChain4> m_swapChain;
+	//Render target views (RTVs) are descriptors that allow the pipeline to access render targets.
 	ComPtr<ID3D12Resource> m_renderTargets[FrameCount];
+	// Command allocators can create command lists and manage the memory that the command lists use to store their commands.
 	ComPtr<ID3D12CommandAllocator> m_commandAllocators[FrameCount];
+	//Descriptor heap for render target views
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	UINT m_rtvDescriptorSize;
+
+	ComPtr<ID3D12RootSignature> m_rootSignature;
+	ComPtr<ID3D12PipelineState> m_pipelineState;
 
 	// Synchronization objects.
 	UINT m_frameIndex = 0;
