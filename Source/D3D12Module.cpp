@@ -8,8 +8,6 @@ D3D12Module::D3D12Module(HWND hwnd)
     _hwnd = hwnd;
 }
 
-
-
 bool D3D12Module::init()
 {
     loadPipeline();
@@ -60,7 +58,8 @@ void D3D12Module::loadPipeline() {
 
     createSwapChain();
     createDescriptorHeap();
-    createDescriptorHandle();
+    createRTVs();
+    createCommandAllocators();
 
     // Create the command list.
     DXCall(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), nullptr, IID_PPV_ARGS(&m_commandList)));
@@ -103,9 +102,8 @@ void D3D12Module::resize()
     getWindowSize(width, height);
 
     if (width != windowWidth || height != windowHeight) {
-        // Wait until all previous GPU work is complete.
-        //waitForFence(m_fenceValues[m_frameIndex]);
-        
+
+        // Ensure GPU is finished with ALL pending work
         flush();
 
         // Release the render targets
@@ -124,7 +122,7 @@ void D3D12Module::resize()
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
         // Recreate the render target views
-		createDescriptorHandle();
+		createRTVs();
 
 		windowWidth = width;
 		windowHeight = height;
@@ -183,17 +181,34 @@ void D3D12Module::createDescriptorHeap() {
     m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 }
 
-void D3D12Module::createDescriptorHandle() {
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
+void D3D12Module::createCommandAllocators()
+{
+    for (UINT n = 0; n < FrameCount; n++)
+    {
+        DXCall(m_device->CreateCommandAllocator(
+            D3D12_COMMAND_LIST_TYPE_DIRECT,
+            IID_PPV_ARGS(&m_commandAllocators[n])
+        ));
+    }
+}
 
-    // Create a RTV and a command allocator for each frame.
+void D3D12Module::createRTVs()
+{
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
+        m_rtvHeap->GetCPUDescriptorHandleForHeapStart()
+    );
+
     for (UINT n = 0; n < FrameCount; n++)
     {
         DXCall(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
-        m_device->CreateRenderTargetView(m_renderTargets[n].Get(), nullptr, rtvHandle);
-        rtvHandle.Offset(1, m_rtvDescriptorSize);
 
-        DXCall(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_commandAllocators[n])));
+        m_device->CreateRenderTargetView(
+            m_renderTargets[n].Get(),
+            nullptr,
+            rtvHandle
+        );
+
+        rtvHandle.Offset(1, m_rtvDescriptorSize);
     }
 }
 

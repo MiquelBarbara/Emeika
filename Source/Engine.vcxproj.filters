@@ -59,6 +59,9 @@
     <ClCompile Include="EditorModule.cpp">
       <Filter>imgui\Module</Filter>
     </ClCompile>
+    <ClCompile Include="ResourcesModule.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DebugDrawPass.h" />
@@ -121,6 +124,9 @@
     </ClInclude>
     <ClInclude Include="EditorModule.h">
       <Filter>imgui\Module</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourcesModule.h">
+      <Filter>D3D12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

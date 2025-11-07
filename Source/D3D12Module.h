@@ -20,7 +20,8 @@ public:
 	void loadPipeline();
 	void createSwapChain();
 	void createDescriptorHeap();
-	void createDescriptorHandle();
+	void createCommandAllocators();
+	void createRTVs();
 	void waitForFence();
 
 	void getWindowSize(unsigned& width, unsigned& height);
