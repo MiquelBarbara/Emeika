@@ -1,34 +1,66 @@
+#include "Globals.h"
 #include "ResourcesModule.h"
+#include "D3D12Module.h"
+#include "Application.h"
 
-void ResourcesModule::CreateUploadBuffer(ID3D12Device10* device, UINT16 bufferSize)
+
+bool ResourcesModule::init()
 {
-	// 1. Describe the buffer
-	D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
-	// 2. Specify UPLOAD heap properties
-	CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
-	// 3. Create the resource
-	device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&_buffer));
+	ID3D12Device5* device = app->getD3D12Module()->GetDevice();
+	device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&_commandAllocator));
+	device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&_commandList));
+	_commandList->Reset(_commandAllocator.Get(), nullptr);
+
+	return true;
 }
 
-void ResourcesModule::CreateDefaultBuffer(ID3D12Device10* device, ID3D12GraphicsCommandList* commandList)
+ComPtr<ID3D12Resource> ResourcesModule::CreateUploadBuffer(const void* data, size_t size )
 {
+	ComPtr<ID3D12Resource> buffer;
+
+	CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+	CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Buffer(size);
+	app->getD3D12Module()->GetDevice()->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&buffer));
+
+	return buffer;
+}
+
+ComPtr<ID3D12Resource> ResourcesModule::CreateDefaultBuffer(const void* data, size_t size)
+{
+	ID3D12Device* device = app->getD3D12Module()->GetDevice();
+	ID3D12CommandQueue* queue = app->getD3D12Module()->GetCommandQueue();
+
 	// --- CREATE THE FINAL GPU BUFFER (DEFAULT HEAP) ---
+	ComPtr<ID3D12Resource> buffer;
 	auto defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
-	auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(_bufferSize);
-	device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(& _vertexBuffer));
+	auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
+	device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&buffer));
 	// --- CREATE THE STAGING BUFFER (UPLOAD HEAP) ---
+	ComPtr<ID3D12Resource> uploadBuffer;
 	auto uploadHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
-	device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&_stagingBuffer));
+	device->CreateCommittedResource(&uploadHeap, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&uploadBuffer));
+
 	// --- CPU: FILL STAGING BUFFER ---
 	// Map the buffer: get a CPU pointer to its memory
-	/*BYTE* pData = nullptr;
+	BYTE* pData = nullptr;
 	CD3DX12_RANGE readRange(0, 0); // We won't read from it, so range is (0,0)
-	_buffer->Map(0, &readRange, reinterpret_cast<void**>(&pData));
+	uploadBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pData));
 	// Copy our application data into the GPU buffer
-	memcpy(pData, cpuData, dataSize);
+	memcpy(pData, data, size);
 	// Unmap the buffer (invalidate the pointer)
-	_buffer->Unmap(0, nullptr);*/
+	uploadBuffer->Unmap(0, nullptr);
+	
+	// Copy buffer commands
+	_commandList->CopyResource(buffer.Get(), uploadBuffer.Get());
+	_commandList->Close();
 
-	// --- GPU: COPY DATA ---
-	commandList->CopyResource(_vertexBuffer.Get(), _stagingBuffer.Get());
+	ID3D12CommandList* lists[] = { _commandList.Get() };
+	queue->ExecuteCommandLists(1, lists);
+
+	app->getD3D12Module()->Flush();
+
+	_commandAllocator->Reset();
+	_commandList->Reset(_commandAllocator.Get(), nullptr);
+
+	return buffer;
 }

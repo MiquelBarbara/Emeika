@@ -12,6 +12,7 @@ public:
 	D3D12Module(HWND hwnd);
 
 	bool init() override;
+	bool postInit();
 	void preRender() override;
 	void render() override;
 	void postRender() override;
@@ -35,14 +36,11 @@ public:
 	ID3D12Device5* GetDevice() { return m_device.Get(); }
 	HWND GetWindowHandle() { return _hwnd; }
 	ID3D12GraphicsCommandList* GetCommandList() { return m_commandList.Get(); }
+	ID3D12CommandQueue* GetCommandQueue() { return m_commandQueue.Get(); }
+	ID3D12CommandAllocator* GetCommandAllocator() { return m_commandAllocators->Get(); }
 private:
 	static const UINT FrameCount = 2;
 
-	struct Vertex
-	{
-		XMFLOAT3 position;
-		XMFLOAT4 color;
-	};
 
 	// The DXGI factory used to create the swap chain and other DXGI objects
 	ComPtr<IDXGIFactory6> m_dxgiFactory;
@@ -77,4 +75,8 @@ private:
 	HWND _hwnd = nullptr;
 	LONG windowWidth = 0;
 	LONG windowHeight = 0;
+
+	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+	ComPtr<ID3D12Resource> buffer;
+
 };

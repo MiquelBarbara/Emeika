@@ -9,6 +9,7 @@
 class Module;
 class D3D12Module;
 class EditorModule;
+class ResourcesModule;
 
 class Application
 {
@@ -23,6 +24,7 @@ public:
 	bool         cleanUp();
 
     D3D12Module*                getD3D12Module() { return _d3d12; }
+    ResourcesModule*            getResourcesModule() { return _resourcesModule; }
     float                       getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
     float                       getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }
     uint64_t                    getElapsedMilis() const { return elapsedMilis; }
@@ -36,6 +38,7 @@ private:
     std::vector<Module*> modules;
     D3D12Module* _d3d12 = nullptr;
     EditorModule* _editorModule = nullptr;
+    ResourcesModule* _resourcesModule = nullptr;
 
     uint64_t  lastMilis = 0;
     TickList  tickList;

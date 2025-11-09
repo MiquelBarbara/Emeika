@@ -104,7 +104,7 @@ EditorModule::~EditorModule()
 bool EditorModule::postInit()
 {
 	D3D12Module* _d3d12 = app->getD3D12Module();
-	_gui = new ImGuiPass(_d3d12->getDevice(), _d3d12->getWindowHandle());
+	_gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle());
 
 	return true;
 }
@@ -121,7 +121,7 @@ void EditorModule::preRender()
 
     // TODO: Main Menu Bar, Inspector, Asset Browser, hierarchy, scene.
     //MainMenuBar();
-    MainDockspace(&_showMainDockspace);
+    //MainDockspace(&_showMainDockspace);
 
 	//ImGui::ShowDemoWindow();
     _console.Draw("Console");
@@ -131,6 +131,5 @@ void EditorModule::preRender()
 
 void EditorModule::render()
 {
-
-	_gui->record(app->getD3D12Module()->getCommandList());
+	_gui->record(app->getD3D12Module()->GetCommandList());
 }

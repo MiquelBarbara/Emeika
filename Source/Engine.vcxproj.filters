@@ -179,9 +179,4 @@
       <Filter>Maths</Filter>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="..\..\..\..\Downloads\shaders.hlsl">
-      <Filter>D3D12\Shaders</Filter>
-    </FxCompile>
-  </ItemGroup>
 </Project>

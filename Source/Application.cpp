@@ -3,6 +3,7 @@
 #include "InputModule.h"
 #include "D3D12Module.h"
 #include "EditorModule.h"
+#include "ResourcesModule.h"
 
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
@@ -10,6 +11,8 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(new InputModule((HWND)hWnd));
     modules.push_back(_editorModule = new EditorModule());
     modules.push_back(_d3d12 = new D3D12Module((HWND)hWnd));
+    modules.push_back(_resourcesModule = new ResourcesModule());
+
 }
 
 Application::~Application()
@@ -37,6 +40,7 @@ bool Application::init()
 bool Application::postInit()
 {
     _editorModule->postInit();
+    _d3d12->postInit();
     return true;
 }
 
