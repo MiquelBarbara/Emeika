@@ -34,7 +34,7 @@ ComPtr<ID3D12Resource> ResourcesModule::CreateDefaultBuffer(const void* data, si
 	ComPtr<ID3D12Resource> buffer;
 	auto defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	auto bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(size);
-	device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&buffer));
+	device->CreateCommittedResource(&defaultHeap, D3D12_HEAP_FLAG_NONE, &bufferDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&buffer));
 	// --- CREATE THE STAGING BUFFER (UPLOAD HEAP) ---
 	ComPtr<ID3D12Resource> uploadBuffer;
 	auto uploadHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);

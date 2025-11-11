@@ -27,7 +27,7 @@ public:
 	void CreateRootSignature();
 	void CreatePipelineStateObject();
 	void CreateCommandList();
-	void WaitForFence();
+
 
 	void GetWindowSize(unsigned& width, unsigned& height);
 	void Resize();
@@ -38,9 +38,14 @@ public:
 	ID3D12GraphicsCommandList* GetCommandList() { return m_commandList.Get(); }
 	ID3D12CommandQueue* GetCommandQueue() { return m_commandQueue.Get(); }
 	ID3D12CommandAllocator* GetCommandAllocator() { return m_commandAllocators->Get(); }
+
+	//Fence related functions
+	bool IsFenceComplete(UINT16 fenceValue);
+	UINT64 Signal();
+	void WaitForFence();
+	ComPtr<ID3D12Fence> CreateFence(ComPtr<ID3D12Device> device);
 private:
 	static const UINT FrameCount = 2;
-
 
 	// The DXGI factory used to create the swap chain and other DXGI objects
 	ComPtr<IDXGIFactory6> m_dxgiFactory;

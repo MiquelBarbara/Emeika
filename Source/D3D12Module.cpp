@@ -21,6 +21,97 @@ bool D3D12Module::postInit() {
     return true;
 }
 
+void D3D12Module::preRender()
+{
+    m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+    WaitForFence();
+
+    // Reset command list and allocator
+    m_commandAllocators[m_frameIndex]->Reset();
+    m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), m_pipelineState.Get());
+
+    // Bind root signature (must be set before any draw calls)
+    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+    // Setup viewport & scissor
+    D3D12_VIEWPORT viewport = {};
+    viewport.TopLeftX = 0.0f;
+    viewport.TopLeftY = 0.0f;
+    viewport.Width = static_cast<float>(windowWidth);
+    viewport.Height = static_cast<float>(windowHeight);
+    viewport.MinDepth = 0.0f;
+    viewport.MaxDepth = 1.0f;
+
+    D3D12_RECT scissorRect = { 0, 0, (LONG)windowWidth, (LONG)windowHeight };
+
+    m_commandList->RSSetViewports(1, &viewport);
+    m_commandList->RSSetScissorRects(1, &scissorRect);
+
+    // Transition back buffer to render target
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        m_renderTargets[m_frameIndex].Get(),
+        D3D12_RESOURCE_STATE_PRESENT,
+        D3D12_RESOURCE_STATE_RENDER_TARGET
+    );
+    m_commandList->ResourceBarrier(1, &barrier);
+
+    // Set render target
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
+        m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
+        m_frameIndex,
+        m_rtvDescriptorSize
+    );
+    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+    // Clear + draw
+    const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
+    m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+    m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+    m_commandList->DrawInstanced(3, 1, 0, 0);
+}
+
+
+void D3D12Module::render()
+{
+    // Indicate that the back buffer will now be used to present.
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        m_renderTargets[m_frameIndex].Get(),
+        D3D12_RESOURCE_STATE_RENDER_TARGET,
+        D3D12_RESOURCE_STATE_PRESENT);
+
+    m_commandList->ResourceBarrier(1, &barrier);
+
+    // Close the command list.
+    m_commandList->Close();
+
+    // Execute the command list.
+    ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
+    m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+    // Present the frame.
+    m_swapChain->Present(1, 0);
+}
+
+void D3D12Module::postRender()
+{
+    // Move swap chain index to next frame
+    m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+    // Store the fence value associated with this back buffer index
+    m_fenceValues[m_frameIndex] = Signal();
+}
+
+bool D3D12Module::cleanUp()
+{
+    WaitForFence();
+
+    CloseHandle(m_fenceEvent);
+
+    return true;
+}
+
+
 void D3D12Module::LoadPipeline() {
 
     UINT dxgiFactoryFlags = 0;
@@ -52,7 +143,7 @@ void D3D12Module::LoadPipeline() {
 
         info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
         info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-        //info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+        info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
     }
 #endif
 
@@ -122,18 +213,24 @@ void D3D12Module::CreatePipelineStateObject() {
 
 void D3D12Module::CreateCommandList() {
     DXCall(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipelineState.Get(), IID_PPV_ARGS(&m_commandList)));
+    m_commandList->Close();
 
     // Create synchronization objects and wait until assets have been uploaded to the GPU.
-    {
-        DXCall(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_fence)));
+    m_fence = CreateFence(m_device);
+}
 
-        // Create an event handle to use for frame synchronization.
-        m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-        if (m_fenceEvent == nullptr)
-        {
-            DXCall(HRESULT_FROM_WIN32(GetLastError()));
-        }
+ComPtr<ID3D12Fence> D3D12Module::CreateFence(ComPtr<ID3D12Device> device) {
+    ComPtr<ID3D12Fence> fence;
+    DXCall(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
+
+    // Create an event handle to use for frame synchronization.
+    m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+    if (m_fenceEvent == nullptr)
+    {
+        DXCall(HRESULT_FROM_WIN32(GetLastError()));
     }
+
+    return fence;
 }
 
 void D3D12Module::LoadAssets()
@@ -156,14 +253,12 @@ void D3D12Module::LoadAssets()
         // Define the geometry for a triangle.
         Vertex triangleVertices[] =
         {
-            { { 0.0f , 0.25f , 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
+            { { 0.25f , 0.25f , 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
             { { 0.25f * aspectRatio, -0.25f , 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
             { { -0.25f * aspectRatio, -0.25f , 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
         };
 
         const UINT vertexBufferSize = sizeof(triangleVertices);
-
-        //Add code from resource module to create buffers
 
         buffer = app->getResourcesModule()->CreateDefaultBuffer(triangleVertices, vertexBufferSize);
 
@@ -205,6 +300,7 @@ void D3D12Module::Resize()
         for (UINT n = 0; n < FrameCount; n++)
         {
             m_renderTargets[n].Reset();
+            m_fenceValues[n] = 0;
         }
 
         // Resize the swap chain
@@ -307,110 +403,25 @@ void D3D12Module::CreateRTVs()
     }
 }
 
+bool D3D12Module::IsFenceComplete(UINT16 fenceValue) {
+    return m_fence->GetCompletedValue() >= fenceValue;
+}
+
 // Wait for pending GPU work to complete.
 void D3D12Module::WaitForFence() {
     const UINT64 fenceValue = m_fenceValues[m_frameIndex];
-    if (fenceValue != 0 && m_fence->GetCompletedValue() < fenceValue)
+    if (!IsFenceComplete(fenceValue))
     {
         m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent);
         WaitForSingleObject(m_fenceEvent, INFINITE);
     }
-
 }
 
-void D3D12Module::preRender()
-{
-    m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-    WaitForFence();
-
-    // Reset command list and allocator
-    m_commandAllocators[m_frameIndex]->Reset();
-    m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), m_pipelineState.Get());
-
-    // Bind root signature (must be set before any draw calls)
-    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-
-    // Setup viewport & scissor
-    D3D12_VIEWPORT viewport = {};
-    viewport.TopLeftX = 0.0f;
-    viewport.TopLeftY = 0.0f;
-    viewport.Width = static_cast<float>(windowWidth);
-    viewport.Height = static_cast<float>(windowHeight);
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-
-    D3D12_RECT scissorRect = { 0, 0, (LONG)windowWidth, (LONG)windowHeight };
-
-    m_commandList->RSSetViewports(1, &viewport);
-    m_commandList->RSSetScissorRects(1, &scissorRect);
-
-    // Transition back buffer to render target
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        m_renderTargets[m_frameIndex].Get(),
-        D3D12_RESOURCE_STATE_PRESENT,
-        D3D12_RESOURCE_STATE_RENDER_TARGET
-    );
-    m_commandList->ResourceBarrier(1, &barrier);
-
-    // Set render target
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
-        m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
-        m_frameIndex,
-        m_rtvDescriptorSize
-    );
-    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
-
-    // Clear + draw
-    const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-    m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-
-    m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-    m_commandList->DrawInstanced(3, 1, 0, 0);
-}
-
-
-void D3D12Module::render()
-{
-    // Indicate that the back buffer will now be used to present.
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        m_renderTargets[m_frameIndex].Get(),
-        D3D12_RESOURCE_STATE_RENDER_TARGET,
-        D3D12_RESOURCE_STATE_PRESENT);
-
-    m_commandList->ResourceBarrier(1, &barrier);
-
-    // Close the command list.
-    m_commandList->Close();
-
-    // Execute the command list.
-    ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-    m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-    // Present the frame.
-    m_swapChain->Present(1, 0);
-}
-
-void D3D12Module::postRender()
-{
-    // Advance fence value for this frame
+UINT64 D3D12Module::Signal() {
     const UINT64 fenceToSignal = ++m_currentFenceValue;
     m_commandQueue->Signal(m_fence.Get(), fenceToSignal);
-
-    // Move swap chain index to next frame
-    m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-
-    // Store the fence value associated with this back buffer index
-    m_fenceValues[m_frameIndex] = fenceToSignal;
+    return fenceToSignal;
 }
 
-bool D3D12Module::cleanUp()
-{
-    WaitForFence();
-
-    CloseHandle(m_fenceEvent);
-
-    return true;
-}
 
 
