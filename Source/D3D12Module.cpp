@@ -30,45 +30,31 @@ void D3D12Module::preRender()
     m_commandAllocators[m_frameIndex]->Reset();
     m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), m_pipelineState.Get());
 
-    // Bind root signature (must be set before any draw calls)
-    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-
-    // Setup viewport & scissor
-    D3D12_VIEWPORT viewport = {};
-    viewport.TopLeftX = 0.0f;
-    viewport.TopLeftY = 0.0f;
-    viewport.Width = static_cast<float>(windowWidth);
-    viewport.Height = static_cast<float>(windowHeight);
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-
-    D3D12_RECT scissorRect = { 0, 0, (LONG)windowWidth, (LONG)windowHeight };
-
-    m_commandList->RSSetViewports(1, &viewport);
-    m_commandList->RSSetScissorRects(1, &scissorRect);
-
     // Transition back buffer to render target
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        m_renderTargets[m_frameIndex].Get(),
-        D3D12_RESOURCE_STATE_PRESENT,
-        D3D12_RESOURCE_STATE_RENDER_TARGET
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(),D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
     );
     m_commandList->ResourceBarrier(1, &barrier);
 
     // Set render target
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
-        m_rtvHeap->GetCPUDescriptorHandleForHeapStart(),
-        m_frameIndex,
-        m_rtvDescriptorSize
-    );
+    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
     m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
     // Clear + draw
     const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
     m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 
-    m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    // Bind root signature (must be set before any draw calls)
+    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
     m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+
+    // Setup viewport & scissor
+    D3D12_VIEWPORT viewport{ 0.0, 0.0, float(windowWidth), float(windowHeight) , 0.0, 1.0 };
+    D3D12_RECT scissor{ 0, 0, windowWidth, windowHeight };
+
+    m_commandList->RSSetViewports(1, &viewport);
+    m_commandList->RSSetScissorRects(1, &scissor);
+
+    m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_commandList->DrawInstanced(3, 1, 0, 0);
 }
 
@@ -76,10 +62,7 @@ void D3D12Module::preRender()
 void D3D12Module::render()
 {
     // Indicate that the back buffer will now be used to present.
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        m_renderTargets[m_frameIndex].Get(),
-        D3D12_RESOURCE_STATE_RENDER_TARGET,
-        D3D12_RESOURCE_STATE_PRESENT);
+    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
     m_commandList->ResourceBarrier(1, &barrier);
 
@@ -90,8 +73,8 @@ void D3D12Module::render()
     ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
     m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-    // Present the frame.
-    m_swapChain->Present(1, 0);
+    // Present the frame and allow tearing
+    m_swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
 }
 
 void D3D12Module::postRender()
@@ -148,16 +131,14 @@ void D3D12Module::LoadPipeline() {
 #endif
 
     // Describe and create the command queue.
-    D3D12_COMMAND_QUEUE_DESC queueDesc{};
-    queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-
-    DXCall(m_device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_commandQueue)));
-
-    CreateSwapChain();
-    CreateDescriptorHeap();
-    CreateRTVs();
-    CreateCommandAllocators();
+    m_commandQueue = CreateCommandQueue(m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+    m_swapChain = CreateSwapChain(_hwnd, m_commandQueue, windowWidth, windowHeight, FrameCount);
+    m_rtvHeap = CreateDescriptorHeap(m_device,D3D12_DESCRIPTOR_HEAP_TYPE_RTV, FrameCount);
+    UpdateRenderTargetViews(m_device, m_swapChain, m_rtvHeap);
+    for (UINT n = 0; n < FrameCount; n++)
+    {
+		m_commandAllocators[n] = CreateCommandAllocator(m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	}
 }
 
 void D3D12Module::CreateRootSignature() {
@@ -211,25 +192,18 @@ void D3D12Module::CreatePipelineStateObject() {
     DXCall(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 }
 
-void D3D12Module::CreateCommandList() {
-    DXCall(m_device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_commandAllocators[m_frameIndex].Get(), m_pipelineState.Get(), IID_PPV_ARGS(&m_commandList)));
-    m_commandList->Close();
 
-    // Create synchronization objects and wait until assets have been uploaded to the GPU.
-    m_fence = CreateFence(m_device);
+ComPtr<ID3D12GraphicsCommandList> D3D12Module::CreateCommandList(ComPtr<ID3D12Device2> device, ComPtr<ID3D12CommandAllocator> commandAllocator, D3D12_COMMAND_LIST_TYPE type) {
+    ComPtr<ID3D12GraphicsCommandList> commandList;
+    DXCall(device->CreateCommandList(0, type, commandAllocator.Get(), m_pipelineState.Get(), IID_PPV_ARGS(&commandList)));
+    commandList->Close();
+
+    return commandList;
 }
 
 ComPtr<ID3D12Fence> D3D12Module::CreateFence(ComPtr<ID3D12Device> device) {
     ComPtr<ID3D12Fence> fence;
     DXCall(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
-
-    // Create an event handle to use for frame synchronization.
-    m_fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-    if (m_fenceEvent == nullptr)
-    {
-        DXCall(HRESULT_FROM_WIN32(GetLastError()));
-    }
-
     return fence;
 }
 
@@ -242,7 +216,9 @@ void D3D12Module::LoadAssets()
     CreatePipelineStateObject();
 
     // Create the command list.
-    CreateCommandList();
+    m_commandList = CreateCommandList(m_device, m_commandAllocators[0], D3D12_COMMAND_LIST_TYPE_DIRECT);
+    m_fence = CreateFence(m_device);
+    m_fenceEvent = CreateEventHandle();
 
     // Create the vertex buffer.
     {
@@ -313,24 +289,33 @@ void D3D12Module::Resize()
 		m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
         // Recreate the render target views
-		CreateRTVs();
+        UpdateRenderTargetViews(m_device, m_swapChain, m_rtvHeap);
 
 		windowWidth = width;
 		windowHeight = height;
     }
 }
 
-void D3D12Module::CreateSwapChain() {
+ComPtr<IDXGISwapChain4> D3D12Module::CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> commandQueue, uint32_t width, uint32_t height, uint32_t bufferCount) {
+
+    ComPtr<IDXGISwapChain4> dxgiSwapChain4;
+    ComPtr<IDXGIFactory4> dxgiFactory4;
+    UINT createFactoryFlags = 0;
+#if defined(_DEBUG)
+    createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+#endif
+
+    DXCall(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4)));
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.Width = windowWidth; 
-    swapChainDesc.Height = windowHeight;
+    swapChainDesc.Width = width;
+    swapChainDesc.Height = height;
     swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // 32-bit RGBA format (8 bits per channel)
     // UNORM = Unsigned normalized integer (0-255 mapped to 0.0-1.0)
     swapChainDesc.Stereo = FALSE; // Set to TRUE for stereoscopic 3D rendering (VR/3D Vision)
     swapChainDesc.SampleDesc = { 1, 0 }; // Multisampling { Count, Quality } // Count=1: No multisampling (1 sample per pixel)
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // This buffer will be used as a render target
-    swapChainDesc.BufferCount = FrameCount; // Double buffering:
+    swapChainDesc.BufferCount = bufferCount;
     // - 1 front buffer (displayed)
    // - 1 back buffer (rendering)
     swapChainDesc.Scaling = DXGI_SCALING_STRETCH; // How to scale when window size doesn't match buffer size:
@@ -339,65 +324,72 @@ void D3D12Module::CreateSwapChain() {
     // - FLIP: Uses page flipping (no copying)
    // - DISCARD: Discard previous back buffer contents
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // Alpha channel behavior for window blending UNSPECIFIED = Use default behavior
-    swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING; // Additional swap chain options: 0 = No special flags
+    swapChainDesc.Flags = CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
     // DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH: Allow full-screen mode switches
    //DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING: Allow tearing in windowed mode (VSync off)
 
-    ComPtr<IDXGISwapChain1> swapChain;
+    ComPtr<IDXGISwapChain1> swapChain1;
 
-    assert(m_dxgiFactory != nullptr);
-
-    DXCall(m_dxgiFactory->CreateSwapChainForHwnd(
-        m_commandQueue.Get(),
-        _hwnd,
+    DXCall(dxgiFactory4->CreateSwapChainForHwnd(
+        commandQueue.Get(),
+        hWnd,
         &swapChainDesc,
         nullptr, // fullscreen desc
         nullptr, // restrict output
-        &swapChain
+        &swapChain1
     ));
 
-    swapChain.As(&m_swapChain);
-    m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+    swapChain1.As(&dxgiSwapChain4);
+
+    return dxgiSwapChain4;
 }
 
-void D3D12Module::CreateDescriptorHeap() {
+ComPtr<ID3D12DescriptorHeap> D3D12Module::CreateDescriptorHeap(ComPtr<ID3D12Device2> device,D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors) {
+    ComPtr<ID3D12DescriptorHeap> descriptorHeap;
 
     // Describe and create a render target view (RTV) descriptor heap.
     D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-    rtvHeapDesc.NumDescriptors = FrameCount;
-    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-    rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-    DXCall(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_rtvHeap)));
+    rtvHeapDesc.NumDescriptors = numDescriptors;
+    rtvHeapDesc.Type = type;
+    DXCall(device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&descriptorHeap)));
 
-    m_rtvDescriptorSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    return descriptorHeap;
 }
 
-void D3D12Module::CreateCommandAllocators()
+
+ComPtr<ID3D12CommandAllocator> D3D12Module::CreateCommandAllocator(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type)
 {
-    for (UINT n = 0; n < FrameCount; n++)
-    {
-        DXCall(m_device->CreateCommandAllocator(
-            D3D12_COMMAND_LIST_TYPE_DIRECT,
-            IID_PPV_ARGS(&m_commandAllocators[n])
-        ));
-    }
+    ComPtr<ID3D12CommandAllocator> commandAllocator;
+    DXCall(device->CreateCommandAllocator(type , IID_PPV_ARGS(&commandAllocator)));
+    return commandAllocator;
 }
 
-void D3D12Module::CreateRTVs()
+ComPtr<ID3D12CommandQueue> D3D12Module::CreateCommandQueue(ComPtr<ID3D12Device> device, D3D12_COMMAND_LIST_TYPE type)
 {
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(
-        m_rtvHeap->GetCPUDescriptorHandleForHeapStart()
-    );
+    ComPtr<ID3D12CommandQueue> d3d12CommandQueue;
+
+    D3D12_COMMAND_QUEUE_DESC desc = {};
+    desc.Type = type;
+    desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+    desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+    desc.NodeMask = 0;
+
+    DXCall(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&d3d12CommandQueue)));
+
+    return d3d12CommandQueue;
+}
+
+void D3D12Module::UpdateRenderTargetViews(ComPtr<ID3D12Device2> device, ComPtr<IDXGISwapChain4> swapChain, ComPtr<ID3D12DescriptorHeap> descriptorHeap)
+{
+    m_rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+
+   CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
     for (UINT n = 0; n < FrameCount; n++)
     {
-        DXCall(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
+        DXCall(swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n])));
 
-        m_device->CreateRenderTargetView(
-            m_renderTargets[n].Get(),
-            nullptr,
-            rtvHandle
-        );
+        device->CreateRenderTargetView(m_renderTargets[n].Get(),nullptr, rtvHandle);
 
         rtvHandle.Offset(1, m_rtvDescriptorSize);
     }
@@ -421,6 +413,41 @@ UINT64 D3D12Module::Signal() {
     const UINT64 fenceToSignal = ++m_currentFenceValue;
     m_commandQueue->Signal(m_fence.Get(), fenceToSignal);
     return fenceToSignal;
+}
+
+HANDLE D3D12Module::CreateEventHandle() {
+    HANDLE fenceEvent;
+
+    fenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
+    assert(fenceEvent && "Failed to create fence event.");
+
+    return fenceEvent;
+}
+
+bool D3D12Module::CheckTearingSupport()
+{
+    BOOL allowTearing = FALSE;
+
+    // Rather than create the DXGI 1.5 factory interface directly, we create the
+    // DXGI 1.4 interface and query for the 1.5 interface. This is to enable the 
+    // graphics debugging tools which will not support the 1.5 factory interface 
+    // until a future update.
+    ComPtr<IDXGIFactory4> factory4;
+    if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&factory4))))
+    {
+        ComPtr<IDXGIFactory5> factory5;
+        if (SUCCEEDED(factory4.As(&factory5)))
+        {
+            if (FAILED(factory5->CheckFeatureSupport(
+                DXGI_FEATURE_PRESENT_ALLOW_TEARING,
+                &allowTearing, sizeof(allowTearing))))
+            {
+                allowTearing = FALSE;
+            }
+        }
+    }
+
+    return allowTearing == TRUE;
 }
 
 
