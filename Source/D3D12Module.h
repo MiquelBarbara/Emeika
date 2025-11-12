@@ -29,7 +29,7 @@ public:
 	void CreateRootSignature();
 	void CreatePipelineStateObject();
 	bool CheckTearingSupport();
-
+	void TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandList, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
 
 	void GetWindowSize(unsigned& width, unsigned& height);
 	void Resize();

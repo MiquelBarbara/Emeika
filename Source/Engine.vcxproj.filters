@@ -62,6 +62,9 @@
     <ClCompile Include="ResourcesModule.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
+    <ClCompile Include="CommandQueue.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DebugDrawPass.h" />
@@ -128,6 +131,9 @@
     <ClInclude Include="ResourcesModule.h">
       <Filter>D3D12</Filter>
     </ClInclude>
+    <ClInclude Include="CommandQueue.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Engine.ico">
@@ -178,5 +184,9 @@
     <None Include="SimpleMath.inl">
       <Filter>Maths</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="VertexShader.hlsl" />
+    <FxCompile Include="PixelShader.hlsl" />
   </ItemGroup>
 </Project>

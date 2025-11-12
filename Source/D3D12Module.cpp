@@ -31,9 +31,7 @@ void D3D12Module::preRender()
     m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), m_pipelineState.Get());
 
     // Transition back buffer to render target
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(),D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET
-    );
-    m_commandList->ResourceBarrier(1, &barrier);
+    TransitionResource(m_commandList, m_renderTargets[m_frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     // Set render target
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
@@ -62,10 +60,7 @@ void D3D12Module::preRender()
 void D3D12Module::render()
 {
     // Indicate that the back buffer will now be used to present.
-    auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
-    m_commandList->ResourceBarrier(1, &barrier);
-
+    TransitionResource(m_commandList, m_renderTargets[m_frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
     // Close the command list.
     m_commandList->Close();
 
@@ -141,6 +136,12 @@ void D3D12Module::LoadPipeline() {
 	}
 }
 
+void D3D12Module::TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandList,ComPtr<ID3D12Resource> resource,D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
+{
+    CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(),beforeState, afterState);
+    commandList->ResourceBarrier(1, &barrier);
+}
+
 void D3D12Module::CreateRootSignature() {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
     rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
@@ -152,8 +153,8 @@ void D3D12Module::CreateRootSignature() {
 }
 
 void D3D12Module::CreatePipelineStateObject() {
-    ComPtr<ID3DBlob> vertexShader;
-    ComPtr<ID3DBlob> pixelShader;
+    //ComPtr<ID3DBlob> vertexShader;
+    //ComPtr<ID3DBlob> pixelShader;
 
 #if defined(_DEBUG)
     // Enable better shader debugging with the graphics debugging tools.
@@ -162,8 +163,17 @@ void D3D12Module::CreatePipelineStateObject() {
     UINT compileFlags = 0;
 #endif
 
-    DXCall(D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
-    DXCall(D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
+    // Load the vertex shader.
+    ComPtr<ID3DBlob> vertexShaderBlob;
+    DXCall(D3DReadFileToBlob(L"VertexShader.cso", &vertexShaderBlob));
+
+    // Load the pixel shader.
+    ComPtr<ID3DBlob> pixelShaderBlob;
+    DXCall(D3DReadFileToBlob(L"PixelShader.cso", &pixelShaderBlob));
+
+
+    //DXCall(D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "VSMain", "vs_5_0", compileFlags, 0, &vertexShader, nullptr));
+    //DXCall(D3DCompileFromFile(L"shaders.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, "PSMain", "ps_5_0", compileFlags, 0, &pixelShader, nullptr));
 
     // Define the vertex input layout.
     D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
@@ -176,8 +186,8 @@ void D3D12Module::CreatePipelineStateObject() {
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
     psoDesc.pRootSignature = m_rootSignature.Get();
-    psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShader.Get());
-    psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShader.Get());
+    psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
+    psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psoDesc.DepthStencilState.DepthEnable = FALSE;

@@ -19,6 +19,8 @@
 #include <stdexcept>
 #include <system_error>
 #include <vector>
+#include <libloaderapi.h>
+#include <DebugDrawPass.cpp>
 
 
 namespace DX
