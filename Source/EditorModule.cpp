@@ -92,8 +92,8 @@ void Style() {
 
 EditorModule::EditorModule()
 {
-    _console = Console();
-    _console.AddLog("Editor Module Initialized");
+    //_console = Console();
+    _logger = new Logger();
 }
 
 EditorModule::~EditorModule()
@@ -124,7 +124,7 @@ void EditorModule::preRender()
     //MainDockspace(&_showMainDockspace);
 
 	//ImGui::ShowDemoWindow();
-    _console.Draw("Console");
+    //_console.Draw("Console");
 
 	ImGui::EndFrame();
 }

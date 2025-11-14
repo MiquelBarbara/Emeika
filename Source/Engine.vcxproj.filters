@@ -3,34 +3,34 @@
   <ItemGroup>
     <ClCompile Include="DebugDrawPass.cpp" />
     <ClCompile Include="Engine.cpp">
-      <Filter>Engine</Filter>
+      <Filter>Core\Engine</Filter>
     </ClCompile>
     <ClCompile Include="3rdParty\imgui-docking\imgui.cpp">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClCompile>
     <ClCompile Include="3rdParty\imgui-docking\imgui_demo.cpp">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClCompile>
     <ClCompile Include="3rdParty\imgui-docking\imgui_draw.cpp">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClCompile>
     <ClCompile Include="3rdParty\imgui-docking\backends\imgui_impl_dx12.cpp">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClCompile>
     <ClCompile Include="3rdParty\imgui-docking\backends\imgui_impl_win32.cpp">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClCompile>
     <ClCompile Include="3rdParty\imgui-docking\imgui_tables.cpp">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClCompile>
     <ClCompile Include="3rdParty\imgui-docking\imgui_widgets.cpp">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClCompile>
     <ClCompile Include="ImGuiPass.cpp">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClCompile>
     <ClCompile Include="3rdParty\ImGuizmo\ImGuizmo.cpp">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClCompile>
     <ClCompile Include="D3D12Module.cpp">
       <Filter>D3D12</Filter>
@@ -56,14 +56,26 @@
     <ClCompile Include="Globals.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="EditorModule.cpp">
-      <Filter>imgui\Module</Filter>
-    </ClCompile>
-    <ClCompile Include="ResourcesModule.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="CommandQueue.cpp">
       <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="Timer.cpp">
+      <Filter>Core\Timers</Filter>
+    </ClCompile>
+    <ClCompile Include="Time.cpp">
+      <Filter>Core\Timers</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorModule.cpp">
+      <Filter>Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="ResourcesModule.cpp">
+      <Filter>Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineController.cpp">
+      <Filter>Core\Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Editor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -75,28 +87,28 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Engine.h">
-      <Filter>Engine</Filter>
+      <Filter>Core\Engine</Filter>
     </ClInclude>
     <ClInclude Include="3rdParty\imgui-docking\imgui.h">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClInclude>
     <ClInclude Include="3rdParty\imgui-docking\backends\imgui_impl_dx12.h">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClInclude>
     <ClInclude Include="3rdParty\imgui-docking\backends\imgui_impl_win32.h">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClInclude>
     <ClInclude Include="3rdParty\imgui-1.89.8\backends\imgui_impl_win32.h">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClInclude>
     <ClInclude Include="3rdParty\imgui-docking\imgui_internal.h">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClInclude>
     <ClInclude Include="ImGuiPass.h">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClInclude>
     <ClInclude Include="3rdParty\ImGuizmo\ImGuizmo.h">
-      <Filter>imgui</Filter>
+      <Filter>Editor\imgui</Filter>
     </ClInclude>
     <ClInclude Include="D3D12Module.h">
       <Filter>D3D12</Filter>
@@ -125,31 +137,37 @@
     <ClInclude Include="Module.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="EditorModule.h">
-      <Filter>imgui\Module</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourcesModule.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
     <ClInclude Include="CommandQueue.h">
       <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="Timer.h">
+      <Filter>Core\Timers</Filter>
+    </ClInclude>
+    <ClInclude Include="Time.hpp">
+      <Filter>Core\Timers</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorModule.h">
+      <Filter>Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourcesModule.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineController.h">
+      <Filter>Core\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Editor</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Engine.ico">
-      <Filter>Engine</Filter>
+      <Filter>Core\Engine</Filter>
     </Image>
     <Image Include="small.ico">
-      <Filter>Resources</Filter>
+      <Filter>Core\Engine</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Engine">
-      <UniqueIdentifier>{ab10a825-a32c-4012-8287-dfeb83ee1c99}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="imgui">
-      <UniqueIdentifier>{a60f8542-9cd4-4679-8902-854421339996}</UniqueIdentifier>
-    </Filter>
     <Filter Include="D3D12">
       <UniqueIdentifier>{6f8d5702-d82b-46d5-9404-e01286d5908a}</UniqueIdentifier>
     </Filter>
@@ -168,16 +186,25 @@
     <Filter Include="Core\Application">
       <UniqueIdentifier>{3252bbe7-16a5-413a-a214-af6112ee63b7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="imgui\Module">
-      <UniqueIdentifier>{8cc6243a-d67f-4193-a480-fd4634d7b0b9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="D3D12\Shaders">
       <UniqueIdentifier>{5c66ace0-41d4-4137-b5f9-ab9952d19522}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor">
+      <UniqueIdentifier>{2bed0e6a-b904-458e-ab3b-3c21b9f58527}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\imgui">
+      <UniqueIdentifier>{a60f8542-9cd4-4679-8902-854421339996}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Timers">
+      <UniqueIdentifier>{1514364a-f620-4a4f-bea2-17ede130ddd0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Engine">
+      <UniqueIdentifier>{ab10a825-a32c-4012-8287-dfeb83ee1c99}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Engine.rc">
-      <Filter>Engine</Filter>
+      <Filter>Core\Engine</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
@@ -186,7 +213,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="VertexShader.hlsl" />
-    <FxCompile Include="PixelShader.hlsl" />
+    <FxCompile Include="PixelShader.hlsl">
+      <Filter>D3D12\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="VertexShader.hlsl">
+      <Filter>D3D12\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
