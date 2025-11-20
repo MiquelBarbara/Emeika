@@ -5,6 +5,7 @@
 #include <dxgi1_6.h>
 #include <cstdint>
 #include <chrono>
+#include "DebugDrawPass.h"
 
 class D3D12Module : public Module
 {
@@ -87,4 +88,5 @@ private:
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 	ComPtr<ID3D12Resource> buffer;
 
+	DebugDrawPass debugDrawPass;
 };
