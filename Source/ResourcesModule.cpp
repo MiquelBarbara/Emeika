@@ -64,3 +64,21 @@ ComPtr<ID3D12Resource> ResourcesModule::CreateDefaultBuffer(const void* data, si
 
 	return buffer;
 }
+
+ComPtr<ID3D12Resource> ResourcesModule::CreateDepthBuffer(float windowWidth, float windowHeight)
+{
+	ID3D12Device* device = app->getD3D12Module()->GetDevice();
+	ComPtr<ID3D12Resource> depthBuffer;
+
+	CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, windowWidth, windowHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+
+	D3D12_CLEAR_VALUE clearValue = {};
+	clearValue.Format = DXGI_FORMAT_D32_FLOAT;
+	clearValue.DepthStencil.Depth = 1.0f;
+	clearValue.DepthStencil.Stencil = 0;
+
+	device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&depthBuffer));
+
+	return depthBuffer;
+}

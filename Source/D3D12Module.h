@@ -7,6 +7,7 @@
 #include <chrono>
 #include "DebugDrawPass.h"
 
+
 class D3D12Module : public Module
 {
 public:
@@ -27,6 +28,7 @@ public:
 	ComPtr<ID3D12CommandQueue> CreateCommandQueue(ComPtr<ID3D12Device> device, D3D12_COMMAND_LIST_TYPE type);
 	ComPtr<ID3D12GraphicsCommandList> CreateCommandList(ComPtr<ID3D12Device2> device, ComPtr<ID3D12CommandAllocator> commandAllocator, D3D12_COMMAND_LIST_TYPE type);
 	void UpdateRenderTargetViews(ComPtr<ID3D12Device2> device,ComPtr<IDXGISwapChain4> swapChain, ComPtr<ID3D12DescriptorHeap> descriptorHeap);
+	void UpdateDepthView(ComPtr<ID3D12Device2> device, ComPtr<ID3D12DescriptorHeap> descriptorHeap);
 	void CreateRootSignature();
 	void CreatePipelineStateObject();
 	bool CheckTearingSupport();
@@ -69,7 +71,9 @@ private:
 	ComPtr<ID3D12CommandAllocator> m_commandAllocators[FrameCount];
 	//Descriptor heap for render target views
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
+	ComPtr<ID3D12DescriptorHeap> m_dsvHeap;
 	UINT m_rtvDescriptorSize;
+	UINT m_dsvDescriptorSize;
 
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ComPtr<ID3D12PipelineState> m_pipelineState;
@@ -82,11 +86,17 @@ private:
 	UINT64 m_currentFenceValue = 0;
 
 	HWND _hwnd = nullptr;
-	LONG windowWidth = 0;
-	LONG windowHeight = 0;
+	unsigned int windowWidth = 0;
+	unsigned int windowHeight = 0;
 
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-	ComPtr<ID3D12Resource> buffer;
 
-	DebugDrawPass debugDrawPass;
+	ComPtr<ID3D12Resource> buffer;
+	ComPtr<ID3D12Resource> depthBuffer;
+
+	DebugDrawPass* debugDrawPass;
+	Matrix model;
+	Matrix view;
+	Matrix proj;
+
 };

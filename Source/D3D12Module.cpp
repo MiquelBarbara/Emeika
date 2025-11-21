@@ -7,11 +7,13 @@
 D3D12Module::D3D12Module(HWND hwnd) 
 {
     _hwnd = hwnd;
+    GetWindowSize(windowWidth, windowHeight);
 }
 
 bool D3D12Module::init()
 {
     LoadPipeline();
+    debugDrawPass = new DebugDrawPass(m_device.Get(), m_commandQueue.Get(), false);
 
     return true;
 }
@@ -33,26 +35,39 @@ void D3D12Module::preRender()
     // Transition back buffer to render target
     TransitionResource(m_commandList, m_renderTargets[m_frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-    // Set render target
+
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
-    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+    CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
 
     // Clear + draw
     const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
     m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+    m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0,0, nullptr);
 
     // Bind root signature (must be set before any draw calls)
+    m_commandList->SetPipelineState(m_pipelineState.Get());
     m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+    //Set input assembler
+    m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
     // Setup viewport & scissor
     D3D12_VIEWPORT viewport{ 0.0, 0.0, float(windowWidth), float(windowHeight) , 0.0, 1.0 };
     D3D12_RECT scissor{ 0, 0, windowWidth, windowHeight };
-
     m_commandList->RSSetViewports(1, &viewport);
     m_commandList->RSSetScissorRects(1, &scissor);
 
-    m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+    //Assign composed MVP matrix
+    Matrix mvp = (model * view * proj).Transpose();
+    m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
+
+    dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
+    dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
+    debugDrawPass->record(m_commandList.Get(), viewport.Width, viewport.Height, view, proj);
+
     m_commandList->DrawInstanced(3, 1, 0, 0);
 }
 
@@ -129,7 +144,9 @@ void D3D12Module::LoadPipeline() {
     m_commandQueue = CreateCommandQueue(m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
     m_swapChain = CreateSwapChain(_hwnd, m_commandQueue, windowWidth, windowHeight, FrameCount);
     m_rtvHeap = CreateDescriptorHeap(m_device,D3D12_DESCRIPTOR_HEAP_TYPE_RTV, FrameCount);
+    m_dsvHeap = CreateDescriptorHeap(m_device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
     UpdateRenderTargetViews(m_device, m_swapChain, m_rtvHeap);
+    UpdateDepthView(m_device, m_dsvHeap);
     for (UINT n = 0; n < FrameCount; n++)
     {
 		m_commandAllocators[n] = CreateCommandAllocator(m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -144,7 +161,9 @@ void D3D12Module::TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandLi
 
 void D3D12Module::CreateRootSignature() {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    CD3DX12_ROOT_PARAMETER rootParameters;
+    rootParameters.InitAsConstants(sizeof(Matrix) / sizeof(UINT32), 0); //number of 32 bit elements in a matrix
+    rootSignatureDesc.Init(1, &rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
@@ -190,14 +209,13 @@ void D3D12Module::CreatePipelineStateObject() {
     psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    psoDesc.DepthStencilState.DepthEnable = FALSE;
-    psoDesc.DepthStencilState.StencilEnable = FALSE;
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
     psoDesc.SampleMask = UINT_MAX;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     psoDesc.NumRenderTargets = 1;
     psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    psoDesc.SampleDesc.Count = 1;
-
+    psoDesc.SampleDesc = { 1,0 };
 
     DXCall(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 }
@@ -239,9 +257,9 @@ void D3D12Module::LoadAssets()
         // Define the geometry for a triangle.
         Vertex triangleVertices[] =
         {
-            { { 0.25f , 0.25f , 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-            { { 0.25f * aspectRatio, -0.25f , 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-            { { -0.25f * aspectRatio, -0.25f , 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
+            { { -1.0f , -1.0f , 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
+            { { 0.0f, 1.0f , 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
+            { { 1.0f, -1.0f , 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
         };
 
         const UINT vertexBufferSize = sizeof(triangleVertices);
@@ -251,6 +269,18 @@ void D3D12Module::LoadAssets()
         m_vertexBufferView.BufferLocation = buffer->GetGPUVirtualAddress();
         m_vertexBufferView.StrideInBytes = sizeof(Vertex);
         m_vertexBufferView.SizeInBytes = vertexBufferSize;
+    }
+
+    //Create the MVP
+    {
+
+        model = Matrix::Identity;
+        view = Matrix::CreateLookAt(Vector3(0.0f, 10.f, 10.0f), Vector3::Zero, Vector3::Up);
+
+        float aspect = float(windowWidth) / float(windowHeight);
+        float fov = XM_PIDIV4;
+
+        proj = Matrix::CreatePerspectiveFieldOfView(fov, aspect, 1.0f, 1000.f);
     }
 }
 
@@ -279,6 +309,8 @@ void D3D12Module::Resize()
 
     if (width != windowWidth || height != windowHeight) {
 
+        windowWidth = width;
+        windowHeight = height;
         // Ensure GPU is finished with ALL pending work
         Flush();
 
@@ -300,9 +332,7 @@ void D3D12Module::Resize()
 
         // Recreate the render target views
         UpdateRenderTargetViews(m_device, m_swapChain, m_rtvHeap);
-
-		windowWidth = width;
-		windowHeight = height;
+        UpdateDepthView(m_device, m_dsvHeap);
     }
 }
 
@@ -366,7 +396,6 @@ ComPtr<ID3D12DescriptorHeap> D3D12Module::CreateDescriptorHeap(ComPtr<ID3D12Devi
     return descriptorHeap;
 }
 
-
 ComPtr<ID3D12CommandAllocator> D3D12Module::CreateCommandAllocator(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type)
 {
     ComPtr<ID3D12CommandAllocator> commandAllocator;
@@ -403,6 +432,15 @@ void D3D12Module::UpdateRenderTargetViews(ComPtr<ID3D12Device2> device, ComPtr<I
 
         rtvHandle.Offset(1, m_rtvDescriptorSize);
     }
+}
+
+void D3D12Module::UpdateDepthView(ComPtr<ID3D12Device2> device, ComPtr<ID3D12DescriptorHeap> descriptorHeap)
+{
+    //Resize screen dependt resources
+    //Create a depth buffer
+    depthBuffer = app->getResourcesModule()->CreateDepthBuffer(windowWidth, windowHeight);
+    //Update the depth-stencil
+    device->CreateDepthStencilView(depthBuffer.Get(), nullptr, descriptorHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
 bool D3D12Module::IsFenceComplete(UINT16 fenceValue) {
