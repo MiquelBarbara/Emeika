@@ -18,6 +18,5 @@ public:
 	ComPtr<ID3D12Resource> CreateDefaultBuffer(const void* data, size_t size);
 	ComPtr<ID3D12Resource> CreateDepthBuffer(float windowWidth, float windowHeight);
 private:
-	ComPtr<ID3D12CommandAllocator> _commandAllocator;
-	ComPtr<ID3D12GraphicsCommandList> _commandList;
+
 };

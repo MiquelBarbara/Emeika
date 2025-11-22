@@ -13,7 +13,7 @@ D3D12Module::D3D12Module(HWND hwnd)
 bool D3D12Module::init()
 {
     LoadPipeline();
-    debugDrawPass = std::make_unique<DebugDrawPass>(m_device.Get(), m_commandQueue.Get(), false);
+    debugDrawPass = std::make_unique<DebugDrawPass>(m_device.Get(), _commandQueue->GetD3D12CommandQueue().Get(), false);
 
     return true;
 }
@@ -26,11 +26,10 @@ bool D3D12Module::postInit() {
 void D3D12Module::preRender()
 {
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-    WaitForFence();
+    _commandQueue->WaitForFenceValue(m_fenceValues[m_frameIndex]);
 
     // Reset command list and allocator
-    m_commandAllocators[m_frameIndex]->Reset();
-    m_commandList->Reset(m_commandAllocators[m_frameIndex].Get(), m_pipelineState.Get());
+    m_commandList = _commandQueue->GetCommandList();
 
     // Transition back buffer to render target
     TransitionResource(m_commandList, m_renderTargets[m_frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
@@ -76,12 +75,9 @@ void D3D12Module::render()
 {
     // Indicate that the back buffer will now be used to present.
     TransitionResource(m_commandList, m_renderTargets[m_frameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-    // Close the command list.
-    m_commandList->Close();
 
     // Execute the command list.
-    ID3D12CommandList* ppCommandLists[] = { m_commandList.Get() };
-    m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+    m_fenceValues[m_frameIndex] = _commandQueue->ExecuteCommandList(m_commandList);
 
     // Present the frame and allow tearing
     m_swapChain->Present(0, DXGI_PRESENT_ALLOW_TEARING);
@@ -92,14 +88,12 @@ void D3D12Module::postRender()
     // Move swap chain index to next frame
     m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
     // Store the fence value associated with this back buffer index
-    m_fenceValues[m_frameIndex] = Signal();
+    m_fenceValues[m_frameIndex] = _commandQueue->Signal();
 }
 
 bool D3D12Module::cleanUp()
 {
-    WaitForFence();
-
-    CloseHandle(m_fenceEvent);
+    _commandQueue->WaitForFenceValue(m_fenceValues[m_frameIndex]);
 
     return true;
 }
@@ -141,16 +135,12 @@ void D3D12Module::LoadPipeline() {
 #endif
 
     // Describe and create the command queue.
-    m_commandQueue = CreateCommandQueue(m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
-    m_swapChain = CreateSwapChain(_hwnd, m_commandQueue, windowWidth, windowHeight, FrameCount);
+    _commandQueue = std::make_unique<CommandQueue>(m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+    m_swapChain = CreateSwapChain(_hwnd, _commandQueue->GetD3D12CommandQueue(), windowWidth, windowHeight, FrameCount);
     m_rtvHeap = CreateDescriptorHeap(m_device,D3D12_DESCRIPTOR_HEAP_TYPE_RTV, FrameCount);
     m_dsvHeap = CreateDescriptorHeap(m_device, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
     UpdateRenderTargetViews(m_device, m_swapChain, m_rtvHeap);
     UpdateDepthView(m_device, m_dsvHeap);
-    for (UINT n = 0; n < FrameCount; n++)
-    {
-		m_commandAllocators[n] = CreateCommandAllocator(m_device, D3D12_COMMAND_LIST_TYPE_DIRECT);
-	}
 }
 
 void D3D12Module::TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandList,ComPtr<ID3D12Resource> resource,D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
@@ -221,19 +211,6 @@ void D3D12Module::CreatePipelineStateObject() {
 }
 
 
-ComPtr<ID3D12GraphicsCommandList> D3D12Module::CreateCommandList(ComPtr<ID3D12Device2> device, ComPtr<ID3D12CommandAllocator> commandAllocator, D3D12_COMMAND_LIST_TYPE type) {
-    ComPtr<ID3D12GraphicsCommandList> commandList;
-    DXCall(device->CreateCommandList(0, type, commandAllocator.Get(), m_pipelineState.Get(), IID_PPV_ARGS(&commandList)));
-    commandList->Close();
-
-    return commandList;
-}
-
-ComPtr<ID3D12Fence> D3D12Module::CreateFence(ComPtr<ID3D12Device> device) {
-    ComPtr<ID3D12Fence> fence;
-    DXCall(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence)));
-    return fence;
-}
 
 void D3D12Module::LoadAssets()
 {
@@ -242,11 +219,6 @@ void D3D12Module::LoadAssets()
 
     // Create the pipeline state, which includes compiling and loading shaders.
     CreatePipelineStateObject();
-
-    // Create the command list.
-    m_commandList = CreateCommandList(m_device, m_commandAllocators[0], D3D12_COMMAND_LIST_TYPE_DIRECT);
-    m_fence = CreateFence(m_device);
-    m_fenceEvent = CreateEventHandle();
 
     // Create the vertex buffer.
     {
@@ -292,15 +264,6 @@ void D3D12Module::GetWindowSize(unsigned& width, unsigned& height) {
     height = unsigned(rect.bottom - rect.top);
 }
 
-void D3D12Module::Flush() {
-    // Signal a new fence value
-    const UINT64 fenceToSignal = ++m_currentFenceValue;
-    m_commandQueue->Signal(m_fence.Get(), fenceToSignal);
-
-    // Wait until GPU reaches it
-    m_fence->SetEventOnCompletion(fenceToSignal, m_fenceEvent);
-    WaitForSingleObject(m_fenceEvent, INFINITE);
-}
 
 void D3D12Module::Resize()
 {
@@ -312,7 +275,7 @@ void D3D12Module::Resize()
         windowWidth = width;
         windowHeight = height;
         // Ensure GPU is finished with ALL pending work
-        Flush();
+        _commandQueue->Flush();
 
         // Release the render targets
         for (UINT n = 0; n < FrameCount; n++)
@@ -396,28 +359,6 @@ ComPtr<ID3D12DescriptorHeap> D3D12Module::CreateDescriptorHeap(ComPtr<ID3D12Devi
     return descriptorHeap;
 }
 
-ComPtr<ID3D12CommandAllocator> D3D12Module::CreateCommandAllocator(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type)
-{
-    ComPtr<ID3D12CommandAllocator> commandAllocator;
-    DXCall(device->CreateCommandAllocator(type , IID_PPV_ARGS(&commandAllocator)));
-    return commandAllocator;
-}
-
-ComPtr<ID3D12CommandQueue> D3D12Module::CreateCommandQueue(ComPtr<ID3D12Device> device, D3D12_COMMAND_LIST_TYPE type)
-{
-    ComPtr<ID3D12CommandQueue> d3d12CommandQueue;
-
-    D3D12_COMMAND_QUEUE_DESC desc = {};
-    desc.Type = type;
-    desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-    desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-    desc.NodeMask = 0;
-
-    DXCall(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&d3d12CommandQueue)));
-
-    return d3d12CommandQueue;
-}
-
 void D3D12Module::UpdateRenderTargetViews(ComPtr<ID3D12Device2> device, ComPtr<IDXGISwapChain4> swapChain, ComPtr<ID3D12DescriptorHeap> descriptorHeap)
 {
     m_rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -441,35 +382,6 @@ void D3D12Module::UpdateDepthView(ComPtr<ID3D12Device2> device, ComPtr<ID3D12Des
     depthBuffer = app->getResourcesModule()->CreateDepthBuffer(windowWidth, windowHeight);
     //Update the depth-stencil
     device->CreateDepthStencilView(depthBuffer.Get(), nullptr, descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-}
-
-bool D3D12Module::IsFenceComplete(UINT64 fenceValue) {
-    return m_fence->GetCompletedValue() >= fenceValue;
-}
-
-// Wait for pending GPU work to complete.
-void D3D12Module::WaitForFence() {
-    const UINT64 fenceValue = m_fenceValues[m_frameIndex];
-    if (!IsFenceComplete(fenceValue))
-    {
-        m_fence->SetEventOnCompletion(fenceValue, m_fenceEvent);
-        WaitForSingleObject(m_fenceEvent, INFINITE);
-    }
-}
-
-UINT64 D3D12Module::Signal() {
-    const UINT64 fenceToSignal = ++m_currentFenceValue;
-    m_commandQueue->Signal(m_fence.Get(), fenceToSignal);
-    return fenceToSignal;
-}
-
-HANDLE D3D12Module::CreateEventHandle() {
-    HANDLE fenceEvent;
-
-    fenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-    assert(fenceEvent && "Failed to create fence event.");
-
-    return fenceEvent;
 }
 
 bool D3D12Module::CheckTearingSupport()

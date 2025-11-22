@@ -2,15 +2,11 @@
 #include "ResourcesModule.h"
 #include "D3D12Module.h"
 #include "Application.h"
+#include "CommandQueue.h"
 
 
 bool ResourcesModule::init()
 {
-	ID3D12Device5* device = app->getD3D12Module()->GetDevice();
-	device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&_commandAllocator));
-	device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&_commandList));
-	_commandList->Reset(_commandAllocator.Get(), nullptr);
-
 	return true;
 }
 
@@ -28,7 +24,7 @@ ComPtr<ID3D12Resource> ResourcesModule::CreateUploadBuffer(const void* data, siz
 ComPtr<ID3D12Resource> ResourcesModule::CreateDefaultBuffer(const void* data, size_t size)
 {
 	ID3D12Device* device = app->getD3D12Module()->GetDevice();
-	ID3D12CommandQueue* queue = app->getD3D12Module()->GetCommandQueue();
+	CommandQueue* queue = app->getD3D12Module()->GetCommandQueue();
 
 	// --- CREATE THE FINAL GPU BUFFER (DEFAULT HEAP) ---
 	ComPtr<ID3D12Resource> buffer;
@@ -51,16 +47,14 @@ ComPtr<ID3D12Resource> ResourcesModule::CreateDefaultBuffer(const void* data, si
 	uploadBuffer->Unmap(0, nullptr);
 	
 	// Copy buffer commands
+
+	ComPtr<ID3D12GraphicsCommandList4> _commandList = queue->GetCommandList();
+
 	_commandList->CopyResource(buffer.Get(), uploadBuffer.Get());
-	_commandList->Close();
 
-	ID3D12CommandList* lists[] = { _commandList.Get() };
-	queue->ExecuteCommandLists(1, lists);
+	queue->ExecuteCommandList(_commandList);
 
-	app->getD3D12Module()->Flush();
-
-	_commandAllocator->Reset();
-	_commandList->Reset(_commandAllocator.Get(), nullptr);
+	queue->Flush();
 
 	return buffer;
 }

@@ -9,18 +9,20 @@
 using Microsoft::WRL::ComPtr;
 using std::queue;
 
+using GraphicsCommandList = ID3D12GraphicsCommandList4;
+
 class CommandQueue
 {
 public:
-    CommandQueue(ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type);
+    CommandQueue(ComPtr<ID3D12Device4> device, D3D12_COMMAND_LIST_TYPE type);
     virtual ~CommandQueue();
 
     // Get an available command list from the command queue.
-    ComPtr<ID3D12GraphicsCommandList2> GetCommandList();
+    ComPtr<GraphicsCommandList> GetCommandList();
 
     // Execute a command list.
     // Returns the fence value to wait for for this command list.
-    uint64_t ExecuteCommandList(ComPtr<ID3D12GraphicsCommandList2> commandList);
+    uint64_t ExecuteCommandList(ComPtr<GraphicsCommandList> commandList);
 
     uint64_t Signal();
     bool IsFenceComplete(uint64_t fenceValue);
@@ -31,7 +33,7 @@ public:
 protected:
 
     ComPtr<ID3D12CommandAllocator> CreateCommandAllocator();
-    ComPtr<ID3D12GraphicsCommandList2> CreateCommandList(ComPtr<ID3D12CommandAllocator> allocator);
+    ComPtr<GraphicsCommandList> CreateCommandList(ComPtr<ID3D12CommandAllocator> allocator);
 
 private:
     // Keep track of command allocators that are "in-flight"
@@ -42,10 +44,10 @@ private:
     };
 
     using CommandAllocatorQueue = queue<CommandAllocatorEntry>;
-    using CommandListQueue = queue<ComPtr<ID3D12GraphicsCommandList2>>;
+    using CommandListQueue = queue<ComPtr<GraphicsCommandList>>;
 
     D3D12_COMMAND_LIST_TYPE                     m_CommandListType;
-    ComPtr<ID3D12Device2>                       m_d3d12Device;
+    ComPtr<ID3D12Device4>                       m_d3d12Device;
     ComPtr<ID3D12CommandQueue>                  m_d3d12CommandQueue;
     ComPtr<ID3D12Fence>                         m_d3d12Fence;
     HANDLE                                      m_FenceEvent;

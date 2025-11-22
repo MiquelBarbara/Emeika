@@ -88,6 +88,7 @@ void ImGuiPass::startFrame()
 
 void ImGuiPass::record(ID3D12GraphicsCommandList* commandList)
 {
+
     BEGIN_EVENT(commandList, "ImGui Pass");
 
     ImGui::Render();

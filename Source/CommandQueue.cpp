@@ -1,7 +1,7 @@
 #include "Globals.h"
 #include "CommandQueue.h"
 
-CommandQueue::CommandQueue(Microsoft::WRL::ComPtr<ID3D12Device2> device, D3D12_COMMAND_LIST_TYPE type)
+CommandQueue::CommandQueue(Microsoft::WRL::ComPtr<ID3D12Device4> device, D3D12_COMMAND_LIST_TYPE type)
     : m_FenceValue(0)
     , m_CommandListType(type)
     , m_d3d12Device(device)
@@ -25,10 +25,10 @@ CommandQueue::~CommandQueue()
 	CloseHandle(m_FenceEvent);
 }
 
-ComPtr<ID3D12GraphicsCommandList2> CommandQueue::GetCommandList()
+ComPtr<GraphicsCommandList> CommandQueue::GetCommandList()
 {
     ComPtr<ID3D12CommandAllocator> commandAllocator;
-    ComPtr<ID3D12GraphicsCommandList2> commandList;
+    ComPtr<GraphicsCommandList> commandList;
 
     if (!m_CommandAllocatorQueue.empty() && IsFenceComplete(m_CommandAllocatorQueue.front().fenceValue))
     {
@@ -61,7 +61,7 @@ ComPtr<ID3D12GraphicsCommandList2> CommandQueue::GetCommandList()
     return commandList;
 }
 
-uint64_t CommandQueue::ExecuteCommandList(ComPtr<ID3D12GraphicsCommandList2> commandList)
+uint64_t CommandQueue::ExecuteCommandList(ComPtr<GraphicsCommandList> commandList)
 {
     commandList->Close();
 
@@ -132,9 +132,9 @@ ComPtr<ID3D12CommandAllocator> CommandQueue::CreateCommandAllocator()
     return commandAllocator;
 }
 
-ComPtr<ID3D12GraphicsCommandList2> CommandQueue::CreateCommandList(ComPtr<ID3D12CommandAllocator> allocator)
+ComPtr<GraphicsCommandList> CommandQueue::CreateCommandList(ComPtr<ID3D12CommandAllocator> allocator)
 {
-    ComPtr<ID3D12GraphicsCommandList2> commandList;
+    ComPtr<GraphicsCommandList> commandList;
     DXCall(m_d3d12Device->CreateCommandList(0, m_CommandListType, allocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
 
     return commandList;

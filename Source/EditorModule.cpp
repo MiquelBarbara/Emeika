@@ -88,8 +88,6 @@ void Style() {
 }
 
 
-
-
 EditorModule::EditorModule()
 {
     //_console = Console();
