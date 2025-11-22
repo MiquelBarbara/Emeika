@@ -13,7 +13,7 @@ D3D12Module::D3D12Module(HWND hwnd)
 bool D3D12Module::init()
 {
     LoadPipeline();
-    debugDrawPass = new DebugDrawPass(m_device.Get(), m_commandQueue.Get(), false);
+    debugDrawPass = std::make_unique<DebugDrawPass>(m_device.Get(), m_commandQueue.Get(), false);
 
     return true;
 }
@@ -34,7 +34,6 @@ void D3D12Module::preRender()
 
     // Transition back buffer to render target
     TransitionResource(m_commandList, m_renderTargets[m_frameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
 
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
     CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
@@ -64,11 +63,12 @@ void D3D12Module::preRender()
     Matrix mvp = (model * view * proj).Transpose();
     m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
 
+    m_commandList->DrawInstanced(3, 1, 0, 0);
+
     dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
     dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
     debugDrawPass->record(m_commandList.Get(), viewport.Width, viewport.Height, view, proj);
 
-    m_commandList->DrawInstanced(3, 1, 0, 0);
 }
 
 
@@ -443,7 +443,7 @@ void D3D12Module::UpdateDepthView(ComPtr<ID3D12Device2> device, ComPtr<ID3D12Des
     device->CreateDepthStencilView(depthBuffer.Get(), nullptr, descriptorHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
-bool D3D12Module::IsFenceComplete(UINT16 fenceValue) {
+bool D3D12Module::IsFenceComplete(UINT64 fenceValue) {
     return m_fence->GetCompletedValue() >= fenceValue;
 }
 

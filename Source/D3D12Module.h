@@ -45,7 +45,7 @@ public:
 	ID3D12CommandAllocator* GetCommandAllocator() { return m_commandAllocators->Get(); }
 
 	//Fence related functions
-	bool IsFenceComplete(UINT16 fenceValue);
+	bool IsFenceComplete(UINT64 fenceValue);
 	UINT64 Signal();
 	void WaitForFence();
 	ComPtr<ID3D12Fence> CreateFence(ComPtr<ID3D12Device> device);
@@ -94,7 +94,7 @@ private:
 	ComPtr<ID3D12Resource> buffer;
 	ComPtr<ID3D12Resource> depthBuffer;
 
-	DebugDrawPass* debugDrawPass;
+	std::unique_ptr<DebugDrawPass> debugDrawPass;
 	Matrix model;
 	Matrix view;
 	Matrix proj;
