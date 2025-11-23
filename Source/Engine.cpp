@@ -233,7 +233,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         else {
             app->setPaused(false);
-            app->getD3D12Module()->Resize();
+            app->getD3D12Module()->GetWindow()->Resize();
         }
         break;
     case WM_SYSKEYDOWN:
