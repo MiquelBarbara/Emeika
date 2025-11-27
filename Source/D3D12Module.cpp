@@ -2,6 +2,7 @@
 #include "D3D12Module.h"
 #include "Application.h"
 #include "ResourcesModule.h"
+#include "CameraModule.h"
 #include <d3dcompiler.h>
 
 D3D12Module::D3D12Module(HWND hwnd) 
@@ -59,14 +60,15 @@ void D3D12Module::preRender()
     m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
     //Assign composed MVP matrix
-    Matrix mvp = (model * view * proj).Transpose();
+    auto camera = app->getCameraModule();
+    Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
     m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
 
     m_commandList->DrawInstanced(3, 1, 0, 0);
 
     dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
     dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
-    debugDrawPass->record(m_commandList.Get(), viewport.Width, viewport.Height, view, proj);
+    debugDrawPass->record(m_commandList.Get(), viewport.Width, viewport.Height, camera->GetViewMatrix(), camera->GetProjectionMatrix());
 
 }
 
@@ -247,12 +249,8 @@ void D3D12Module::LoadAssets()
     {
 
         model = Matrix::Identity;
-        view = Matrix::CreateLookAt(Vector3(0.0f, 10.f, 10.0f), Vector3::Zero, Vector3::Up);
-
-        float aspect = float(windowWidth) / float(windowHeight);
-        float fov = XM_PIDIV4;
-
-        proj = Matrix::CreatePerspectiveFieldOfView(fov, aspect, 1.0f, 1000.f);
+        auto camera = app->getCameraModule();
+        camera->AspectRatio(windowWidth / windowHeight);
     }
 }
 
@@ -274,6 +272,10 @@ void D3D12Module::Resize()
 
         windowWidth = width;
         windowHeight = height;
+
+        auto camera = app->getCameraModule();
+        camera->AspectRatio(windowWidth / windowHeight);
+
         // Ensure GPU is finished with ALL pending work
         _commandQueue->Flush();
 

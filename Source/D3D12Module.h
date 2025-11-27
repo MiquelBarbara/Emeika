@@ -78,7 +78,4 @@ private:
 	std::unique_ptr<DebugDrawPass> debugDrawPass;
 	std::unique_ptr<CommandQueue> _commandQueue;
 	Matrix model;
-	Matrix view;
-	Matrix proj;
-
 };

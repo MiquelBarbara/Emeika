@@ -77,6 +77,9 @@
     <ClCompile Include="Logger.cpp">
       <Filter>Editor</Filter>
     </ClCompile>
+    <ClCompile Include="CameraModule.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DebugDrawPass.h" />
@@ -157,6 +160,9 @@
     </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraModule.h">
+      <Filter>D3D12</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
