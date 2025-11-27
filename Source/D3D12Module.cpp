@@ -60,14 +60,14 @@ void D3D12Module::preRender()
     m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
     //Assign composed MVP matrix
-    Matrix mvp = (model * view * proj).Transpose();
+    Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
     m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
 
     m_commandList->DrawInstanced(3, 1, 0, 0);
 
     dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
     dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
-    debugDrawPass->record(m_commandList.Get(), window->Width(), window->Height(), view, proj);
+    debugDrawPass->record(m_commandList.Get(), window->Width(), window->Height(), camera->GetViewMatrix(), camera->GetProjectionMatrix());
 
 }
 
@@ -86,9 +86,6 @@ void D3D12Module::render()
 
 void D3D12Module::postRender()
 {
-    // Move swap chain index to next frame
-    // m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
-    // Store the fence value associated with this back buffer index
     m_fenceValues[m_frameIndex] = _commandQueue->Signal();
 }
 
@@ -210,6 +207,11 @@ void D3D12Module::LoadAssets()
     // Create the pipeline state, which includes compiling and loading shaders.
     CreatePipelineStateObject();
 
+    camera = new Camera();
+    camera->SetViewMatrix(Vector3(0.0f, 10.f, 10.0f), Vector3::Zero, Vector3::Up);
+    camera->SetPerspectiveProjection(XM_PIDIV4, static_cast<float>(window->Width()) / static_cast<float>(window->Height()), 1.0f, 1000.f);
+    model = Matrix::Identity;
+
     // Create the vertex buffer.
     {
         unsigned width, height;
@@ -231,18 +233,6 @@ void D3D12Module::LoadAssets()
         m_vertexBufferView.BufferLocation = buffer->GetGPUVirtualAddress();
         m_vertexBufferView.StrideInBytes = sizeof(Vertex);
         m_vertexBufferView.SizeInBytes = vertexBufferSize;
-    }
-
-    //Create the MVP
-    {
-
-        model = Matrix::Identity;
-        view = Matrix::CreateLookAt(Vector3(0.0f, 10.f, 10.0f), Vector3::Zero, Vector3::Up);
-
-        float aspect = float(window->Width()) / float(window->Height());
-        float fov = XM_PIDIV4;
-
-        proj = Matrix::CreatePerspectiveFieldOfView(fov, aspect, 1.0f, 1000.f);
     }
 }
 

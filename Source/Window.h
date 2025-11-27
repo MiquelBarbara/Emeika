@@ -8,15 +8,17 @@ constexpr static uint32_t bufferCount = 3;
 
 using SwapChain = ComPtr<IDXGISwapChain4>;
 
-// Encapsulates all Direct3D 12 resources and operations associated with a
-// single application window, including:
-//
-// • Swap chain creation and management (triple-buffered).
-// • Render target view (RTV) descriptor heap creation and RTV allocation.
-// • Depth-stencil buffer creation and DSV allocation.
-// • Handling window resizes and recreating size-dependent resources.
-// • Managing the current back buffer index used for rendering.
-// • Providing accessors for the active render target, viewport, and scissor.
+/// <summary>
+/// Encapsulates all Direct3D 12 resources and operations associated with a
+/// single application window, including:
+///
+/// • Swap chain creation and management (triple-buffered).
+/// • Render target view (RTV) descriptor heap creation and RTV allocation.
+/// • Depth-stencil buffer creation and DSV allocation.
+/// • Handling window resizes and recreating size-dependent resources.
+/// • Managing the current back buffer index used for rendering.
+/// • Providing accessors for the active render target, viewport, and scissor.
+/// </summary>
 class Window
 {
 public:
@@ -42,6 +44,7 @@ public:
 	constexpr const D3D12_RECT& GetScissorRect() const { return m_scissorRect; }
 private:
 
+	//This may be changed to a more general ResourceData struct if needed
 	struct RenderTargetData
 	{
 		ComPtr<ID3D12Resource> resource{ nullptr };

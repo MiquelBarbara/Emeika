@@ -24,6 +24,7 @@ public:
 	bool         cleanUp();
 
     D3D12Module*                getD3D12Module() { return _d3d12; }
+    EditorModule*              getEditorModule() { return _editorModule; }
     ResourcesModule*            getResourcesModule() { return _resourcesModule; }
     float                       getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
     float                       getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }

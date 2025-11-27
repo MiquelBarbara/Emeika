@@ -8,6 +8,7 @@
 #include "DebugDrawPass.h"
 #include "CommandQueue.h"
 #include "Window.h"
+#include "Camera.h"
 
 
 class D3D12Module : public Module
@@ -61,7 +62,5 @@ private:
 	HWND _hwnd;
 
 	Matrix model;
-	Matrix view;
-	Matrix proj;
-
+	Camera* camera;
 };

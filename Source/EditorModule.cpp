@@ -2,6 +2,7 @@
 #include "EditorModule.h"
 #include "D3D12Module.h"
 #include "vector"
+#include <backends/imgui_impl_dx12.h>
 
 using namespace std;
 
@@ -92,6 +93,8 @@ EditorModule::EditorModule()
 {
     //_console = Console();
     _logger = new Logger();
+
+
 }
 
 EditorModule::~EditorModule()
@@ -103,6 +106,8 @@ bool EditorModule::postInit()
 {
 	D3D12Module* _d3d12 = app->getD3D12Module();
 	_gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle());
+
+    _sceneView = new SceneView(_d3d12, _gui->GetHeap().Get(), 0);
 
 	return true;
 }
@@ -116,6 +121,8 @@ void EditorModule::preRender()
         Style();
 		_firstFrame = false;
 	}
+
+    _sceneView->Render();
 
     // TODO: Main Menu Bar, Inspector, Asset Browser, hierarchy, scene.
     //MainMenuBar();

@@ -11,10 +11,12 @@ using std::queue;
 
 using GraphicsCommandList = ID3D12GraphicsCommandList4;
 
-// This class provides a lightweight management layer around a DirectX 12
-// command queue. It maintains small pools of command allocators and command
-// lists, recycling them once the GPU has finished executing the work that
-// depends on them.
+/// <summary>
+/// This class provides a lightweight management layer around a DirectX 12
+/// command queue. It maintains small pools of command allocators and command
+/// lists, recycling them once the GPU has finished executing the work that
+/// depends on them.
+/// </summary>
 class CommandQueue
 {
 public:
