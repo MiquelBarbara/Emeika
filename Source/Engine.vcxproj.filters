@@ -186,6 +186,9 @@
     <ClInclude Include="DebugDrawPass.h">
       <Filter>Editor</Filter>
     </ClInclude>
+    <ClInclude Include="CameraModule.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Engine.ico">

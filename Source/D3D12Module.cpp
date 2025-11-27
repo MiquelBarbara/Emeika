@@ -2,6 +2,7 @@
 #include "D3D12Module.h"
 #include "Application.h"
 #include "ResourcesModule.h"
+#include "CameraModule.h"
 #include <d3dcompiler.h>
 
 D3D12Module::D3D12Module(HWND hwnd) 
@@ -60,6 +61,7 @@ void D3D12Module::preRender()
     m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
     //Assign composed MVP matrix
+    auto camera = app->getCameraModule();
     Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
     m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
 

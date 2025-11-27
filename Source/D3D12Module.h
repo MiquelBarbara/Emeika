@@ -62,5 +62,6 @@ private:
 	HWND _hwnd;
 
 	Matrix model;
-	Camera* camera;
+	Matrix proj;
+
 };

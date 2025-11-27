@@ -4,6 +4,7 @@
 #include "D3D12Module.h"
 #include "EditorModule.h"
 #include "ResourcesModule.h"
+#include "CameraModule.h"
 
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
@@ -12,7 +13,7 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(_editorModule = new EditorModule());
     modules.push_back(_d3d12 = new D3D12Module((HWND)hWnd));
     modules.push_back(_resourcesModule = new ResourcesModule());
-
+    modules.push_back(_cameraModule = new CameraModule());
 }
 
 Application::~Application()
