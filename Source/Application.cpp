@@ -5,11 +5,12 @@
 #include "EditorModule.h"
 #include "ResourcesModule.h"
 #include "CameraModule.h"
+#include "Time.hpp"
 
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {
-    modules.push_back(new InputModule((HWND)hWnd));
+    modules.push_back(_inputModule = new InputModule((HWND)hWnd));
     modules.push_back(_editorModule = new EditorModule());
     modules.push_back(_d3d12 = new D3D12Module((HWND)hWnd));
     modules.push_back(_resourcesModule = new ResourcesModule());
@@ -40,9 +41,14 @@ bool Application::init()
 
 bool Application::postInit()
 {
-    _editorModule->postInit();
-    _d3d12->postInit();
-    return true;
+    bool ret = true;
+
+    for (auto it = modules.begin(); it != modules.end() && ret; ++it)
+        ret = (*it)->postInit();
+
+    lastMilis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    return ret;
 }
 
 void Application::update()
@@ -58,6 +64,8 @@ void Application::update()
     tickSum += elapsedMilis;
     tickList[tickIndex] = elapsedMilis;
     tickIndex = (tickIndex + 1) % MAX_FPS_TICKS;
+
+    Time::update();
 
     if (!app->paused)
     {

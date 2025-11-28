@@ -16,3 +16,32 @@ InputModule::InputModule(HWND hWnd)
 }
 
 
+bool InputModule::IsKeyDown(Keyboard::Keys key)
+{
+    return keyboard->GetState().IsKeyDown(key);
+}
+
+bool InputModule::IsLeftMouseDown()
+{
+    return mouse->GetState().leftButton == Mouse::ButtonStateTracker::HELD;
+}
+
+bool InputModule::IsRightMouseDown()
+{
+    return mouse->GetState().rightButton == Mouse::ButtonStateTracker::HELD;
+}
+
+void InputModule::GetMouseDelta(float& deltaX, float& deltaY)
+{
+    auto state = mouse->GetState();
+
+    float currentX = (float)state.x;
+    float currentY = (float)state.y;
+
+    deltaX = currentX - mouseDeltaX;
+    deltaY = currentY - mouseDeltaY;
+
+    mouseDeltaX = currentX;
+    mouseDeltaY = currentY;
+}
+

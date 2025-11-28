@@ -88,6 +88,9 @@
     <ClCompile Include="DebugDrawPass.cpp">
       <Filter>Editor</Filter>
     </ClCompile>
+    <ClCompile Include="CameraModule.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug_draw.hpp" />

@@ -122,7 +122,7 @@ void EditorModule::preRender()
 		_firstFrame = false;
 	}
 
-    _sceneView->Render();
+    //_sceneView->Render();
 
     // TODO: Main Menu Bar, Inspector, Asset Browser, hierarchy, scene.
     //MainMenuBar();

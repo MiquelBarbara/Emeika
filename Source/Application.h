@@ -11,6 +11,7 @@ class D3D12Module;
 class EditorModule;
 class ResourcesModule;
 class CameraModule;
+class InputModule;
 
 class Application
 {
@@ -27,6 +28,7 @@ public:
     D3D12Module*                getD3D12Module() { return _d3d12; }
     EditorModule*              getEditorModule() { return _editorModule; }
     ResourcesModule*            getResourcesModule() { return _resourcesModule; }
+    InputModule*               getInputModule() { return _inputModule; }
     CameraModule* getCameraModule() { return _cameraModule; }
     float                       getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
     float                       getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }
@@ -43,6 +45,7 @@ private:
     EditorModule* _editorModule = nullptr;
     ResourcesModule* _resourcesModule = nullptr;
     CameraModule* _cameraModule = nullptr;
+    InputModule* _inputModule = nullptr;
 
     uint64_t  lastMilis = 0;
     TickList  tickList;

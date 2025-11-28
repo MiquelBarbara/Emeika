@@ -1,11 +1,12 @@
 #pragma once
 #include "Module.h"
-
+#include "InputModule.h"
 
 class CameraModule: public Module
 {
 public:
 	bool init();
+	bool postInit();
 	void update();
 
 	void SetFOV(const float fov);
@@ -16,6 +17,7 @@ public:
 	void LookAt(const Vector3& lookAt);
 
 	void CalculateProjectionMatrix();
+	void CalculateViewMatrix();
 
 	Matrix& GetProjectionMatrix() { return _proj; }
 	Matrix& GetViewMatrix() { return _view; }
@@ -27,11 +29,19 @@ private:
 	Vector3 _target = Vector3::Zero;
 	Vector3 _up = Vector3::Up;
 
+	Vector3 _forward = Vector3::Forward;
+	Vector3 _right = Vector3::Right;
+
+	Quaternion _rotation = Quaternion::Identity;
+	float sensitivity = 0.004f;
+
 	bool _isDirty = false;
 
 	float _fov = XM_PIDIV4;
 	float _aspectRatio = 0;
 	float _nearPlane = 1.0f;
 	float _farPlane = 1000.f;
+
+	InputModule* inputModule = nullptr;
 };
 

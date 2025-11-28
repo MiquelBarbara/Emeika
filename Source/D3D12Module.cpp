@@ -209,11 +209,6 @@ void D3D12Module::LoadAssets()
     // Create the pipeline state, which includes compiling and loading shaders.
     CreatePipelineStateObject();
 
-    camera = new Camera();
-    camera->SetViewMatrix(Vector3(0.0f, 10.f, 10.0f), Vector3::Zero, Vector3::Up);
-    camera->SetPerspectiveProjection(XM_PIDIV4, static_cast<float>(window->Width()) / static_cast<float>(window->Height()), 1.0f, 1000.f);
-    model = Matrix::Identity;
-
     // Create the vertex buffer.
     {
         unsigned width, height;

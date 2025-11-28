@@ -62,6 +62,5 @@ private:
 	HWND _hwnd;
 
 	Matrix model;
-	Matrix proj;
 
 };
