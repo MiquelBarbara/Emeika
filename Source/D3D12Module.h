@@ -8,13 +8,13 @@
 #include "DebugDrawPass.h"
 #include "CommandQueue.h"
 #include "Window.h"
-#include "Camera.h"
 
 
 class D3D12Module : public Module
 {
 public:
 	D3D12Module(HWND hwnd);
+	~D3D12Module();
 
 	bool init() override;
 	bool postInit();

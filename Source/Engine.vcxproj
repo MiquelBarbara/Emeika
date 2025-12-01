@@ -172,8 +172,8 @@
     <ClInclude Include="3rdParty\ImGuizmo\ImGuizmo.h" />
     <ClInclude Include="Application.h" />
     <ClInclude Include="CameraModule.h" />
-    <ClInclude Include="Camera.h" />
     <ClInclude Include="CommandQueue.h" />
+    <ClInclude Include="ConfigurationView.h" />
     <ClInclude Include="D3D12Module.h" />
     <ClInclude Include="DebugDrawPass.h" />
     <ClInclude Include="debug_draw.hpp" />
@@ -265,8 +265,8 @@
     </ClCompile>
     <ClCompile Include="Application.cpp" />
     <ClCompile Include="CameraModule.cpp" />
-    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CommandQueue.cpp" />
+    <ClCompile Include="ConfigurationView.cpp" />
     <ClCompile Include="D3D12Module.cpp" />
     <ClCompile Include="DebugDrawPass.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

@@ -79,9 +79,6 @@
     <ClCompile Include="Window.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="SceneView.cpp">
       <Filter>Editor</Filter>
     </ClCompile>
@@ -90,6 +87,9 @@
     </ClCompile>
     <ClCompile Include="CameraModule.cpp">
       <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigurationView.cpp">
+      <Filter>Editor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -174,9 +174,6 @@
     <ClInclude Include="Window.h">
       <Filter>D3D12</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
     <ClInclude Include="Transform.h">
       <Filter>D3D12</Filter>
     </ClInclude>
@@ -191,6 +188,9 @@
     </ClInclude>
     <ClInclude Include="CameraModule.h">
       <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigurationView.h">
+      <Filter>Editor</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

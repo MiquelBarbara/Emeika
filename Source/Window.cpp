@@ -8,19 +8,36 @@ Window::Window(HWND hWnd): _hwnd(hWnd)
 {
     GetWindowSize(windowWidth, windowHeight);
     m_swapChain = CreateSwapChain(hWnd, app->getD3D12Module()->GetCommandQueue()->GetD3D12CommandQueue(), windowWidth, windowHeight);
-    m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
+    m_currentBackBufferIndex = m_swapChain.Get()->GetCurrentBackBufferIndex();
     m_rtvHeap = CreateDescriptorHeap(app->getD3D12Module()->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, bufferCount);
     m_dsvHeap = CreateDescriptorHeap(app->getD3D12Module()->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
-    UpdateRenderTargetViews(app->getD3D12Module()->GetDevice(), m_swapChain, m_rtvHeap);
+    UpdateRenderTargetViews(app->getD3D12Module()->GetDevice(), m_swapChain.Get(), m_rtvHeap);
     UpdateDepthView(app->getD3D12Module()->GetDevice(), m_dsvHeap);
 
     m_viewport = D3D12_VIEWPORT{ 0.0, 0.0, float(windowWidth), float(windowHeight) , 0.0, 1.0 };
     m_scissorRect = D3D12_RECT { 0, 0, long(windowWidth), long(windowHeight) };
 }
 
-SwapChain Window::CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> commandQueue, uint32_t width, uint32_t height)
+Window::~Window()
 {
-    ComPtr<IDXGISwapChain4> dxgiSwapChain4;
+    // 1. Release render targets
+    for (int i = 0; i < bufferCount; ++i)
+        m_renderTargets[i].resource.Reset();
+
+    // 2. Release depth stencil
+    m_depthStencil.resource.Reset();
+
+    // 3. Release descriptor heaps
+    m_rtvHeap.Reset();
+    m_dsvHeap.Reset();
+
+    // 4. Release swap chain
+    m_swapChain.Reset();
+}
+
+ComPtr<SwapChain> Window::CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> commandQueue, uint32_t width, uint32_t height)
+{
+    ComPtr<SwapChain> dxgiSwapChain4;
     ComPtr<IDXGIFactory4> dxgiFactory4;
     UINT createFactoryFlags = 0;
 #if defined(_DEBUG)
@@ -68,8 +85,8 @@ SwapChain Window::CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> commandQ
 
 void Window::Present() const
 {
-    m_swapChain->Present(0, _flags);
-    m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
+    m_swapChain.Get()->Present(0, DXGI_PRESENT_ALLOW_TEARING);
+    m_currentBackBufferIndex = m_swapChain.Get()->GetCurrentBackBufferIndex();
 }
 
 void Window::GetWindowSize(unsigned& width, unsigned& height) {
@@ -107,14 +124,14 @@ void Window::Resize()
         // Resize the swap chain
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
 
-        DXCall(m_swapChain->GetDesc(&swapChainDesc));
+        DXCall(m_swapChain.Get()->GetDesc(&swapChainDesc));
 
-        DXCall(m_swapChain->ResizeBuffers(bufferCount, width, height, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
+        DXCall(m_swapChain.Get()->ResizeBuffers(bufferCount, width, height, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
 
-        m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
+        m_currentBackBufferIndex = m_swapChain.Get()->GetCurrentBackBufferIndex();
 
         // Recreate the render target views
-        UpdateRenderTargetViews(app->getD3D12Module()->GetDevice(), m_swapChain, m_rtvHeap);
+        UpdateRenderTargetViews(app->getD3D12Module()->GetDevice(), m_swapChain.Get(), m_rtvHeap);
         UpdateDepthView(app->getD3D12Module()->GetDevice(), m_dsvHeap);
     }
 }

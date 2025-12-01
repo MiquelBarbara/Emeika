@@ -6,7 +6,7 @@
 
 constexpr static uint32_t bufferCount = 3;
 
-using SwapChain = ComPtr<IDXGISwapChain4>;
+using SwapChain = IDXGISwapChain4;
 
 /// <summary>
 /// Encapsulates all Direct3D 12 resources and operations associated with a
@@ -24,7 +24,8 @@ class Window
 public:
 	constexpr static DXGI_FORMAT DefaultFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	Window(HWND hWnd);
-	SwapChain CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> commandQueue, uint32_t width, uint32_t height);
+	~Window();
+	ComPtr<SwapChain> CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> commandQueue, uint32_t width, uint32_t height);
 	void Present() const;
 	void Resize();
 
@@ -57,7 +58,7 @@ private:
 		CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle{};
 	};
 
-	SwapChain m_swapChain;
+	ComPtr<SwapChain> m_swapChain;
 	// RTV
 	ComPtr<ID3D12DescriptorHeap> m_rtvHeap;
 	UINT m_rtvDescriptorSize{ 0 };

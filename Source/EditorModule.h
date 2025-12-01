@@ -4,6 +4,7 @@
 #include "Application.h"
 #include "Logger.h"
 #include <SceneView.h>
+#include <ConfigurationView.h>
 
 class ImGuiPass;
 class Logger;
@@ -22,10 +23,14 @@ private:
 	ImGuiPass* _gui = nullptr;
 	SceneView* _sceneView;
 	Logger* _logger = nullptr;
+	ConfigurationView* _configurationView = nullptr;
+	DebugDrawPass* _debugDrawPass = nullptr;
 
     bool _showMainDockspace = true;
     bool _showHierarchy = true;
     bool _showInspector = true;
+
+	bool _showDebugDrawPass= false;
 
     bool _firstFrame = true;
 };

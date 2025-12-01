@@ -10,6 +10,12 @@ D3D12Module::D3D12Module(HWND hwnd)
     _hwnd = hwnd;
 }
 
+D3D12Module::~D3D12Module()
+{
+
+}
+
+
 bool D3D12Module::init()
 {
     LoadPipeline();
@@ -70,7 +76,6 @@ void D3D12Module::preRender()
     dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
     dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
     debugDrawPass->record(m_commandList.Get(), window->Width(), window->Height(), camera->GetViewMatrix(), camera->GetProjectionMatrix());
-
 }
 
 
@@ -93,7 +98,37 @@ void D3D12Module::postRender()
 
 bool D3D12Module::cleanUp()
 {
-    _commandQueue->WaitForFenceValue(m_fenceValues[m_frameIndex]);
+
+    // 2. Destroy debug pass
+    debugDrawPass.reset();
+
+    // 3. Shutdown window
+    if (window)
+    {
+        window->~Window();
+        delete window;
+        window = nullptr;
+    }
+
+    // 4. Reset pipeline / root signature
+    m_pipelineState.Reset();
+    m_rootSignature.Reset();
+
+    // 5. Reset command list
+    m_commandList.Reset();
+
+    // 6. Reset other resources
+    buffer.Reset();
+    depthBuffer.Reset();
+
+    // 7. Reset command queue
+    _commandQueue.reset();
+
+    // 8. Reset device
+    m_device.Reset();
+
+    // 9. Reset DXGI factory
+    m_dxgiFactory.Reset();
 
     return true;
 }

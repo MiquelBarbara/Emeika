@@ -7,6 +7,11 @@
 #include "D3D12Module.h"
 
 
+CameraModule::~CameraModule()
+{
+	inputModule = nullptr;
+}
+
 bool CameraModule::init()
 {
 	CalculateViewMatrix();

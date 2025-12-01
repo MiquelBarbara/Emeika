@@ -5,6 +5,8 @@
 class CameraModule: public Module
 {
 public:
+	CameraModule() = default;
+	~CameraModule();
 	bool init();
 	bool postInit();
 	void update();

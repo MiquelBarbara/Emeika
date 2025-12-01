@@ -12,6 +12,12 @@ SceneView::SceneView(D3D12Module* d3d12Module, ID3D12DescriptorHeap* imguiSrvHea
     CreateImGuiSRV();
 }
 
+SceneView::~SceneView()
+{
+    _d3d12Module = nullptr;
+    _window = nullptr;
+}
+
 void SceneView::CreateImGuiSRV(){
     // Create the SRV for the render target
     UpdateSceneTexture();

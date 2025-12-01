@@ -93,13 +93,15 @@ EditorModule::EditorModule()
 {
     //_console = Console();
     _logger = new Logger();
-
+    _configurationView = new ConfigurationView();
 
 }
 
 EditorModule::~EditorModule()
 {
 	_gui->~ImGuiPass();
+    _sceneView->~SceneView();
+    _logger->~Logger();
 }
 
 bool EditorModule::postInit()
@@ -123,6 +125,8 @@ void EditorModule::preRender()
 	}
 
     //_sceneView->Render();
+    _configurationView->Update();
+    _configurationView->Render();
 
     // TODO: Main Menu Bar, Inspector, Asset Browser, hierarchy, scene.
     //MainMenuBar();

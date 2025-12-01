@@ -22,7 +22,38 @@ CommandQueue::CommandQueue(Microsoft::WRL::ComPtr<ID3D12Device4> device, D3D12_C
 
 CommandQueue::~CommandQueue()
 {
-	CloseHandle(m_FenceEvent);
+    // 1. Wait for GPU to finish all work
+    Flush();
+
+    // 2. Close fence event handle
+    if (m_FenceEvent)
+    {
+        CloseHandle(m_FenceEvent);
+        m_FenceEvent = nullptr;
+    }
+
+    // 3. Reset command allocators
+    while (!m_CommandAllocatorQueue.empty())
+    {
+        m_CommandAllocatorQueue.front().commandAllocator.Reset();
+        m_CommandAllocatorQueue.pop();
+    }
+
+    // 4. Reset command lists
+    while (!m_CommandListQueue.empty())
+    {
+        m_CommandListQueue.front().Reset();
+        m_CommandListQueue.pop();
+    }
+
+    // 5. Reset fence
+    m_d3d12Fence.Reset();
+
+    // 6. Reset command queue
+    m_d3d12CommandQueue.Reset();
+
+    // 7. Reset device
+    m_d3d12Device.Reset();
 }
 
 ComPtr<GraphicsCommandList> CommandQueue::GetCommandList()

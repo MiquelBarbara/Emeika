@@ -10,6 +10,7 @@ class InputModule : public Module
 public:
 
     InputModule(HWND hWnd);
+    void update() override;
     bool IsKeyDown(Keyboard::Keys key);
     bool IsLeftMouseDown();
     bool IsRightMouseDown();
@@ -21,4 +22,5 @@ private:
 
     float mouseDeltaX = 0.0f;
     float mouseDeltaY = 0.0f;
+    bool firstMove = true;
 };
