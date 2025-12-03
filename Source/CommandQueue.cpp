@@ -1,7 +1,7 @@
 #include "Globals.h"
 #include "CommandQueue.h"
 
-CommandQueue::CommandQueue(Microsoft::WRL::ComPtr<ID3D12Device4> device, D3D12_COMMAND_LIST_TYPE type)
+CommandQueue::CommandQueue(ComPtr<ID3D12Device4> device, D3D12_COMMAND_LIST_TYPE type)
     : m_FenceValue(0)
     , m_CommandListType(type)
     , m_d3d12Device(device)

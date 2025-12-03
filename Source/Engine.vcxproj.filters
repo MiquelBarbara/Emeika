@@ -68,7 +68,7 @@
       <Filter>Editor</Filter>
     </ClCompile>
     <ClCompile Include="ResourcesModule.cpp">
-      <Filter>Resources</Filter>
+      <Filter>D3D12\Resources</Filter>
     </ClCompile>
     <ClCompile Include="EngineController.cpp">
       <Filter>Core\Engine</Filter>
@@ -90,6 +90,12 @@
     </ClCompile>
     <ClCompile Include="ConfigurationView.cpp">
       <Filter>Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderDescriptorsModule.cpp">
+      <Filter>D3D12</Filter>
+    </ClCompile>
+    <ClCompile Include="SampleModule.cpp">
+      <Filter>D3D12</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -163,7 +169,7 @@
       <Filter>Editor</Filter>
     </ClInclude>
     <ClInclude Include="ResourcesModule.h">
-      <Filter>Resources</Filter>
+      <Filter>D3D12\Resources</Filter>
     </ClInclude>
     <ClInclude Include="EngineController.h">
       <Filter>Core\Engine</Filter>
@@ -192,6 +198,12 @@
     <ClInclude Include="ConfigurationView.h">
       <Filter>Editor</Filter>
     </ClInclude>
+    <ClInclude Include="ShaderDescriptorsModule.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
+    <ClInclude Include="SampleModule.h">
+      <Filter>D3D12</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Engine.ico">
@@ -210,9 +222,6 @@
     </Filter>
     <Filter Include="Maths">
       <UniqueIdentifier>{9e492cea-5dd8-47e3-a116-eab834e05cde}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resources">
-      <UniqueIdentifier>{b286ac8e-665a-4fe1-b174-9a4d8e4e917f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Core">
       <UniqueIdentifier>{883f394f-a5a6-46c5-aef8-502161e6618d}</UniqueIdentifier>
@@ -234,6 +243,9 @@
     </Filter>
     <Filter Include="Core\Engine">
       <UniqueIdentifier>{ab10a825-a32c-4012-8287-dfeb83ee1c99}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Resources">
+      <UniqueIdentifier>{b286ac8e-665a-4fe1-b174-9a4d8e4e917f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

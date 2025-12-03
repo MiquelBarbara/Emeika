@@ -17,7 +17,7 @@ public:
 	~D3D12Module();
 
 	bool init() override;
-	bool postInit();
+	bool postInit() override;
 	void preRender() override;
 	void render() override;
 	void postRender() override;
@@ -63,4 +63,6 @@ private:
 
 	Matrix model;
 
+	UINT textureSrvIndex = 0;
+	ComPtr<ID3D12Resource> texture;
 };

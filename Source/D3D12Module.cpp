@@ -3,6 +3,8 @@
 #include "Application.h"
 #include "ResourcesModule.h"
 #include "CameraModule.h"
+#include "ShaderDescriptorsModule.h"
+#include "SampleModule.h"
 #include <d3dcompiler.h>
 
 D3D12Module::D3D12Module(HWND hwnd) 
@@ -20,12 +22,12 @@ bool D3D12Module::init()
 {
     LoadPipeline();
     window = new Window(_hwnd);
-    debugDrawPass = std::make_unique<DebugDrawPass>(m_device.Get(), _commandQueue->GetD3D12CommandQueue().Get(), false);
 
     return true;
 }
 
 bool D3D12Module::postInit() {
+    debugDrawPass = std::make_unique<DebugDrawPass>(m_device.Get(), _commandQueue->GetD3D12CommandQueue().Get(), false);
     LoadAssets();
     return true;
 }
@@ -60,18 +62,22 @@ void D3D12Module::preRender()
     m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
     // Setup viewport & scissor
-
     m_commandList->RSSetViewports(1, &window->GetViewport());
     m_commandList->RSSetScissorRects(1, &window->GetScissorRect());
 
     m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
 
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptorsModule()->GetSRVHeap(), app->getSampleModule()->GetSamplerHeap()};
+    m_commandList->SetDescriptorHeaps(2, descriptorHeaps);
+
     //Assign composed MVP matrix
     auto camera = app->getCameraModule();
     Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
     m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
+    m_commandList->SetGraphicsRootDescriptorTable(1, app->getShaderDescriptorsModule()->GetGPUHandle(textureSrvIndex));
+    m_commandList->SetGraphicsRootDescriptorTable(2, app->getSampleModule()->GetGPUHandle(SampleModule::Type::LINEAR_CLAMP));
 
-    m_commandList->DrawInstanced(3, 1, 0, 0);
+    m_commandList->DrawInstanced(6, 1, 0, 0);
 
     dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
     dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
@@ -109,6 +115,8 @@ bool D3D12Module::cleanUp()
         delete window;
         window = nullptr;
     }
+
+    texture.Reset();
 
     // 4. Reset pipeline / root signature
     m_pipelineState.Reset();
@@ -181,9 +189,18 @@ void D3D12Module::TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandLi
 
 void D3D12Module::CreateRootSignature() {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters;
-    rootParameters.InitAsConstants(sizeof(Matrix) / sizeof(UINT32), 0); //number of 32 bit elements in a matrix
-    rootSignatureDesc.Init(1, &rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
+    CD3DX12_DESCRIPTOR_RANGE srvRange, sampRange;
+
+    srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0); // 1 range of 1 SRV descriptor
+    sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, SampleModule::COUNT, 0);
+
+    rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+    rootParameters[1].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL); // The descriptor table
+    rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+
+    rootSignatureDesc.Init(3, rootParameters, 0, nullptr,
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
@@ -212,7 +229,7 @@ void D3D12Module::CreatePipelineStateObject() {
     D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0}
     };
 
     // Describe and create the graphics pipeline state object (PSO).
@@ -253,9 +270,12 @@ void D3D12Module::LoadAssets()
         // Define the geometry for a triangle.
         Vertex triangleVertices[] =
         {
-            { { -1.0f , -1.0f , 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },
-            { { 0.0f, 1.0f , 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },
-            { { 1.0f, -1.0f , 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }
+            { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(-0.2f, 1.2f) },
+            { Vector3(-1.0f, 1.0f, 0.0f),   Vector2(-0.2f, -0.2f) },
+            { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.2f, -0.2f) },
+            { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(-0.2f, 1.2f) },
+            { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.2f, -0.2f) },
+            { Vector3(1.0f, -1.0f, 0.0f),   Vector2(1.2f, 1.2f) }
         };
 
         const UINT vertexBufferSize = sizeof(triangleVertices);
@@ -266,6 +286,9 @@ void D3D12Module::LoadAssets()
         m_vertexBufferView.StrideInBytes = sizeof(Vertex);
         m_vertexBufferView.SizeInBytes = vertexBufferSize;
     }
+
+    texture = app->getResourcesModule()->CreateTexture2DFromFile(L"dog.dds");
+    textureSrvIndex = app->getShaderDescriptorsModule()->CreateSRV(texture.Get());
 }
 
 

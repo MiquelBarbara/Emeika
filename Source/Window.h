@@ -25,7 +25,7 @@ public:
 	constexpr static DXGI_FORMAT DefaultFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	Window(HWND hWnd);
 	~Window();
-	ComPtr<SwapChain> CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> commandQueue, uint32_t width, uint32_t height);
+	ComPtr<SwapChain> CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> commandQueue, uint32_t width,  uint32_t height);
 	void Present() const;
 	void Resize();
 

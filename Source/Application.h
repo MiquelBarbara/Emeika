@@ -12,6 +12,8 @@ class EditorModule;
 class ResourcesModule;
 class CameraModule;
 class InputModule;
+class SampleModule;
+class ShaderDescriptorsModule;
 
 class Application
 {
@@ -30,6 +32,10 @@ public:
     ResourcesModule*            getResourcesModule() { return _resourcesModule; }
     InputModule*               getInputModule() { return _inputModule; }
     CameraModule* getCameraModule() { return _cameraModule; }
+    ShaderDescriptorsModule* getShaderDescriptorsModule() { return _shaderDescriptorsModule;}
+    SampleModule*              getSampleModule() { return _sampleModule; }
+
+
     float                       getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
     float                       getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }
     uint64_t                    getElapsedMilis() const { return elapsedMilis; }
@@ -46,6 +52,8 @@ private:
     ResourcesModule* _resourcesModule = nullptr;
     CameraModule* _cameraModule = nullptr;
     InputModule* _inputModule = nullptr;
+    ShaderDescriptorsModule* _shaderDescriptorsModule = nullptr;
+    SampleModule* _sampleModule = nullptr;
 
     uint64_t  lastMilis = 0;
     TickList  tickList;

@@ -4,6 +4,8 @@
 #include "D3D12Module.h"
 #include "EditorModule.h"
 #include "ResourcesModule.h"
+#include "ShaderDescriptorsModule.h"
+#include "SampleModule.h"
 #include "CameraModule.h"
 #include "Time.hpp"
 
@@ -15,6 +17,8 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(_d3d12 = new D3D12Module((HWND)hWnd));
     modules.push_back(_resourcesModule = new ResourcesModule());
     modules.push_back(_cameraModule = new CameraModule());
+    modules.push_back(_shaderDescriptorsModule = new ShaderDescriptorsModule());
+    modules.push_back(_sampleModule = new SampleModule());
 }
 
 Application::~Application()

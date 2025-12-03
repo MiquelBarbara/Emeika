@@ -1,9 +1,7 @@
-struct PixelShaderInput
-{
-    float4 Color : COLOR;
-};
+Texture2D colourTex : register(t0);
+SamplerState colourSampler : register(s0);
  
-float4 main(PixelShaderInput IN) : SV_TARGET
+float4 main(float2 coords : TEXCOORD) : SV_TARGET
 {
-    return IN.Color;
+    return colourTex.Sample(colourSampler, coords);;
 }

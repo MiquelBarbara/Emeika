@@ -1,13 +1,8 @@
-struct VertexPosColor
+
+struct VertexOutput
 {
-    float3 Position : POSITION;
-    float3 Color : COLOR;
-};
- 
-struct VertexShaderOutput
-{
-    float4 Color : COLOR;
-    float4 Position : SV_Position;
+    float2 texCoord : TEXCOORD;
+    float4 position : SV_POSITION;
 };
 
 cbuffer Transforms : register(b0)
@@ -15,12 +10,12 @@ cbuffer Transforms : register(b0)
     float4x4 mvp;
 };
  
-VertexShaderOutput main(VertexPosColor IN)
+VertexOutput main(float3 position : POSITION, float2 texCoord : TEXCOORD)
 {
-    VertexShaderOutput OUT;
+    VertexOutput output;
  
-    OUT.Position = mul(float4(IN.Position, 1.0), mvp);
-    OUT.Color = float4(IN.Color, 1.0f);
+    output.position = mul(float4(position, 1.0), mvp);
+    output.texCoord = texCoord;
  
-    return OUT;
+    return output;
 }
