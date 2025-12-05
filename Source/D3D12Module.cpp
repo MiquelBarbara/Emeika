@@ -75,13 +75,16 @@ void D3D12Module::preRender()
     Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
     m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
     m_commandList->SetGraphicsRootDescriptorTable(1, app->getShaderDescriptorsModule()->GetGPUHandle(textureSrvIndex));
-    m_commandList->SetGraphicsRootDescriptorTable(2, app->getSampleModule()->GetGPUHandle(SampleModule::Type::LINEAR_CLAMP));
+    m_commandList->SetGraphicsRootDescriptorTable(2, app->getSampleModule()->GetGPUHandle(_sampleType));
 
     m_commandList->DrawInstanced(6, 1, 0, 0);
 
-    dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
-    dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
-    debugDrawPass->record(m_commandList.Get(), window->Width(), window->Height(), camera->GetViewMatrix(), camera->GetProjectionMatrix());
+    if (_showDebugDrawPass) {
+        dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
+        dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
+        debugDrawPass->record(m_commandList.Get(), window->Width(), window->Height(), camera->GetViewMatrix(), camera->GetProjectionMatrix());
+    }
+    
 }
 
 
@@ -289,6 +292,11 @@ void D3D12Module::LoadAssets()
 
     texture = app->getResourcesModule()->CreateTexture2DFromFile(L"dog.dds");
     textureSrvIndex = app->getShaderDescriptorsModule()->CreateSRV(texture.Get());
+}
+
+void D3D12Module::ToggleDebugDraw()
+{
+    _showDebugDrawPass = !_showDebugDrawPass;
 }
 
 

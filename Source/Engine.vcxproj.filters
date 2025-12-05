@@ -70,9 +70,6 @@
     <ClCompile Include="ResourcesModule.cpp">
       <Filter>D3D12\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="EngineController.cpp">
-      <Filter>Core\Engine</Filter>
-    </ClCompile>
     <ClCompile Include="Logger.cpp">
       <Filter>Editor</Filter>
     </ClCompile>
@@ -170,9 +167,6 @@
     </ClInclude>
     <ClInclude Include="ResourcesModule.h">
       <Filter>D3D12\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineController.h">
-      <Filter>Core\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>Editor</Filter>

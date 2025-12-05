@@ -179,7 +179,6 @@
     <ClInclude Include="debug_draw.hpp" />
     <ClInclude Include="EditorModule.h" />
     <ClInclude Include="Engine.h" />
-    <ClInclude Include="EngineController.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GamePad.h" />
     <ClInclude Include="Globals.h" />
@@ -276,7 +275,6 @@
     </ClCompile>
     <ClCompile Include="EditorModule.cpp" />
     <ClCompile Include="Engine.cpp" />
-    <ClCompile Include="EngineController.cpp" />
     <ClCompile Include="GamePad.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

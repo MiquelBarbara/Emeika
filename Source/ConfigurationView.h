@@ -9,6 +9,7 @@ using namespace std;
 class ConfigurationView
 {
 public:
+
 	ConfigurationView() = default;
 	~ConfigurationView() = default;
 
@@ -17,5 +18,7 @@ public:
 private:
 	vector<float> fps_log ;
 	vector<float> ms_log;
+
+	int currentType = 0;
 };
 

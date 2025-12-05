@@ -1,6 +1,7 @@
 #include "Globals.h"
 #include "EditorModule.h"
 #include "D3D12Module.h"
+#include "CameraModule.h"
 #include "vector"
 #include <backends/imgui_impl_dx12.h>
 
@@ -102,6 +103,7 @@ EditorModule::~EditorModule()
 	_gui->~ImGuiPass();
     _sceneView->~SceneView();
     _logger->~Logger();
+    _debugDrawPass->~DebugDrawPass();
 }
 
 bool EditorModule::postInit()
@@ -128,6 +130,9 @@ void EditorModule::preRender()
     _configurationView->Update();
     _configurationView->Render();
 
+    D3D12Module* _d3d12 = app->getD3D12Module();
+
+
     // TODO: Main Menu Bar, Inspector, Asset Browser, hierarchy, scene.
     //MainMenuBar();
     //MainDockspace(&_showMainDockspace);
@@ -141,4 +146,5 @@ void EditorModule::preRender()
 void EditorModule::render()
 {
 	_gui->record(app->getD3D12Module()->GetCommandList());
+
 }

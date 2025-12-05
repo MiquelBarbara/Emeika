@@ -7,6 +7,7 @@
 #include <chrono>
 #include "DebugDrawPass.h"
 #include "CommandQueue.h"
+#include "SampleModule.h"
 #include "Window.h"
 
 
@@ -25,6 +26,8 @@ public:
 
 	void LoadPipeline();
 	void LoadAssets();
+
+	void ToggleDebugDraw();
 	
 	void CreateRootSignature();
 	void CreatePipelineStateObject();
@@ -35,6 +38,9 @@ public:
 	Window* GetWindow() { return window; }
 	CommandQueue* GetCommandQueue() { return _commandQueue.get(); }
 	ID3D12GraphicsCommandList4* GetCommandList() { return m_commandList.Get(); }
+
+	bool* GetShowDebugDrawBool() { return &_showDebugDrawPass; }
+	void SetSampler(const int type) { _sampleType = static_cast<SampleModule::Type>(type); }
 private:
 
 	// The DXGI factory used to create the swap chain and other DXGI objects
@@ -65,4 +71,7 @@ private:
 
 	UINT textureSrvIndex = 0;
 	ComPtr<ID3D12Resource> texture;
+
+	bool _showDebugDrawPass = true;
+	SampleModule::Type _sampleType = SampleModule::Type::POINT_CLAMP;
 };

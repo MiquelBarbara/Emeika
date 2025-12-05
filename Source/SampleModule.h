@@ -14,6 +14,7 @@ public:
 		COUNT
 	};
 
+
 	bool init();
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(Type type) {

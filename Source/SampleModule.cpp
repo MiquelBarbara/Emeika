@@ -19,6 +19,8 @@ void SampleModule::CreateDefaultSamplers(ID3D12Device* device)
 {
     cpuStart = samplerHeap->GetCPUDescriptorHandleForHeapStart();
     gpuStart = samplerHeap->GetGPUDescriptorHandleForHeapStart();
+    descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
 
     D3D12_SAMPLER_DESC samplers[COUNT] = {
         {
@@ -26,7 +28,7 @@ void SampleModule::CreateDefaultSamplers(ID3D12Device* device)
             D3D12_TEXTURE_ADDRESS_MODE_WRAP,
             D3D12_TEXTURE_ADDRESS_MODE_WRAP,
             D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-            0.0f, 16, D3D12_COMPARISON_FUNC_NONE,
+            0.0f, 16, D3D12_COMPARISON_FUNC_NEVER,
             {0.0f, 0.0f, 0.0f, 0.0f},
             0.0f, D3D12_FLOAT32_MAX
         },
@@ -36,7 +38,7 @@ void SampleModule::CreateDefaultSamplers(ID3D12Device* device)
             D3D12_TEXTURE_ADDRESS_MODE_WRAP,
             D3D12_TEXTURE_ADDRESS_MODE_WRAP,
             D3D12_TEXTURE_ADDRESS_MODE_WRAP,
-            0, 16, D3D12_COMPARISON_FUNC_NONE,
+            0, 16, D3D12_COMPARISON_FUNC_NEVER,
             {0.0f, 0.0f, 0.0f, 0.0f},
             0.0f, D3D12_FLOAT32_MAX
         },
@@ -46,7 +48,7 @@ void SampleModule::CreateDefaultSamplers(ID3D12Device* device)
             D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
             D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
             D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-            0, 16, D3D12_COMPARISON_FUNC_NONE,
+            0, 16, D3D12_COMPARISON_FUNC_NEVER,
             {0.0f, 0.0f, 0.0f, 0.0f},
             0.0f, D3D12_FLOAT32_MAX
         },
@@ -56,7 +58,7 @@ void SampleModule::CreateDefaultSamplers(ID3D12Device* device)
             D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
             D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
             D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
-            0, 16, D3D12_COMPARISON_FUNC_NONE,
+            0, 16, D3D12_COMPARISON_FUNC_NEVER,
             {0.0f, 0.0f, 0.0f, 0.0f},
             0.0f, D3D12_FLOAT32_MAX
         }
