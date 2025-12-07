@@ -18,6 +18,7 @@ private:
     Window* _window;
 
     // SRV para la textura de la escena
+    ComPtr<ID3D12Resource> _renderTarget;
     ComPtr<ID3D12DescriptorHeap> _imguiSrvHeap;
     UINT _srvIndex;
     ImTextureID _sceneTextureId{};

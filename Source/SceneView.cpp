@@ -26,7 +26,7 @@ void SceneView::CreateImGuiSRV(){
 void SceneView::UpdateSceneTexture()
 {
     // Obtener el render target actual
-    ID3D12Resource* renderTarget = _window->GetCurrentRenderTarget();
+    _renderTarget = _window->GetCurrentRenderTarget();
 
     // Volver a crear el SRV en el descriptor heap de ImGui
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
@@ -36,7 +36,7 @@ void SceneView::UpdateSceneTexture()
     srvDesc.Texture2D.MipLevels = 1;
 
     _d3d12Module->GetDevice()->CreateShaderResourceView(
-        renderTarget,
+        _renderTarget.Get(),
         &srvDesc,
         _imguiSrvHeap->GetCPUDescriptorHandleForHeapStart()
     );

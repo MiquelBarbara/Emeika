@@ -1,27 +1,37 @@
 #include "Globals.h"
-#include "SampleModule.h"
+#include "DescriptorsModule.h"
 #include "Application.h"
 #include "D3D12Module.h"
+#include "ResourcesModule.h"
 
-bool SampleModule::init()
+bool DescriptorsModule::init()
 {
-	auto device = app->getD3D12Module()->GetDevice();
-	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.NumDescriptors = COUNT;
-	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
-	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&samplerHeap)); // Create Sampler Descriptor Heap
-	CreateDefaultSamplers(device); // Create default samplers (e.g., Linear Wrap, Point Clamp)
+    _device = app->GetD3D12Module()->GetDevice();
+
+    _rtv = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 3);
+    _dsv = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
+    _srv = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256);
+    _samplers = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, SampleType::COUNT);
+
+    CreateDefaultSamplers();
 	return true;
 }
 
-void SampleModule::CreateDefaultSamplers(ID3D12Device* device)
+bool DescriptorsModule::cleanUp()
 {
-    cpuStart = samplerHeap->GetCPUDescriptorHandleForHeapStart();
-    gpuStart = samplerHeap->GetGPUDescriptorHandleForHeapStart();
-    descriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    delete _rtv;
+    _rtv = nullptr;
+    delete _dsv;
+    _dsv = nullptr;
+    delete _srv;
+    _srv = nullptr;
+    delete _samplers;
+    _samplers = nullptr;
+    return true;
+}
 
-
+void DescriptorsModule::CreateDefaultSamplers()
+{
     D3D12_SAMPLER_DESC samplers[COUNT] = {
         {
             D3D12_FILTER_MIN_MAG_MIP_LINEAR,
@@ -66,6 +76,8 @@ void SampleModule::CreateDefaultSamplers(ID3D12Device* device)
 
     for (uint32_t i = 0; i < COUNT; ++i)
     {
-        device->CreateSampler(&samplers[i], CD3DX12_CPU_DESCRIPTOR_HANDLE(cpuStart, i, descriptorSize));
+        auto handle = _samplers->Allocate();
+        _device->CreateSampler(&samplers[i], handle.cpu);
     }
 }
+

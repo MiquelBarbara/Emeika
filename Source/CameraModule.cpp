@@ -9,7 +9,7 @@
 
 CameraModule::~CameraModule()
 {
-	inputModule = nullptr;
+	_inputModule = nullptr;
 }
 
 bool CameraModule::init()
@@ -20,8 +20,8 @@ bool CameraModule::init()
 
 bool CameraModule::postInit()
 {
-	AspectRatio(app->getD3D12Module()->GetWindow()->Width() / app->getD3D12Module()->GetWindow()->Height());
-	inputModule = app->getInputModule();
+	AspectRatio(app->GetD3D12Module()->GetWindow()->Width() / app->GetD3D12Module()->GetWindow()->Height());
+	_inputModule = app->GetInputModule();
 	return true;
 }
 
@@ -36,21 +36,30 @@ void CameraModule::update()
 	Vector3 newPos = _eye;
 	Vector3 newTarget = _target;
 
+	_forward = newTarget - newPos;
+	_forward.Normalize();
+
+	_right = _forward.Cross(_up);
+	_right.Normalize();
+
 	//Mouse look
 	float deltaX = 0.0f;
 	float deltaY = 0.0f;
 
-	if (inputModule->IsRightMouseDown()) {
-		inputModule->GetMouseDelta(deltaX, deltaY);
+	//Zoom in and out
+	float wheel = 0.0f;
+	_inputModule->GetMouseWheel(wheel);
+	if (wheel != 0) {
+		newPos += _forward * wheel * Time::deltaTime();
+		newTarget *= _forward * wheel * Time::deltaTime();
+	}
 
-		Vector3 forward = (newTarget - newPos);
-		forward.Normalize();
 
-		Vector3 right = forward.Cross(_up);
-		right.Normalize();
+	if (_inputModule->IsRightMouseDown()) {
+		_inputModule->GetMouseDelta(deltaX, deltaY);
 
-		Quaternion yaw = Quaternion::CreateFromAxisAngle(_up, deltaX * sensitivity);
-		Quaternion pitch = Quaternion::CreateFromAxisAngle(_right, deltaY * sensitivity);
+		Quaternion yaw = Quaternion::CreateFromAxisAngle(_up, deltaX * _sensitivity);
+		Quaternion pitch = Quaternion::CreateFromAxisAngle(_right, deltaY * _sensitivity);
 		_rotation = yaw * pitch;
 
 		Vector3 direction = newTarget - newPos;
@@ -64,35 +73,41 @@ void CameraModule::update()
 		_right.Normalize();
 
 		//Move forward or backward
-		if (inputModule->IsKeyDown(Keyboard::W)) {
+		if (_inputModule->IsKeyDown(Keyboard::W)) {
 			newPos += _forward * Time::deltaTime();
 			newTarget += _forward * Time::deltaTime();
 		}
-		if (inputModule->IsKeyDown(Keyboard::S)) {
+		if (_inputModule->IsKeyDown(Keyboard::S)) {
 			newPos -= _forward * Time::deltaTime();
 			newTarget -= _forward * Time::deltaTime();
 		}
 
 		//Up or down
-		if (inputModule->IsKeyDown(Keyboard::Q)) {
+		if (_inputModule->IsKeyDown(Keyboard::Q)) {
 			newPos.y += 1.0f * Time::deltaTime();
 			newTarget.y += 1.0f * Time::deltaTime();
 		}
 
-		if (inputModule->IsKeyDown(Keyboard::E)) {
+		if (_inputModule->IsKeyDown(Keyboard::E)) {
 			newPos.y -= 1.0f * Time::deltaTime();
 			newTarget.y -= 1.0f * Time::deltaTime();
 		}
 
 		//Left or Right
-		if (inputModule->IsKeyDown(Keyboard::A)) {
+		if (_inputModule->IsKeyDown(Keyboard::A)) {
 			newPos -= _right * Time::deltaTime();
 			newTarget -= _right * Time::deltaTime();
 		}
-		if (inputModule->IsKeyDown(Keyboard::D)) {
+		if (_inputModule->IsKeyDown(Keyboard::D)) {
 			newPos += _right * Time::deltaTime();
 			newTarget += _right * Time::deltaTime();
 		}
+	}
+
+	//Focus the camera to the geometry
+	if (_inputModule->IsKeyDown(Keyboard::F)) {
+		Matrix* model = app->GetD3D12Module()->GetModelMatrix();
+		newTarget = Vector3::Transform(Vector3::Zero, *model);
 	}
 
 	SetPosition(newPos);
@@ -134,6 +149,15 @@ void CameraModule::LookAt(const Vector3& lookAt)
 {
 	_eye = lookAt;
 	_isDirty = true;
+}
+
+void CameraModule::Resize()
+{
+	unsigned int width, height;
+	app->GetD3D12Module()->GetWindow()->GetWindowSize(width, height);
+	if (width > height) {
+		AspectRatio(width / height);
+	}
 }
 
 void CameraModule::CalculateProjectionMatrix()

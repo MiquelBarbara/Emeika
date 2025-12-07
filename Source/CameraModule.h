@@ -17,6 +17,7 @@ public:
 	void SetPosition(const Vector3& position);
 	void SetOrientation(const Vector3& orientation);
 	void LookAt(const Vector3& lookAt);
+	void Resize();
 
 	void CalculateProjectionMatrix();
 	void CalculateViewMatrix();
@@ -35,7 +36,7 @@ private:
 	Vector3 _right = Vector3::Right;
 
 	Quaternion _rotation = Quaternion::Identity;
-	float sensitivity = 0.004f;
+	float _sensitivity = 0.004f;
 
 	bool _isDirty = false;
 
@@ -44,6 +45,6 @@ private:
 	float _nearPlane = 1.0f;
 	float _farPlane = 1000.f;
 
-	InputModule* inputModule = nullptr;
+	InputModule* _inputModule = nullptr;
 };
 

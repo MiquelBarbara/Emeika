@@ -1,4 +1,6 @@
 #pragma once
+#include "Globals.h"
+
 /// <summary>
 /// Represents a 3D transformation including position, rotation, and scale.
 /// </summary>

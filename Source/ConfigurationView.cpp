@@ -2,7 +2,7 @@
 #include "ConfigurationView.h"
 #include "Application.h"
 #include "D3D12Module.h"
-#include "SampleModule.h"
+#include "DescriptorsModule.h"
 #include "Time.hpp"
 
 void ConfigurationView::Render()
@@ -18,13 +18,13 @@ void ConfigurationView::Render()
 	ImGui::End();
 
 	ImGui::Begin("Grid/Axis");
-	ImGui::Checkbox("Show/Hide grid and axis", app->getD3D12Module()->GetShowDebugDrawBool());
+	ImGui::Checkbox("Show/Hide grid and axis", app->GetD3D12Module()->GetShowDebugDrawBool());
 	ImGui::End();
 
 	ImGui::Begin("Textures");
 	const char* sampleTypes[] = { "LINEAR_WRAP","POINT_WRAP","LINEAR_CLAMP","POINT_CLAMP" };
-	if(ImGui::Combo("Texture filtering and adress mode", &currentType, sampleTypes, SampleModule::COUNT)){
-		app->getD3D12Module()->SetSampler(currentType);
+	if(ImGui::Combo("Texture filtering and adress mode", &currentType, sampleTypes, DescriptorsModule::SampleType::COUNT)){
+		app->GetD3D12Module()->SetSampler(currentType);
 	}
 	ImGui::End();
 }

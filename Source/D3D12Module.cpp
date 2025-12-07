@@ -3,8 +3,7 @@
 #include "Application.h"
 #include "ResourcesModule.h"
 #include "CameraModule.h"
-#include "ShaderDescriptorsModule.h"
-#include "SampleModule.h"
+#include "DescriptorsModule.h"
 #include <d3dcompiler.h>
 
 D3D12Module::D3D12Module(HWND hwnd) 
@@ -21,12 +20,12 @@ D3D12Module::~D3D12Module()
 bool D3D12Module::init()
 {
     LoadPipeline();
-    window = new Window(_hwnd);
 
     return true;
 }
 
 bool D3D12Module::postInit() {
+    window = new Window(_hwnd);
     debugDrawPass = std::make_unique<DebugDrawPass>(m_device.Get(), _commandQueue->GetD3D12CommandQueue().Get(), false);
     LoadAssets();
     return true;
@@ -44,14 +43,14 @@ void D3D12Module::preRender()
     TransitionResource(m_commandList, window->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
     //CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
-    D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = window->GetCurrentRenderTargetView();
+    DescriptorHandle rtvHandle = window->GetCurrentRenderTargetView();
     //CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
-    D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = window->GetDepthStencilView();
+    DescriptorHandle dsvHandle = window->GetDepthStencilView();
 
     // Clear + draw
     const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-    m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-    m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0,0, nullptr);
+    m_commandList->ClearRenderTargetView(rtvHandle.cpu, clearColor, 0, nullptr);
+    m_commandList->ClearDepthStencilView(dsvHandle.cpu, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0,0, nullptr);
 
     // Bind root signature (must be set before any draw calls)
     m_commandList->SetPipelineState(m_pipelineState.Get());
@@ -65,17 +64,17 @@ void D3D12Module::preRender()
     m_commandList->RSSetViewports(1, &window->GetViewport());
     m_commandList->RSSetScissorRects(1, &window->GetScissorRect());
 
-    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+    m_commandList->OMSetRenderTargets(1, &rtvHandle.cpu, FALSE, &dsvHandle.cpu);
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = { app->getShaderDescriptorsModule()->GetSRVHeap(), app->getSampleModule()->GetSamplerHeap()};
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->GetDescriptorsModule()->GetSRV()->GetHeap(), app->GetDescriptorsModule()->GetSamplers()->GetHeap() };
     m_commandList->SetDescriptorHeaps(2, descriptorHeaps);
 
     //Assign composed MVP matrix
-    auto camera = app->getCameraModule();
+    auto camera = app->GetCameraModule();
     Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
     m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
-    m_commandList->SetGraphicsRootDescriptorTable(1, app->getShaderDescriptorsModule()->GetGPUHandle(textureSrvIndex));
-    m_commandList->SetGraphicsRootDescriptorTable(2, app->getSampleModule()->GetGPUHandle(_sampleType));
+    m_commandList->SetGraphicsRootDescriptorTable(1, texture._srv.gpu);
+    m_commandList->SetGraphicsRootDescriptorTable(2, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));
 
     m_commandList->DrawInstanced(6, 1, 0, 0);
 
@@ -118,8 +117,6 @@ bool D3D12Module::cleanUp()
         delete window;
         window = nullptr;
     }
-
-    texture.Reset();
 
     // 4. Reset pipeline / root signature
     m_pipelineState.Reset();
@@ -196,7 +193,7 @@ void D3D12Module::CreateRootSignature() {
     CD3DX12_DESCRIPTOR_RANGE srvRange, sampRange;
 
     srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0); // 1 range of 1 SRV descriptor
-    sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, SampleModule::COUNT, 0);
+    sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, DescriptorsModule::SampleType::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
     rootParameters[1].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL); // The descriptor table
@@ -283,15 +280,14 @@ void D3D12Module::LoadAssets()
 
         const UINT vertexBufferSize = sizeof(triangleVertices);
 
-        buffer = app->getResourcesModule()->CreateDefaultBuffer(triangleVertices, vertexBufferSize);
+        buffer = app->GetResourcesModule()->CreateDefaultBuffer(triangleVertices, vertexBufferSize);
 
         m_vertexBufferView.BufferLocation = buffer->GetGPUVirtualAddress();
         m_vertexBufferView.StrideInBytes = sizeof(Vertex);
         m_vertexBufferView.SizeInBytes = vertexBufferSize;
     }
 
-    texture = app->getResourcesModule()->CreateTexture2DFromFile(L"dog.dds");
-    textureSrvIndex = app->getShaderDescriptorsModule()->CreateSRV(texture.Get());
+    texture = app->GetResourcesModule()->CreateTexture2DFromFile(L"dog.dds");
 }
 
 void D3D12Module::ToggleDebugDraw()

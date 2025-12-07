@@ -1,19 +1,26 @@
 #pragma once
 #include "Transform.h"
+#include "Mesh.h"
+#include "Material.h"
 
-class Model
-{
-public:
-	Transform& GetTransform() { return _transform; }
-	Matrix& GetWorldMatrix() { return _transform.GetWorldMatrix(); }
-private:
-	// In future both both Transform and Model should be components in an ECS pattern
-	Transform _transform;
+namespace tinygltf { class Model; }
 
-	//Mesh buffers
-	ComPtr<ID3D12Resource> _vertexBuffer;
-	ComPtr<ID3D12Resource> _indexBuffer;
-	D3D12_VERTEX_BUFFER_VIEW _vertexBufferView;
-	D3D12_INDEX_BUFFER_VIEW _indexBufferView;
-};
+namespace Emeika {
+	class Model
+	{
+	public:
+		void Load(const char* fileName);
+		Transform& GetTransform() { return _transform; }
+		Matrix& GetWorldMatrix() { return _transform.GetWorldMatrix(); }
+	private:
+		// In future both both Transform and Model should be components in an ECS pattern
+		Transform _transform;
+
+		std::vector<Emeika::Mesh*> _meshes;
+		std::vector<Emeika::Material*> _materials;
+	};
+}
+
+
+
 

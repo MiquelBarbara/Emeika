@@ -15,6 +15,7 @@ public:
     bool IsLeftMouseDown();
     bool IsRightMouseDown();
     void GetMouseDelta(float& deltaX, float& deltaY);
+    void GetMouseWheel(float& delta);
 private:
     std::unique_ptr<Keyboard> keyboard;
     std::unique_ptr<Mouse> mouse;
@@ -22,5 +23,6 @@ private:
 
     float mouseDeltaX = 0.0f;
     float mouseDeltaY = 0.0f;
+    float wheelDelta = 0.0f;
     bool firstMove = true;
 };

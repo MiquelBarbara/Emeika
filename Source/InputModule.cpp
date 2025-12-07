@@ -66,3 +66,10 @@ void InputModule::GetMouseDelta(float& deltaX, float& deltaY)
     mouseDeltaY = currentY;
 }
 
+void InputModule::GetMouseWheel(float& delta)
+{
+    float currentValue = mouse->GetState().scrollWheelValue;
+    delta = currentValue - wheelDelta;
+    wheelDelta = currentValue;
+}
+

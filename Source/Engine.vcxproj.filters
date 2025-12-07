@@ -88,11 +88,23 @@
     <ClCompile Include="ConfigurationView.cpp">
       <Filter>Editor</Filter>
     </ClCompile>
-    <ClCompile Include="ShaderDescriptorsModule.cpp">
-      <Filter>D3D12</Filter>
+    <ClCompile Include="Model.cpp">
+      <Filter>D3D12\Geometry</Filter>
     </ClCompile>
-    <ClCompile Include="SampleModule.cpp">
-      <Filter>D3D12</Filter>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>D3D12\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>D3D12\Geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="DescriptorsModule.cpp">
+      <Filter>D3D12\Descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="DescriptorHeap.cpp">
+      <Filter>D3D12\Descriptors</Filter>
+    </ClCompile>
+    <ClCompile Include="Resources.cpp">
+      <Filter>D3D12\Resources\Textures</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -174,12 +186,6 @@
     <ClInclude Include="Window.h">
       <Filter>D3D12</Filter>
     </ClInclude>
-    <ClInclude Include="Transform.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
     <ClInclude Include="SceneView.h">
       <Filter>Editor</Filter>
     </ClInclude>
@@ -192,11 +198,29 @@
     <ClInclude Include="ConfigurationView.h">
       <Filter>Editor</Filter>
     </ClInclude>
-    <ClInclude Include="ShaderDescriptorsModule.h">
-      <Filter>D3D12</Filter>
+    <ClInclude Include="Model.h">
+      <Filter>D3D12\Geometry</Filter>
     </ClInclude>
-    <ClInclude Include="SampleModule.h">
-      <Filter>D3D12</Filter>
+    <ClInclude Include="Mesh.h">
+      <Filter>D3D12\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Transform.h">
+      <Filter>D3D12\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="UtilityGLFT.h">
+      <Filter>D3D12\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>D3D12\Geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorsModule.h">
+      <Filter>D3D12\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorHeap.h">
+      <Filter>D3D12\Descriptors</Filter>
+    </ClInclude>
+    <ClInclude Include="Resources.h">
+      <Filter>D3D12\Resources\Textures</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -240,6 +264,15 @@
     </Filter>
     <Filter Include="D3D12\Resources">
       <UniqueIdentifier>{b286ac8e-665a-4fe1-b174-9a4d8e4e917f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Descriptors">
+      <UniqueIdentifier>{7881f684-8e13-48ef-b782-2e85ff9bfc29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Geometry">
+      <UniqueIdentifier>{83c3b228-a53b-4f4b-b615-a09f5fdd0387}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Resources\Textures">
+      <UniqueIdentifier>{76aa94b6-93be-455c-8f6b-25244900a198}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

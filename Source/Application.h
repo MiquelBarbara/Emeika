@@ -14,6 +14,7 @@ class CameraModule;
 class InputModule;
 class SampleModule;
 class ShaderDescriptorsModule;
+class DescriptorsModule;
 
 class Application
 {
@@ -27,14 +28,12 @@ public:
 	void         update();
 	bool         cleanUp();
 
-    D3D12Module*                getD3D12Module() { return _d3d12; }
-    EditorModule*              getEditorModule() { return _editorModule; }
-    ResourcesModule*            getResourcesModule() { return _resourcesModule; }
-    InputModule*               getInputModule() { return _inputModule; }
-    CameraModule* getCameraModule() { return _cameraModule; }
-    ShaderDescriptorsModule* getShaderDescriptorsModule() { return _shaderDescriptorsModule;}
-    SampleModule*              getSampleModule() { return _sampleModule; }
-
+    D3D12Module*                GetD3D12Module() { return _d3d12; }
+    EditorModule*              GetEditorModule() { return _editorModule; }
+    ResourcesModule*            GetResourcesModule() { return _resourcesModule; }
+    InputModule*               GetInputModule() { return _inputModule; }
+    CameraModule* GetCameraModule() { return _cameraModule; }
+    DescriptorsModule* GetDescriptorsModule() { return _descriptorsModule; }
 
     float                       getFPS() const { return 1000.0f * float(MAX_FPS_TICKS) / tickSum; }
     float                       getAvgElapsedMs() const { return tickSum / float(MAX_FPS_TICKS); }
@@ -52,8 +51,7 @@ private:
     ResourcesModule* _resourcesModule = nullptr;
     CameraModule* _cameraModule = nullptr;
     InputModule* _inputModule = nullptr;
-    ShaderDescriptorsModule* _shaderDescriptorsModule = nullptr;
-    SampleModule* _sampleModule = nullptr;
+    DescriptorsModule* _descriptorsModule = nullptr;
 
     uint64_t  lastMilis = 0;
     TickList  tickList;

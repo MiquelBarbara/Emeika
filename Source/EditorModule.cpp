@@ -101,17 +101,17 @@ EditorModule::EditorModule()
 EditorModule::~EditorModule()
 {
 	_gui->~ImGuiPass();
-    _sceneView->~SceneView();
+    //_sceneView->~SceneView();
     _logger->~Logger();
     _debugDrawPass->~DebugDrawPass();
 }
 
 bool EditorModule::postInit()
 {
-	D3D12Module* _d3d12 = app->getD3D12Module();
+	D3D12Module* _d3d12 = app->GetD3D12Module();
 	_gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle());
 
-    _sceneView = new SceneView(_d3d12, _gui->GetHeap().Get(), 0);
+    //_sceneView = new SceneView(_d3d12, _gui->GetHeap().Get(), 0);
 
 	return true;
 }
@@ -130,7 +130,7 @@ void EditorModule::preRender()
     _configurationView->Update();
     _configurationView->Render();
 
-    D3D12Module* _d3d12 = app->getD3D12Module();
+    D3D12Module* _d3d12 = app->GetD3D12Module();
 
 
     // TODO: Main Menu Bar, Inspector, Asset Browser, hierarchy, scene.
@@ -145,6 +145,6 @@ void EditorModule::preRender()
 
 void EditorModule::render()
 {
-	_gui->record(app->getD3D12Module()->GetCommandList());
+	_gui->record(app->GetD3D12Module()->GetCommandList());
 
 }

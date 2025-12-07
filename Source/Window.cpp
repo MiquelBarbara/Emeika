@@ -2,17 +2,16 @@
 #include "Window.h"
 #include "Application.h"
 #include "ResourcesModule.h"
+#include "CameraModule.h"
 #include "D3D12Module.h"
 
 Window::Window(HWND hWnd): _hwnd(hWnd)
 {
     GetWindowSize(windowWidth, windowHeight);
-    m_swapChain = CreateSwapChain(hWnd, app->getD3D12Module()->GetCommandQueue()->GetD3D12CommandQueue(), windowWidth, windowHeight);
+    m_swapChain = CreateSwapChain(hWnd, app->GetD3D12Module()->GetCommandQueue()->GetD3D12CommandQueue(), windowWidth, windowHeight);
     m_currentBackBufferIndex = m_swapChain.Get()->GetCurrentBackBufferIndex();
-    m_rtvHeap = CreateDescriptorHeap(app->getD3D12Module()->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, bufferCount);
-    m_dsvHeap = CreateDescriptorHeap(app->getD3D12Module()->GetDevice(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1);
-    UpdateRenderTargetViews(app->getD3D12Module()->GetDevice(), m_swapChain.Get(), m_rtvHeap);
-    UpdateDepthView(app->getD3D12Module()->GetDevice(), m_dsvHeap);
+    m_depthStencil = app->GetResourcesModule()->CreateDepthBuffer(windowWidth, windowHeight);
+    CreateRenderTargetViews(app->GetD3D12Module()->GetDevice());
 
     m_viewport = D3D12_VIEWPORT{ 0.0, 0.0, float(windowWidth), float(windowHeight) , 0.0, 1.0 };
     m_scissorRect = D3D12_RECT { 0, 0, long(windowWidth), long(windowHeight) };
@@ -25,11 +24,11 @@ Window::~Window()
         m_renderTargets[i].resource.Reset();
 
     // 2. Release depth stencil
-    m_depthStencil.resource.Reset();
+    //m_depthStencil.resource.Reset();
 
     // 3. Release descriptor heaps
-    m_rtvHeap.Reset();
-    m_dsvHeap.Reset();
+    //m_rtvHeap.Reset();
+    //m_dsvHeap.Reset();
 
     // 4. Release swap chain
     m_swapChain.Reset();
@@ -111,8 +110,10 @@ void Window::Resize()
         m_viewport = D3D12_VIEWPORT{ 0.0, 0.0, float(windowWidth), float(windowHeight) , 0.0, 1.0 };
         m_scissorRect = D3D12_RECT{ 0, 0, long(windowWidth), long(windowHeight) };
 
+        app->GetCameraModule()->Resize();
+
         // Ensure GPU is finished with ALL pending work
-        app->getD3D12Module()->GetCommandQueue()->Flush();
+        app->GetD3D12Module()->GetCommandQueue()->Flush();
         //_commandQueue->Flush();
 
         // Release the render targets
@@ -124,54 +125,28 @@ void Window::Resize()
         // Resize the swap chain
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
 
-        DXCall(m_swapChain.Get()->GetDesc(&swapChainDesc));
+        DXCall(m_swapChain->GetDesc(&swapChainDesc));
 
-        DXCall(m_swapChain.Get()->ResizeBuffers(bufferCount, width, height, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
+        DXCall(m_swapChain->ResizeBuffers(bufferCount, width, height, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
 
-        m_currentBackBufferIndex = m_swapChain.Get()->GetCurrentBackBufferIndex();
+        m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 
         // Recreate the render target views
-        UpdateRenderTargetViews(app->getD3D12Module()->GetDevice(), m_swapChain.Get(), m_rtvHeap);
-        UpdateDepthView(app->getD3D12Module()->GetDevice(), m_dsvHeap);
+        CreateRenderTargetViews(app->GetD3D12Module()->GetDevice());
+        m_depthStencil = app->GetResourcesModule()->CreateDepthBuffer(windowWidth, windowHeight);
     }
 }
 
-ComPtr<ID3D12DescriptorHeap> Window::CreateDescriptorHeap(ComPtr<ID3D12Device2> device, const D3D12_DESCRIPTOR_HEAP_TYPE type, const uint32_t numDescriptors) {
-    ComPtr<ID3D12DescriptorHeap> descriptorHeap;
 
-    // Describe and create a render target view (RTV) descriptor heap.
-    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-    rtvHeapDesc.NumDescriptors = numDescriptors;
-    rtvHeapDesc.Type = type;
-    DXCall(device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&descriptorHeap)));
-
-    return descriptorHeap;
-}
-
-void Window::UpdateRenderTargetViews(ComPtr<ID3D12Device2> device, ComPtr<IDXGISwapChain4> swapChain, ComPtr<ID3D12DescriptorHeap> descriptorHeap)
-{
-    m_rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-    CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
+void Window::CreateRenderTargetViews(ComPtr<ID3D12Device2> device)
+{    
     for (UINT n = 0; n < bufferCount; n++)
     {
-        m_renderTargets[n].rtvHandle = rtvHandle;
-        DXCall(swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n].resource)));
-
-        device->CreateRenderTargetView(m_renderTargets[n].resource.Get(), nullptr, rtvHandle);
-
-        rtvHandle.Offset(1, m_rtvDescriptorSize);
+        auto rtvHandle = app->GetDescriptorsModule()->GetRTV()->Allocate();
+        m_renderTargets[n].rtv = rtvHandle;
+        DXCall(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n].resource)));
+        device->CreateRenderTargetView(m_renderTargets[n].resource.Get(), nullptr, rtvHandle.cpu);
     }
-}
-
-void Window::UpdateDepthView(ComPtr<ID3D12Device2> device, ComPtr<ID3D12DescriptorHeap> descriptorHeap)
-{
-    //Resize screen dependt resources
-    //Create a depth buffer
-    m_depthStencil.resource = app->getResourcesModule()->CreateDepthBuffer(windowWidth, windowHeight);
-    //Update the depth-stencil
-    device->CreateDepthStencilView(m_depthStencil.resource.Get(), nullptr, descriptorHeap->GetCPUDescriptorHandleForHeapStart());
 }
 
 

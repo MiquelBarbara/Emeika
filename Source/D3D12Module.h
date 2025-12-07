@@ -7,10 +7,12 @@
 #include <chrono>
 #include "DebugDrawPass.h"
 #include "CommandQueue.h"
-#include "SampleModule.h"
+#include "DescriptorsModule.h"
 #include "Window.h"
 
-
+// -----------------------------------------------------------------------------
+// D3D12Module
+// -----------------------------------------------------------------------------
 class D3D12Module : public Module
 {
 public:
@@ -40,7 +42,8 @@ public:
 	ID3D12GraphicsCommandList4* GetCommandList() { return m_commandList.Get(); }
 
 	bool* GetShowDebugDrawBool() { return &_showDebugDrawPass; }
-	void SetSampler(const int type) { _sampleType = static_cast<SampleModule::Type>(type); }
+	void SetSampler(const int type) { _sampleType = static_cast<DescriptorsModule::SampleType>(type); }
+	Matrix* GetModelMatrix() { return &model; }
 private:
 
 	// The DXGI factory used to create the swap chain and other DXGI objects
@@ -67,11 +70,10 @@ private:
 	Window* window;
 	HWND _hwnd;
 
-	Matrix model;
+	Matrix model = Matrix::Identity;
 
-	UINT textureSrvIndex = 0;
-	ComPtr<ID3D12Resource> texture;
+	Texture texture{};
 
 	bool _showDebugDrawPass = true;
-	SampleModule::Type _sampleType = SampleModule::Type::POINT_CLAMP;
+	DescriptorsModule::SampleType _sampleType = DescriptorsModule::SampleType::POINT_CLAMP;
 };
