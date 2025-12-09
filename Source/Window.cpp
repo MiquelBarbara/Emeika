@@ -62,7 +62,7 @@ ComPtr<SwapChain> Window::CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> 
     // - FLIP: Uses page flipping (no copying)
    // - DISCARD: Discard previous back buffer contents
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // Alpha channel behavior for window blending UNSPECIFIED = Use default behavior
-    swapChainDesc.Flags = CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
+    swapChainDesc.Flags = CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0 | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
     // DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH: Allow full-screen mode switches
    //DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING: Allow tearing in windowed mode (VSync off)
 
@@ -84,7 +84,7 @@ ComPtr<SwapChain> Window::CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> 
 
 void Window::Present() const
 {
-    m_swapChain.Get()->Present(0, DXGI_PRESENT_ALLOW_TEARING);
+    m_swapChain.Get()->Present(0, CheckTearingSupport() ? DXGI_PRESENT_ALLOW_TEARING : 0);
     m_currentBackBufferIndex = m_swapChain.Get()->GetCurrentBackBufferIndex();
 }
 
@@ -150,7 +150,7 @@ void Window::CreateRenderTargetViews(ComPtr<ID3D12Device2> device)
 }
 
 
-bool Window::CheckTearingSupport()
+bool Window::CheckTearingSupport() const
 {
     BOOL allowTearing = FALSE;
 

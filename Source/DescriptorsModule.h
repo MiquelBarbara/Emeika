@@ -31,10 +31,10 @@ public:
 	bool cleanUp() override;
 	void CreateDefaultSamplers();
 
-	DescriptorHeap* GetRTV() { return _rtv; }
-	DescriptorHeap* GetDSV() { return _dsv; }
-	DescriptorHeap* GetSRV() { return _srv; }
-	DescriptorHeap* GetSamplers() { return _samplers; }
+	constexpr DescriptorHeap* GetRTV() const { return _rtv; }
+	constexpr DescriptorHeap* GetDSV() const { return _dsv; }
+	constexpr DescriptorHeap* GetSRV() const { return _srv; }
+	constexpr DescriptorHeap* GetSamplers() const { return _samplers; }
 
 
 private:

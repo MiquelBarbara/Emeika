@@ -34,16 +34,16 @@ struct DescriptorHandle {
 class DescriptorHeap
 {
 public:
-	DescriptorHeap(const D3D12_DESCRIPTOR_HEAP_TYPE type, const uint32_t numDescriptors);
+	DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors);
 	DescriptorHandle Allocate();
 	void Reset();
 
-	ID3D12DescriptorHeap* GetHeap() { return _heap.Get(); }
+	ID3D12DescriptorHeap* GetHeap() const { return _heap.Get(); }
 
-	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(int index) {
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(int index) const {
 		return CD3DX12_CPU_DESCRIPTOR_HANDLE(_heap->GetCPUDescriptorHandleForHeapStart(), index, _descriptorSize);
 	}
-	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int index) {
+	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(int index) const {
 		return CD3DX12_GPU_DESCRIPTOR_HANDLE(_heap->GetGPUDescriptorHandleForHeapStart(), index, _descriptorSize);
 	}
 
@@ -55,6 +55,6 @@ private:
 	uint32_t _numDescriptors;
 	uint32_t _nextFreeIndex = 0;
 
-	const D3D12_DESCRIPTOR_HEAP_TYPE _type{};
+	D3D12_DESCRIPTOR_HEAP_TYPE _type{};
 };
 

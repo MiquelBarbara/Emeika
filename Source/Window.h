@@ -28,7 +28,7 @@ public:
 	void Present() const;
 	void Resize();
 	void CreateRenderTargetViews(ComPtr<ID3D12Device2> device);
-	bool CheckTearingSupport();
+	bool CheckTearingSupport() const;
 	void GetWindowSize(unsigned& width, unsigned& height);
 
 	constexpr uint32_t Width() const { return (uint32_t)m_viewport.Width; }

@@ -199,8 +199,7 @@ void D3D12Module::CreateRootSignature() {
     rootParameters[1].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL); // The descriptor table
     rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(3, rootParameters, 0, nullptr,
-        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
@@ -287,7 +286,7 @@ void D3D12Module::LoadAssets()
         m_vertexBufferView.SizeInBytes = vertexBufferSize;
     }
 
-    texture = app->GetResourcesModule()->CreateTexture2DFromFile(L"dog.dds");
+    texture = app->GetResourcesModule()->CreateTexture2DFromFile(L"Assets/Textures/dog.dds");
 }
 
 void D3D12Module::ToggleDebugDraw()

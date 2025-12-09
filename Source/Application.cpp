@@ -7,7 +7,9 @@
 #include "CameraModule.h"
 #include "DescriptorsModule.h"
 #include "Time.hpp"
+#include <thread>
 
+using namespace std::chrono;
 
 Application::Application(int argc, wchar_t** argv, void* hWnd)
 {

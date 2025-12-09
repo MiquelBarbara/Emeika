@@ -11,8 +11,17 @@ public:
 	bool postInit();
 	void update();
 
+	void UpdateAxes(const Vector3& pos, const Vector3& target);
+
+	float SpeedBoost(float baseSpeed) const;
+	void Zoom(Vector3& pos, Vector3& target);
+	void MouseLook(Vector3& pos, Vector3& target);
+	void Movement(Vector3& pos, Vector3& target, float speed);
+	void Focus(Vector3& target);
+	void Orbit(Vector3& pos, Vector3& target);
+
 	void SetFOV(const float fov);
-	void AspectRatio(const float aspectRatio);
+	void SetAspectRatio();
 	void SetPlaneDistances(const float near, const float far);
 	void SetPosition(const Vector3& position);
 	void SetOrientation(const Vector3& orientation);
@@ -22,8 +31,8 @@ public:
 	void CalculateProjectionMatrix();
 	void CalculateViewMatrix();
 
-	Matrix& GetProjectionMatrix() { return _proj; }
-	Matrix& GetViewMatrix() { return _view; }
+	constexpr Matrix& GetProjectionMatrix() { return _proj; }
+	constexpr Matrix& GetViewMatrix() { return _view; }
 private:
 	Matrix _view = Matrix::Identity;
 	Matrix _proj = Matrix::Identity;
@@ -36,15 +45,17 @@ private:
 	Vector3 _right = Vector3::Right;
 
 	Quaternion _rotation = Quaternion::Identity;
-	float _sensitivity = 0.004f;
+	float _sensitivity = 0.002f;
 
 	bool _isDirty = false;
 
-	float _fov = XM_PIDIV4;
+	float _fovH = XM_PIDIV4;
+	float _fovV = XM_PIDIV4;
 	float _aspectRatio = 0;
 	float _nearPlane = 1.0f;
 	float _farPlane = 1000.f;
 
 	InputModule* _inputModule = nullptr;
+	float _speed = 3.0f;
 };
 

@@ -80,3 +80,8 @@ if(FAILED(x)) {													\
 #endif
 
 #endif // DEBUG
+
+#ifdef _DEBUG
+//Sets the name of the COM object and outputs a debug string in Visual Studio's output window
+#define NAME_D3D12_OBJECT(obj, name) obj->SetName(name); OutputDebugString(L"::D3D12 Object Created: "); OutputDebugString(name); OutputDebugString(L"\n");
+#endif

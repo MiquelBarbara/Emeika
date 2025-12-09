@@ -35,15 +35,15 @@ public:
 	void CreatePipelineStateObject();
 	void TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandList, ComPtr<ID3D12Resource> resource, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
 
-	ID3D12Device4* GetDevice() { return m_device.Get(); }
-	HWND GetWindowHandle() const { return _hwnd; }
-	Window* GetWindow() { return window; }
-	CommandQueue* GetCommandQueue() { return _commandQueue.get(); }
-	ID3D12GraphicsCommandList4* GetCommandList() { return m_commandList.Get(); }
+	ID3D12Device4* GetDevice() const { return m_device.Get(); }
+	constexpr HWND GetWindowHandle() const { return _hwnd; }
+	constexpr Window* GetWindow() const { return window; }
+	CommandQueue* GetCommandQueue() const { return _commandQueue.get(); }
+	ID3D12GraphicsCommandList4* GetCommandList() const { return m_commandList.Get(); }
 
-	bool* GetShowDebugDrawBool() { return &_showDebugDrawPass; }
+	constexpr bool* GetShowDebugDrawBool() { return &_showDebugDrawPass; }
 	void SetSampler(const int type) { _sampleType = static_cast<DescriptorsModule::SampleType>(type); }
-	Matrix* GetModelMatrix() { return &model; }
+	constexpr Matrix* GetModelMatrix() { return &model; }
 private:
 
 	// The DXGI factory used to create the swap chain and other DXGI objects
@@ -51,7 +51,6 @@ private:
 	// The main Direct3D 12 device interface used to create resources and command objects
 	ComPtr<ID3D12Device4> m_device;
 	ComPtr<ID3D12GraphicsCommandList4> m_commandList;
-
 
 	ComPtr<ID3D12RootSignature> m_rootSignature;
 	ComPtr<ID3D12PipelineState> m_pipelineState;

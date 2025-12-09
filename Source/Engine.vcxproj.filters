@@ -37,15 +37,6 @@
     <ClCompile Include="InputModule.cpp">
       <Filter>Inputs</Filter>
     </ClCompile>
-    <ClCompile Include="Keyboard.cpp">
-      <Filter>Inputs</Filter>
-    </ClCompile>
-    <ClCompile Include="GamePad.cpp">
-      <Filter>Inputs</Filter>
-    </ClCompile>
-    <ClCompile Include="Mouse.cpp">
-      <Filter>Inputs</Filter>
-    </ClCompile>
     <ClCompile Include="SimpleMath.cpp">
       <Filter>Maths</Filter>
     </ClCompile>
@@ -54,9 +45,6 @@
     </ClCompile>
     <ClCompile Include="Globals.cpp">
       <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="CommandQueue.cpp">
-      <Filter>D3D12</Filter>
     </ClCompile>
     <ClCompile Include="Timer.cpp">
       <Filter>Core\Timers</Filter>
@@ -88,23 +76,35 @@
     <ClCompile Include="ConfigurationView.cpp">
       <Filter>Editor</Filter>
     </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>D3D12\Geometry</Filter>
-    </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>D3D12\Geometry</Filter>
-    </ClCompile>
-    <ClCompile Include="Material.cpp">
-      <Filter>D3D12\Geometry</Filter>
-    </ClCompile>
     <ClCompile Include="DescriptorsModule.cpp">
-      <Filter>D3D12\Descriptors</Filter>
+      <Filter>D3D12\Wrappers\Descriptors</Filter>
     </ClCompile>
     <ClCompile Include="DescriptorHeap.cpp">
-      <Filter>D3D12\Descriptors</Filter>
+      <Filter>D3D12\Wrappers\Descriptors</Filter>
     </ClCompile>
     <ClCompile Include="Resources.cpp">
       <Filter>D3D12\Resources\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="GamePad.cpp">
+      <Filter>Inputs\GamePad</Filter>
+    </ClCompile>
+    <ClCompile Include="Mouse.cpp">
+      <Filter>Inputs\Mouse</Filter>
+    </ClCompile>
+    <ClCompile Include="Keyboard.cpp">
+      <Filter>Inputs\Keyboard</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>D3D12\Geometry\Model</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>D3D12\Geometry\Model\Mesh</Filter>
+    </ClCompile>
+    <ClCompile Include="Material.cpp">
+      <Filter>D3D12\Geometry\Model\Material</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandQueue.cpp">
+      <Filter>D3D12\Wrappers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -144,15 +144,6 @@
     <ClInclude Include="InputModule.h">
       <Filter>Inputs</Filter>
     </ClInclude>
-    <ClInclude Include="GamePad.h">
-      <Filter>Inputs</Filter>
-    </ClInclude>
-    <ClInclude Include="Keyboard.h">
-      <Filter>Inputs</Filter>
-    </ClInclude>
-    <ClInclude Include="Mouse.h">
-      <Filter>Inputs</Filter>
-    </ClInclude>
     <ClInclude Include="SimpleMath.h">
       <Filter>Maths</Filter>
     </ClInclude>
@@ -164,9 +155,6 @@
     </ClInclude>
     <ClInclude Include="Module.h">
       <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="CommandQueue.h">
-      <Filter>D3D12</Filter>
     </ClInclude>
     <ClInclude Include="Timer.h">
       <Filter>Core\Timers</Filter>
@@ -198,29 +186,41 @@
     <ClInclude Include="ConfigurationView.h">
       <Filter>Editor</Filter>
     </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>D3D12\Geometry</Filter>
-    </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>D3D12\Geometry</Filter>
-    </ClInclude>
     <ClInclude Include="Transform.h">
       <Filter>D3D12\Geometry</Filter>
     </ClInclude>
     <ClInclude Include="UtilityGLFT.h">
       <Filter>D3D12\Geometry</Filter>
     </ClInclude>
-    <ClInclude Include="Material.h">
-      <Filter>D3D12\Geometry</Filter>
-    </ClInclude>
     <ClInclude Include="DescriptorsModule.h">
-      <Filter>D3D12\Descriptors</Filter>
+      <Filter>D3D12\Wrappers\Descriptors</Filter>
     </ClInclude>
     <ClInclude Include="DescriptorHeap.h">
-      <Filter>D3D12\Descriptors</Filter>
+      <Filter>D3D12\Wrappers\Descriptors</Filter>
     </ClInclude>
     <ClInclude Include="Resources.h">
       <Filter>D3D12\Resources\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="GamePad.h">
+      <Filter>Inputs\GamePad</Filter>
+    </ClInclude>
+    <ClInclude Include="Mouse.h">
+      <Filter>Inputs\Mouse</Filter>
+    </ClInclude>
+    <ClInclude Include="Keyboard.h">
+      <Filter>Inputs\Keyboard</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>D3D12\Geometry\Model</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>D3D12\Geometry\Model\Mesh</Filter>
+    </ClInclude>
+    <ClInclude Include="Material.h">
+      <Filter>D3D12\Geometry\Model\Material</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandQueue.h">
+      <Filter>D3D12\Wrappers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -265,14 +265,35 @@
     <Filter Include="D3D12\Resources">
       <UniqueIdentifier>{b286ac8e-665a-4fe1-b174-9a4d8e4e917f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="D3D12\Descriptors">
-      <UniqueIdentifier>{7881f684-8e13-48ef-b782-2e85ff9bfc29}</UniqueIdentifier>
-    </Filter>
     <Filter Include="D3D12\Geometry">
       <UniqueIdentifier>{83c3b228-a53b-4f4b-b615-a09f5fdd0387}</UniqueIdentifier>
     </Filter>
     <Filter Include="D3D12\Resources\Textures">
       <UniqueIdentifier>{76aa94b6-93be-455c-8f6b-25244900a198}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Inputs\GamePad">
+      <UniqueIdentifier>{1eabae0c-8441-4f4a-bb29-273ca24e591d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Inputs\Mouse">
+      <UniqueIdentifier>{e8f0f216-6437-48b2-910f-0dca84cbf266}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Inputs\Keyboard">
+      <UniqueIdentifier>{aaa72633-86b0-428f-a371-8ab1e825dd2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Geometry\Model">
+      <UniqueIdentifier>{7d589e71-6d9c-4c2b-9421-93d8192ce07c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Geometry\Model\Mesh">
+      <UniqueIdentifier>{680d6bb1-ca56-47e5-8e10-0c1dd542cacf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Geometry\Model\Material">
+      <UniqueIdentifier>{05bfdc35-fb58-495a-a789-0cea859d7795}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Wrappers">
+      <UniqueIdentifier>{bd70e7f1-6357-487a-a89c-635c1b2c6e70}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Wrappers\Descriptors">
+      <UniqueIdentifier>{7881f684-8e13-48ef-b782-2e85ff9bfc29}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
