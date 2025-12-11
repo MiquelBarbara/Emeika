@@ -36,8 +36,9 @@ public:
 	ID3D12Resource* GetCurrentRenderTarget() const { return m_renderTargets[m_currentBackBufferIndex].resource.Get(); }
 	constexpr DescriptorHandle GetCurrentRenderTargetView() const { return m_renderTargets[m_currentBackBufferIndex].rtv; }
 	constexpr DescriptorHandle GetDepthStencilView() const { return m_depthStencil._dsv; }
-	constexpr const D3D12_VIEWPORT& GetViewport() const { return m_viewport; }
-	constexpr const D3D12_RECT& GetScissorRect() const { return m_scissorRect; }
+	constexpr const D3D12_VIEWPORT& GetViewport() { return m_viewport; }
+	constexpr const D3D12_RECT& GetScissorRect() { return m_scissorRect; }
+	constexpr uint32_t GetCurrentBackBufferIndex() const { return m_swapChain.Get()->GetCurrentBackBufferIndex(); }
 private:
 
 	ComPtr<SwapChain> m_swapChain;

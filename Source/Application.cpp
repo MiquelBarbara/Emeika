@@ -6,7 +6,7 @@
 #include "ResourcesModule.h"
 #include "CameraModule.h"
 #include "DescriptorsModule.h"
-#include "Time.hpp"
+#include "TimeModule.h"
 #include <thread>
 
 using namespace std::chrono;
@@ -19,7 +19,7 @@ Application::Application(int argc, wchar_t** argv, void* hWnd)
     modules.push_back(_descriptorsModule = new DescriptorsModule());
     modules.push_back(_resourcesModule = new ResourcesModule());
     modules.push_back(_cameraModule = new CameraModule());
-
+    modules.push_back(_timeModule = new TimeModule(120));
 }
 
 Application::~Application()
@@ -39,8 +39,6 @@ bool Application::init()
 	for(auto it = modules.begin(); it != modules.end() && ret; ++it)
 		ret = (*it)->init();
 
-    lastMilis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
 	return ret;
 }
 
@@ -51,26 +49,11 @@ bool Application::postInit()
     for (auto it = modules.begin(); it != modules.end() && ret; ++it)
         ret = (*it)->postInit();
 
-    lastMilis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
     return ret;
 }
 
 void Application::update()
 {
-    using namespace std::chrono_literals;
-
-    // Update milis
-    uint64_t currentMilis = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
-    elapsedMilis = currentMilis - lastMilis;
-    lastMilis = currentMilis;
-    tickSum -= tickList[tickIndex];
-    tickSum += elapsedMilis;
-    tickList[tickIndex] = elapsedMilis;
-    tickIndex = (tickIndex + 1) % MAX_FPS_TICKS;
-
-    Time::update();
 
     if (!app->paused)
     {
@@ -86,6 +69,8 @@ void Application::update()
         for (auto it = modules.begin(); it != modules.end(); ++it)
             (*it)->postRender();
     }
+
+    _timeModule->WaitForNextFrame();
 }
 
 bool Application::cleanUp()

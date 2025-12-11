@@ -30,7 +30,7 @@ ComPtr<ID3D12Resource> ResourcesModule::CreateUploadBuffer(size_t size )
 	return buffer;
 }
 
-ComPtr<ID3D12Resource> ResourcesModule::CreateDefaultBuffer(const void* data, size_t size)
+ComPtr<ID3D12Resource> ResourcesModule::CreateDefaultBuffer(const void* data, size_t size, const char* name)
 {
 	// --- CREATE THE FINAL GPU BUFFER (DEFAULT HEAP) ---
 	ComPtr<ID3D12Resource> buffer;
@@ -60,6 +60,7 @@ ComPtr<ID3D12Resource> ResourcesModule::CreateDefaultBuffer(const void* data, si
 
 	_queue->Flush();
 
+	buffer->SetName(std::wstring(name, name + strlen(name)).c_str());
 	return buffer;
 }
 
@@ -75,6 +76,8 @@ DepthBuffer ResourcesModule::CreateDepthBuffer(float windowWidth, float windowHe
 
 	_device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&resource));
 
+	resource->SetName(L"DepthBuffer");
+
 	auto dsvHeap = app->GetDescriptorsModule()->GetDSV()->Allocate();
 	_device->CreateDepthStencilView(resource.Get(), nullptr, dsvHeap.cpu);
 
@@ -86,7 +89,7 @@ DepthBuffer ResourcesModule::CreateDepthBuffer(float windowWidth, float windowHe
 }
 
 
-Texture ResourcesModule::CreateTexture2DFromFile(const path& filePath)
+Texture ResourcesModule::CreateTexture2DFromFile(const path& filePath, const char* name)
 {
 	Texture texture = Texture();
 	ScratchImage image;
@@ -103,20 +106,27 @@ Texture ResourcesModule::CreateTexture2DFromFile(const path& filePath)
 	}
 
 	TexMetadata metaData = image.GetMetadata();
-	D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(metaData.format, UINT64(metaData.width),UINT(metaData.height), UINT16(metaData.arraySize),UINT16(metaData.mipLevels));
+	if (metaData.dimension != TEX_DIMENSION_TEXTURE2D) {
+		return texture;
+	}
 
+	if (metaData.mipLevels == 1 && (metaData.width > 1 || metaData.height > 1))
+	{
+		ScratchImage mipImages;
+		if (FAILED(GenerateMipMaps(image.GetImages(), image.GetImageCount(), image.GetMetadata(), TEX_FILTER_FANT | TEX_FILTER_SEPARATE_ALPHA, 0, mipImages))) {
+			// Try Nvidia tool?
+		}
+		else {
+			image = std::move(mipImages);
+			metaData = image.GetMetadata();
+		}
+	}
+
+	D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(metaData.format, UINT64(metaData.width),UINT(metaData.height), UINT16(metaData.arraySize),UINT16(metaData.mipLevels));
 	CD3DX12_HEAP_PROPERTIES heap(D3D12_HEAP_TYPE_DEFAULT);
 	_device->CreateCommittedResource(&heap, D3D12_HEAP_FLAG_NONE, &desc,D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texture._resource));
 
-	UINT64 size = GetRequiredIntermediateSize(texture._resource.Get(), 0, image.GetImageCount());
-	ComPtr<ID3D12Resource> stagingBuffer = CreateUploadBuffer(size);
-
-	//If the image has no mipmaps generate them
-	if (metaData.mipLevels == 0) {
-		if (FAILED(GenerateMipMaps(*image.GetImages(), TEX_FILTER_DEFAULT, 3, image, true))) {
-
-		}
-	}
+	ComPtr<ID3D12Resource> stagingBuffer = CreateUploadBuffer(GetRequiredIntermediateSize(texture._resource.Get(), 0, image.GetImageCount()));
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subData;
 	subData.reserve(image.GetImageCount());
@@ -141,6 +151,7 @@ Texture ResourcesModule::CreateTexture2DFromFile(const path& filePath)
 	texture._srv = app->GetDescriptorsModule()->GetSRV()->Allocate();
 	_device->CreateShaderResourceView(texture._resource.Get(), nullptr, texture._srv.cpu);
 
+	texture._resource->SetName(std::wstring(name, name + strlen(name)).c_str());
 	return texture;
 }
 

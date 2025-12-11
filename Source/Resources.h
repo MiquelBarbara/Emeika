@@ -9,6 +9,7 @@ public:
 };
 
 class RenderTexture {
+public:
 	Texture _texture;
 	DescriptorHandle _rtv[Texture::maxMips]{};
 };
@@ -19,7 +20,8 @@ public:
 	DescriptorHandle _dsv{};
 };
 
-struct RenderTarget {
+class RenderTarget {
+public:
 	ComPtr<ID3D12Resource> resource{ nullptr };
 	DescriptorHandle rtv{};
 };

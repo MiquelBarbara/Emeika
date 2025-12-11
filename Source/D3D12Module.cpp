@@ -4,6 +4,7 @@
 #include "ResourcesModule.h"
 #include "CameraModule.h"
 #include "DescriptorsModule.h"
+#include "EditorModule.h"
 #include <d3dcompiler.h>
 
 D3D12Module::D3D12Module(HWND hwnd) 
@@ -33,7 +34,7 @@ bool D3D12Module::postInit() {
 
 void D3D12Module::preRender()
 {
-    //m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+    m_frameIndex = window->GetCurrentBackBufferIndex();
     _commandQueue->WaitForFenceValue(m_fenceValues[m_frameIndex]);
 
     // Reset command list and allocator
@@ -67,7 +68,7 @@ void D3D12Module::preRender()
     m_commandList->OMSetRenderTargets(1, &rtvHandle.cpu, FALSE, &dsvHandle.cpu);
 
     ID3D12DescriptorHeap* descriptorHeaps[] = { app->GetDescriptorsModule()->GetSRV()->GetHeap(), app->GetDescriptorsModule()->GetSamplers()->GetHeap() };
-    m_commandList->SetDescriptorHeaps(2, descriptorHeaps);
+    m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
     //Assign composed MVP matrix
     auto camera = app->GetCameraModule();
@@ -101,7 +102,7 @@ void D3D12Module::render()
 
 void D3D12Module::postRender()
 {
-    m_fenceValues[m_frameIndex] = _commandQueue->Signal();
+
 }
 
 bool D3D12Module::cleanUp()
@@ -279,14 +280,14 @@ void D3D12Module::LoadAssets()
 
         const UINT vertexBufferSize = sizeof(triangleVertices);
 
-        buffer = app->GetResourcesModule()->CreateDefaultBuffer(triangleVertices, vertexBufferSize);
+        buffer = app->GetResourcesModule()->CreateDefaultBuffer(triangleVertices, vertexBufferSize, "VertexBuffer");
 
         m_vertexBufferView.BufferLocation = buffer->GetGPUVirtualAddress();
         m_vertexBufferView.StrideInBytes = sizeof(Vertex);
         m_vertexBufferView.SizeInBytes = vertexBufferSize;
     }
 
-    texture = app->GetResourcesModule()->CreateTexture2DFromFile(L"Assets/Textures/dog.dds");
+    texture = app->GetResourcesModule()->CreateTexture2DFromFile(L"Assets/Textures/dog.dds", "DogBuffer");
 }
 
 void D3D12Module::ToggleDebugDraw()

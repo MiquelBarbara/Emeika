@@ -74,7 +74,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
             DispatchMessage(&msg);
         }
 
-        app->update();
     }
 
     delete app;

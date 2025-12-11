@@ -15,7 +15,7 @@ CommandQueue::CommandQueue(ComPtr<ID3D12Device4> device, D3D12_COMMAND_LIST_TYPE
     DXCall(m_d3d12Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_d3d12CommandQueue)));
 
     DXCall(m_d3d12Device->CreateFence(m_FenceValue, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_d3d12Fence)));
-
+    m_d3d12Fence->SetName(L"CommandQueue Fence");
     m_FenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
     assert(m_FenceEvent && "Failed to create fence event handle.");
 }
@@ -104,7 +104,7 @@ uint64_t CommandQueue::ExecuteCommandList(ComPtr<GraphicsCommandList> commandLis
         commandList.Get()
     };
 
-    m_d3d12CommandQueue->ExecuteCommandLists(1, ppCommandLists);
+    m_d3d12CommandQueue->ExecuteCommandLists(std::size(ppCommandLists), ppCommandLists);
     uint64_t fenceValue = Signal();
 
     m_CommandAllocatorQueue.emplace(CommandAllocatorEntry{ fenceValue, commandAllocator });
@@ -159,7 +159,7 @@ ComPtr<ID3D12CommandAllocator> CommandQueue::CreateCommandAllocator()
 {
     ComPtr<ID3D12CommandAllocator> commandAllocator;
     DXCall(m_d3d12Device->CreateCommandAllocator(m_CommandListType, IID_PPV_ARGS(&commandAllocator)));
-
+    commandAllocator->SetName(L"CommandAllocator" + m_CommandAllocatorQueue.size());
     return commandAllocator;
 }
 
@@ -167,6 +167,6 @@ ComPtr<GraphicsCommandList> CommandQueue::CreateCommandList(ComPtr<ID3D12Command
 {
     ComPtr<GraphicsCommandList> commandList;
     DXCall(m_d3d12Device->CreateCommandList(0, m_CommandListType, allocator.Get(), nullptr, IID_PPV_ARGS(&commandList)));
-
+    commandList->SetName(L"GraphicsCommandList" + +m_CommandListQueue.size());
     return commandList;
 }

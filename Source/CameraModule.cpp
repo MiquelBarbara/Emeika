@@ -2,7 +2,7 @@
 #include "CameraModule.h"
 #include "Keyboard.h"
 #include "Mouse.h"
-#include "Time.hpp"
+#include "TimeModule.h"
 #include "Application.h"
 #include "D3D12Module.h"
 
@@ -49,7 +49,7 @@ void CameraModule::Zoom(Vector3& pos, Vector3& target)
 	if (wheel == 0.0f)
 		return;
 
-	float delta = wheel * Time::deltaTime();
+	float delta = wheel * app->GetTimeModule()->deltaTime();
 	pos += _forward * _speed * delta;
 	target += _forward * _speed * delta;
 }
@@ -80,7 +80,7 @@ void CameraModule::Movement(Vector3& pos, Vector3& target, float speed)
 	if (!_inputModule->IsRightMouseDown())
 		return;
 
-	float dt = Time::deltaTime();
+	float dt = app->GetTimeModule()->deltaTime();
 
 	if (_inputModule->IsKeyDown(Keyboard::W)) {
 		pos += _forward * speed * dt;

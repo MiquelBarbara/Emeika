@@ -38,7 +38,7 @@ void Emeika::Mesh::Load(const tinygltf::Model& model, const tinygltf::Mesh& mesh
 		LoadAccessorData(vertexData + offsetof(Vertex, texCoord0), sizeof(Vector2), sizeof(Vertex),
 			numVertices, model, primitive.attributes, "TEXCOORD_0");
 
-		_vertexBuffer = app->GetResourcesModule()->CreateDefaultBuffer(vertices, numVertices * sizeof(Vertex));
+		_vertexBuffer = app->GetResourcesModule()->CreateDefaultBuffer(vertices, numVertices * sizeof(Vertex), "VertexBuffer");
 		_vertexBufferView = CreteVertexBufferView(_vertexBuffer->GetGPUVirtualAddress(), sizeof(Vertex), numVertices);
 
 		if (primitive.indices > 0) {
@@ -53,7 +53,7 @@ void Emeika::Mesh::Load(const tinygltf::Model& model, const tinygltf::Mesh& mesh
 				LoadAccessorData(indices, indexElementSize, indexElementSize, numIndices, model, primitive.indices);
 
 				if (numIndices > 0) {
-					_indexBuffer = app->GetResourcesModule()->CreateDefaultBuffer(indices, numIndices * indexElementSize);
+					_indexBuffer = app->GetResourcesModule()->CreateDefaultBuffer(indices, numIndices * indexElementSize, "IndexBuffer");
 					_indexBufferView = CreateIndexBufferView(_indexBuffer->GetGPUVirtualAddress(), indexElementSize, numIndices);
 				}
 			}

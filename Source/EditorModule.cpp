@@ -111,8 +111,6 @@ bool EditorModule::postInit()
 	D3D12Module* _d3d12 = app->GetD3D12Module();
 	_gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle());
 
-    //_sceneView = new SceneView(_d3d12, _gui->GetHeap().Get(), 0);
-
 	return true;
 }
 
@@ -126,7 +124,6 @@ void EditorModule::preRender()
 		_firstFrame = false;
 	}
 
-    //_sceneView->Render();
     _configurationView->Update();
     _configurationView->Render();
 
@@ -140,11 +137,16 @@ void EditorModule::preRender()
 	//ImGui::ShowDemoWindow();
     //_console.Draw("Console");
 
-	ImGui::EndFrame();
+    ImGui::EndFrame();
 }
 
 void EditorModule::render()
 {
+
 	_gui->record(app->GetD3D12Module()->GetCommandList());
 
+}
+
+void EditorModule::postRender()
+{
 }

@@ -3,7 +3,7 @@
 #include <ImGuiPass.h>
 #include "Application.h"
 #include "Logger.h"
-#include <SceneView.h>
+#include <DebugDrawPass.h>
 #include <ConfigurationView.h>
 
 class ImGuiPass;
@@ -17,12 +17,11 @@ public:
 	bool postInit();
 	void preRender() override;
 	void render() override;
+	void postRender() override;
 
-	SceneView* GetSceneView() { return _sceneView; }
 private:
 	
 	ImGuiPass* _gui = nullptr;
-	SceneView* _sceneView;
 	Logger* _logger = nullptr;
 	ConfigurationView* _configurationView = nullptr;
 	DebugDrawPass* _debugDrawPass = nullptr;

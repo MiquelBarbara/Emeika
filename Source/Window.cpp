@@ -19,16 +19,16 @@ Window::Window(HWND hWnd): _hwnd(hWnd)
 
 Window::~Window()
 {
+    
     // 1. Release render targets
     for (int i = 0; i < bufferCount; ++i)
         m_renderTargets[i].resource.Reset();
 
     // 2. Release depth stencil
-    //m_depthStencil.resource.Reset();
+    m_depthStencil._texture._resource.Reset();
 
-    // 3. Release descriptor heaps
-    //m_rtvHeap.Reset();
-    //m_dsvHeap.Reset();
+    // 3. Flush GPU commands
+    app->GetD3D12Module()->GetCommandQueue()->Flush();
 
     // 4. Release swap chain
     m_swapChain.Reset();
@@ -62,7 +62,7 @@ ComPtr<SwapChain> Window::CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> 
     // - FLIP: Uses page flipping (no copying)
    // - DISCARD: Discard previous back buffer contents
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED; // Alpha channel behavior for window blending UNSPECIFIED = Use default behavior
-    swapChainDesc.Flags = CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0 | DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;
+    swapChainDesc.Flags = (CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0);
     // DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH: Allow full-screen mode switches
    //DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING: Allow tearing in windowed mode (VSync off)
 
@@ -145,6 +145,7 @@ void Window::CreateRenderTargetViews(ComPtr<ID3D12Device2> device)
         auto rtvHandle = app->GetDescriptorsModule()->GetRTV()->Allocate();
         m_renderTargets[n].rtv = rtvHandle;
         DXCall(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n].resource)));
+        m_renderTargets[n].resource->SetName(L"BackBuffer");
         device->CreateRenderTargetView(m_renderTargets[n].resource.Get(), nullptr, rtvHandle.cpu);
     }
 }

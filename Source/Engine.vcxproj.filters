@@ -49,9 +49,6 @@
     <ClCompile Include="Timer.cpp">
       <Filter>Core\Timers</Filter>
     </ClCompile>
-    <ClCompile Include="Time.cpp">
-      <Filter>Core\Timers</Filter>
-    </ClCompile>
     <ClCompile Include="EditorModule.cpp">
       <Filter>Editor</Filter>
     </ClCompile>
@@ -63,9 +60,6 @@
     </ClCompile>
     <ClCompile Include="Window.cpp">
       <Filter>D3D12</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneView.cpp">
-      <Filter>Editor</Filter>
     </ClCompile>
     <ClCompile Include="DebugDrawPass.cpp">
       <Filter>Editor</Filter>
@@ -159,9 +153,6 @@
     <ClInclude Include="Timer.h">
       <Filter>Core\Timers</Filter>
     </ClInclude>
-    <ClInclude Include="Time.hpp">
-      <Filter>Core\Timers</Filter>
-    </ClInclude>
     <ClInclude Include="EditorModule.h">
       <Filter>Editor</Filter>
     </ClInclude>
@@ -173,9 +164,6 @@
     </ClInclude>
     <ClInclude Include="Window.h">
       <Filter>D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneView.h">
-      <Filter>Editor</Filter>
     </ClInclude>
     <ClInclude Include="DebugDrawPass.h">
       <Filter>Editor</Filter>
@@ -221,6 +209,9 @@
     </ClInclude>
     <ClInclude Include="CommandQueue.h">
       <Filter>D3D12\Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeModule.h">
+      <Filter>Core\Timers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

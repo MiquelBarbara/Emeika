@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "D3D12Module.h"
 #include "DescriptorsModule.h"
-#include "Time.hpp"
+#include "TimeModule.h"
 
 void ConfigurationView::Render()
 {
@@ -37,6 +37,6 @@ void ConfigurationView::Update()
 		ms_log.erase(ms_log.begin());
 	}
 
-	fps_log.push_back(1.0f / Time::deltaTime());
-	ms_log.push_back(Time::deltaTime() * 1000.0f);
+	fps_log.push_back(1.0f / app->GetTimeModule()->deltaTime());
+	ms_log.push_back(app->GetTimeModule()->deltaTime() * 1000.0f);
 }
