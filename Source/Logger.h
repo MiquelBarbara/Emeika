@@ -3,13 +3,10 @@
 
 static char* Strdup(const char* s) { IM_ASSERT(s); size_t len = strlen(s) + 1; void* buf = ImGui::MemAlloc(len); IM_ASSERT(buf); return (char*)memcpy(buf, (const void*)s, len); }
 
-struct Console
+class Logger
 {
-    char InputBuf[256];
-    ImVector<char*> Items;
-    bool AutoScroll = true;
-
-    Console()
+public:
+    Logger()
     {
         Clear();
         InputBuf[0] = '\0';
@@ -66,15 +63,13 @@ struct Console
 
         ImGui::End();
     }
-};
-
-class Logger
-{
-	public:
-        void AddLog(const char* msg, ...)  IM_FMTARGS(2);
+        
 private:
-    Console _console = {};
+    char InputBuf[256];
+    ImVector<char*> Items;
+    bool AutoScroll = true;
+
 };
 
-extern Logger* _logger;
+extern Logger* logger;
 

@@ -35,10 +35,11 @@ public:
 	constexpr uint32_t Height() const { return (uint32_t)m_viewport.Height; }
 	ID3D12Resource* GetCurrentRenderTarget() const { return m_renderTargets[m_currentBackBufferIndex].resource.Get(); }
 	constexpr DescriptorHandle GetCurrentRenderTargetView() const { return m_renderTargets[m_currentBackBufferIndex].rtv; }
-	constexpr DescriptorHandle GetDepthStencilView() const { return m_depthStencil._dsv; }
+	D3D12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView() { return m_depthStencil.DSV(); }
 	constexpr const D3D12_VIEWPORT& GetViewport() { return m_viewport; }
 	constexpr const D3D12_RECT& GetScissorRect() { return m_scissorRect; }
 	constexpr uint32_t GetCurrentBackBufferIndex() const { return m_swapChain.Get()->GetCurrentBackBufferIndex(); }
+	RenderTarget* GetRenderTargets() { return m_renderTargets; }
 private:
 
 	ComPtr<SwapChain> m_swapChain;

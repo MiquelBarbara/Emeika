@@ -4,8 +4,49 @@
 #include "CameraModule.h"
 #include "vector"
 #include <backends/imgui_impl_dx12.h>
+#include "Resources.h"
 
 using namespace std;
+
+Logger* logger = nullptr;
+
+void EditorModule::RenderSceneEditorWindow()
+{
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    ImGui::Begin("Scene Editor", &_showSceneEditor,
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse);
+
+    // Get available content region for the scene view
+    ImVec2 contentRegion = ImGui::GetContentRegionAvail();
+
+    // Only resize if we have valid dimensions (avoid zero-size textures)
+    if (contentRegion.x > 0 && contentRegion.y > 0) {
+        // Check if we need to resize (with some threshold to avoid constant resizing)
+        if (abs(contentRegion.x - _sceneViewSize.x) > 1.0f ||
+            abs(contentRegion.y - _sceneViewSize.y) > 1.0f) {
+            _sceneViewSize = contentRegion;
+        }
+
+        // Display the scene texture
+            // Fallback: draw a placeholder
+            ImDrawList* drawList = ImGui::GetWindowDrawList();
+            ImVec2 p0 = ImGui::GetCursorScreenPos();
+            ImVec2 p1 = ImVec2(p0.x + contentRegion.x, p0.y + contentRegion.y);
+            drawList->AddRectFilled(p0, p1, IM_COL32(30, 30, 40, 255));
+            drawList->AddText(ImVec2(p0.x + 10, p0.y + 10), IM_COL32(255, 255, 255, 255),
+                "Scene View - Render Texture Not Ready");
+        
+    }
+
+    // Update viewport hover/focus state
+    _isViewportHovered = ImGui::IsWindowHovered();
+    _isViewportFocused = ImGui::IsWindowFocused();
+
+
+    ImGui::End();
+    ImGui::PopStyleVar();
+}
 
 void MainMenuBar()
 {
@@ -93,7 +134,7 @@ void Style() {
 EditorModule::EditorModule()
 {
     //_console = Console();
-    _logger = new Logger();
+    logger = new Logger();
     _configurationView = new ConfigurationView();
 
 }
@@ -102,7 +143,7 @@ EditorModule::~EditorModule()
 {
 	_gui->~ImGuiPass();
     //_sceneView->~SceneView();
-    _logger->~Logger();
+    logger->~Logger();
     _debugDrawPass->~DebugDrawPass();
 }
 
@@ -124,6 +165,8 @@ void EditorModule::preRender()
 		_firstFrame = false;
 	}
 
+    RenderSceneEditorWindow();
+
     _configurationView->Update();
     _configurationView->Render();
 
@@ -134,8 +177,8 @@ void EditorModule::preRender()
     //MainMenuBar();
     //MainDockspace(&_showMainDockspace);
 
-	//ImGui::ShowDemoWindow();
-    //_console.Draw("Console");
+	ImGui::ShowDemoWindow();
+    logger->Draw("Console");
 
     ImGui::EndFrame();
 }

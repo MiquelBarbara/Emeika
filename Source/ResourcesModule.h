@@ -30,7 +30,7 @@ public:
 	ComPtr<ID3D12Resource> CreateDefaultBuffer(const void* data, size_t size, const char* name);
 	DepthBuffer CreateDepthBuffer(float windowWidth, float windowHeight);
 	Texture CreateTexture2DFromFile(const path& filePath, const char* name);
-	
+	RenderTexture CreateRenderTexture(float windowWidth, float windowHeight);
 private:
 	ComPtr<ID3D12Device4> _device;
 	CommandQueue* _queue;

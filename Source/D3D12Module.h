@@ -28,7 +28,8 @@ public:
 
 	void LoadPipeline();
 	void LoadAssets();
-
+	void RenderBackground(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle);
+	void RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle);
 	void ToggleDebugDraw();
 	
 	void CreateRootSignature();

@@ -31,6 +31,8 @@ public:
 	bool cleanUp() override;
 	void CreateDefaultSamplers();
 
+
+
 	constexpr DescriptorHeap* GetRTV() const { return _rtv; }
 	constexpr DescriptorHeap* GetDSV() const { return _dsv; }
 	constexpr DescriptorHeap* GetSRV() const { return _srv; }

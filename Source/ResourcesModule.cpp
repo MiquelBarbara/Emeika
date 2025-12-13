@@ -66,32 +66,21 @@ ComPtr<ID3D12Resource> ResourcesModule::CreateDefaultBuffer(const void* data, si
 
 DepthBuffer ResourcesModule::CreateDepthBuffer(float windowWidth, float windowHeight)
 {
-	_device = app->GetD3D12Module()->GetDevice();
-
-	ComPtr<ID3D12Resource> resource;
-
-	CD3DX12_HEAP_PROPERTIES heapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	TextureInitInfo info{};
+	info.clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_D32_FLOAT, 1.0f, 0);
+	info.initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
 	CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, windowWidth, windowHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
-	D3D12_CLEAR_VALUE clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_D32_FLOAT, 1.0f, 0);
+	info.desc = &desc;
 
-	_device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue, IID_PPV_ARGS(&resource));
+	DepthBuffer buffer{ info };
 
-	resource->SetName(L"DepthBuffer");
-
-	auto dsvHeap = app->GetDescriptorsModule()->GetDSV()->Allocate();
-	_device->CreateDepthStencilView(resource.Get(), nullptr, dsvHeap.cpu);
-
-	DepthBuffer depthBuffer = DepthBuffer();
-	depthBuffer._texture._resource = resource;
-	depthBuffer._dsv = dsvHeap;
-
-	return depthBuffer;
+	return buffer;
 }
 
 
 Texture ResourcesModule::CreateTexture2DFromFile(const path& filePath, const char* name)
 {
-	Texture texture = Texture();
+
 	ScratchImage image;
 	const wchar_t* path = filePath.c_str();
 
@@ -102,12 +91,12 @@ Texture ResourcesModule::CreateTexture2DFromFile(const path& filePath, const cha
 	}
 
 	if (image.GetImageCount() == 0) {
-		return texture;
+		return Texture{};
 	}
 
 	TexMetadata metaData = image.GetMetadata();
 	if (metaData.dimension != TEX_DIMENSION_TEXTURE2D) {
-		return texture;
+		return Texture{};
 	}
 
 	if (metaData.mipLevels == 1 && (metaData.width > 1 || metaData.height > 1))
@@ -122,11 +111,13 @@ Texture ResourcesModule::CreateTexture2DFromFile(const path& filePath, const cha
 		}
 	}
 
-	D3D12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(metaData.format, UINT64(metaData.width),UINT(metaData.height), UINT16(metaData.arraySize),UINT16(metaData.mipLevels));
-	CD3DX12_HEAP_PROPERTIES heap(D3D12_HEAP_TYPE_DEFAULT);
-	_device->CreateCommittedResource(&heap, D3D12_HEAP_FLAG_NONE, &desc,D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&texture._resource));
+	TextureInitInfo info{};
+	CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(metaData.format, UINT64(metaData.width), UINT(metaData.height), UINT16(metaData.arraySize), UINT16(metaData.mipLevels));
+	info.desc = &desc;
+	info.initialState = D3D12_RESOURCE_STATE_COPY_DEST;
+	Texture texture{ info };
 
-	ComPtr<ID3D12Resource> stagingBuffer = CreateUploadBuffer(GetRequiredIntermediateSize(texture._resource.Get(), 0, image.GetImageCount()));
+	ComPtr<ID3D12Resource> stagingBuffer = CreateUploadBuffer(GetRequiredIntermediateSize(texture.GetResource(), 0, image.GetImageCount()));
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subData;
 	subData.reserve(image.GetImageCount());
@@ -141,17 +132,37 @@ Texture ResourcesModule::CreateTexture2DFromFile(const path& filePath, const cha
 		}
 	}
 	ComPtr<ID3D12GraphicsCommandList4> commandList = _queue->GetCommandList();
-	UpdateSubresources(commandList.Get(), texture._resource.Get(), stagingBuffer.Get(), 0, 0, UINT(image.GetImageCount()), subData.data());
+	UpdateSubresources(commandList.Get(), texture.GetResource(), stagingBuffer.Get(), 0, 0, UINT(image.GetImageCount()), subData.data());
 
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture._resource.Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture.GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	commandList->ResourceBarrier(1, &barrier);
 	_queue->ExecuteCommandList(commandList);
 	_queue->Flush();
 
-	texture._srv = app->GetDescriptorsModule()->GetSRV()->Allocate();
-	_device->CreateShaderResourceView(texture._resource.Get(), nullptr, texture._srv.cpu);
+	return texture;
+}
 
-	texture._resource->SetName(std::wstring(name, name + strlen(name)).c_str());
+RenderTexture ResourcesModule::CreateRenderTexture(float windowWidth, float windowHeight)
+{
+	TextureInitInfo info{};
+	D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Tex2D( DXGI_FORMAT_R8G8B8A8_UNORM, static_cast<UINT64>(windowWidth), static_cast<UINT>(windowHeight),1,1,1,0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET | D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+	D3D12_CLEAR_VALUE clearValue = CD3DX12_CLEAR_VALUE(DXGI_FORMAT_R8G8B8A8_UNORM, Color(0.1f, 0.1f, 0.3f, 1.0f));
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};
+	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.PlaneSlice = 0;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	info.srvDesc = &srvDesc;
+	info.clearValue = clearValue;
+	info.initialState = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	info.desc = &resourceDesc;
+
+	RenderTexture texture{ info };
 	return texture;
 }
 

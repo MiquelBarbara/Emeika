@@ -25,7 +25,7 @@ Window::~Window()
         m_renderTargets[i].resource.Reset();
 
     // 2. Release depth stencil
-    m_depthStencil._texture._resource.Reset();
+    m_depthStencil.GetResource() == nullptr;
 
     // 3. Flush GPU commands
     app->GetD3D12Module()->GetCommandQueue()->Flush();

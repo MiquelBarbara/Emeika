@@ -55,9 +55,6 @@
     <ClCompile Include="ResourcesModule.cpp">
       <Filter>D3D12\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="Logger.cpp">
-      <Filter>Editor</Filter>
-    </ClCompile>
     <ClCompile Include="Window.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
@@ -99,6 +96,9 @@
     </ClCompile>
     <ClCompile Include="CommandQueue.cpp">
       <Filter>D3D12\Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneEditor.cpp">
+      <Filter>Editor</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -212,6 +212,9 @@
     </ClInclude>
     <ClInclude Include="TimeModule.h">
       <Filter>Core\Timers</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneEditor.h">
+      <Filter>Editor</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

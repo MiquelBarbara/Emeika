@@ -43,50 +43,9 @@ void D3D12Module::preRender()
     // Transition back buffer to render target
     TransitionResource(m_commandList, window->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-    //CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_frameIndex, m_rtvDescriptorSize);
-    DescriptorHandle rtvHandle = window->GetCurrentRenderTargetView();
-    //CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_dsvHeap->GetCPUDescriptorHandleForHeapStart());
-    DescriptorHandle dsvHandle = window->GetDepthStencilView();
-
-    // Clear + draw
-    const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
-    m_commandList->ClearRenderTargetView(rtvHandle.cpu, clearColor, 0, nullptr);
-    m_commandList->ClearDepthStencilView(dsvHandle.cpu, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0,0, nullptr);
-
-    // Bind root signature (must be set before any draw calls)
-    m_commandList->SetPipelineState(m_pipelineState.Get());
-    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-
-    //Set input assembler
-    m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-
-    // Setup viewport & scissor
-    m_commandList->RSSetViewports(1, &window->GetViewport());
-    m_commandList->RSSetScissorRects(1, &window->GetScissorRect());
-
-    m_commandList->OMSetRenderTargets(1, &rtvHandle.cpu, FALSE, &dsvHandle.cpu);
-
-    ID3D12DescriptorHeap* descriptorHeaps[] = { app->GetDescriptorsModule()->GetSRV()->GetHeap(), app->GetDescriptorsModule()->GetSamplers()->GetHeap() };
-    m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-
-    //Assign composed MVP matrix
-    auto camera = app->GetCameraModule();
-    Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
-    m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
-    m_commandList->SetGraphicsRootDescriptorTable(1, texture._srv.gpu);
-    m_commandList->SetGraphicsRootDescriptorTable(2, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));
-
-    m_commandList->DrawInstanced(6, 1, 0, 0);
-
-    if (_showDebugDrawPass) {
-        dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
-        dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
-        debugDrawPass->record(m_commandList.Get(), window->Width(), window->Height(), camera->GetViewMatrix(), camera->GetProjectionMatrix());
-    }
+    RenderTriangle(m_commandList.Get(), window->GetCurrentRenderTargetView().cpu, window->GetDepthStencilView());
     
 }
-
 
 void D3D12Module::render()
 {
@@ -288,6 +247,52 @@ void D3D12Module::LoadAssets()
     }
 
     texture = app->GetResourcesModule()->CreateTexture2DFromFile(L"Assets/Textures/dog.dds", "DogBuffer");
+}
+
+void D3D12Module::RenderBackground(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle)
+{
+    const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
+    m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+    m_commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+    m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+}
+
+void D3D12Module::RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle)
+{
+    // Clear + draw
+    RenderBackground(m_commandList.Get(), rtvHandle, dsvHandle);
+
+    // Bind root signature (must be set before any draw calls)
+    m_commandList->SetPipelineState(m_pipelineState.Get());
+    m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+
+    //Set input assembler
+    m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+
+    // Setup viewport & scissor
+    m_commandList->RSSetViewports(1, &window->GetViewport());
+    m_commandList->RSSetScissorRects(1, &window->GetScissorRect());
+
+
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->GetDescriptorsModule()->GetSRV()->GetHeap(), app->GetDescriptorsModule()->GetSamplers()->GetHeap() };
+    m_commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+    //Assign composed MVP matrix
+    auto camera = app->GetCameraModule();
+    Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
+    m_commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
+    m_commandList->SetGraphicsRootDescriptorTable(1, texture.SRV().gpu);
+    m_commandList->SetGraphicsRootDescriptorTable(2, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));
+
+    m_commandList->DrawInstanced(6, 1, 0, 0);
+
+    if (_showDebugDrawPass) {
+        dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
+        dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
+        debugDrawPass->record(m_commandList.Get(), window->Width(), window->Height(), camera->GetViewMatrix(), camera->GetProjectionMatrix());
+    }
 }
 
 void D3D12Module::ToggleDebugDraw()
