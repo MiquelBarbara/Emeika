@@ -3,6 +3,7 @@
 
 #include "Application.h"
 #include "DescriptorHeap.h"
+#include "DescriptorsModule.h"
 
 #include "imgui.h"
 #include "backends/imgui_impl_win32.h"
@@ -11,15 +12,6 @@
 
 ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd, D3D12_CPU_DESCRIPTOR_HANDLE cpuTextHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuTextHandle)
 {
-
-    // It's not optimal but makes ImGuiPass independent from ModuleDescriptor slides
-    heap = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 100);
-
-    if (!cpuTextHandle.ptr || !gpuTextHandle.ptr)
-    {
-        cpuTextHandle = heap->GetCPUHandle(0);
-        gpuTextHandle = heap->GetGPUHandle(0);
-    }
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -92,11 +84,10 @@ void ImGuiPass::record(ID3D12GraphicsCommandList* commandList)
 
     // It's not optimal but makes ImGuiPass independent from ModuleDescriptor slides
 
-    if (heap)
-    {
-        ID3D12DescriptorHeap* descriptorHeaps[] = { heap->GetHeap()};
-        commandList->SetDescriptorHeaps(1, descriptorHeaps);
-    }
+    ID3D12DescriptorHeap* descriptorHeaps[] = {
+        app->GetDescriptorsModule()->GetSRV()->GetHeap()
+    };
+    commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 

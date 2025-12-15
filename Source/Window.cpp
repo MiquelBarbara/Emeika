@@ -9,7 +9,7 @@ Window::Window(HWND hWnd): _hwnd(hWnd)
 {
     GetWindowSize(windowWidth, windowHeight);
     m_swapChain = CreateSwapChain(hWnd, app->GetD3D12Module()->GetCommandQueue()->GetD3D12CommandQueue(), windowWidth, windowHeight);
-    m_currentBackBufferIndex = m_swapChain.Get()->GetCurrentBackBufferIndex();
+
     m_depthStencil = app->GetResourcesModule()->CreateDepthBuffer(windowWidth, windowHeight);
     CreateRenderTargetViews(app->GetD3D12Module()->GetDevice());
 
@@ -82,10 +82,9 @@ ComPtr<SwapChain> Window::CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> 
     return dxgiSwapChain4;
 }
 
-void Window::Present() const
+void Window::Present()
 {
     m_swapChain.Get()->Present(0, CheckTearingSupport() ? DXGI_PRESENT_ALLOW_TEARING : 0);
-    m_currentBackBufferIndex = m_swapChain.Get()->GetCurrentBackBufferIndex();
 }
 
 void Window::GetWindowSize(unsigned& width, unsigned& height) {
@@ -128,8 +127,6 @@ void Window::Resize()
         DXCall(m_swapChain->GetDesc(&swapChainDesc));
 
         DXCall(m_swapChain->ResizeBuffers(bufferCount, width, height, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
-
-        m_currentBackBufferIndex = m_swapChain->GetCurrentBackBufferIndex();
 
         // Recreate the render target views
         CreateRenderTargetViews(app->GetD3D12Module()->GetDevice());

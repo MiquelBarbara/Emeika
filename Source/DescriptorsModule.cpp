@@ -13,6 +13,8 @@ bool DescriptorsModule::init()
     _srv = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 256);
     _samplers = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, SampleType::COUNT);
 
+    _offscreenRtv = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 10);
+
     CreateDefaultSamplers();
 	return true;
 }

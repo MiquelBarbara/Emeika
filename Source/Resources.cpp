@@ -61,11 +61,12 @@ RenderTexture::RenderTexture(TextureInitInfo info): _texture(info)
     auto device = app->GetD3D12Module()->GetDevice();
 
     for (int i{ 0 }; i < _mipCount; i++) {
-        _rtv[i] = app->GetDescriptorsModule()->GetRTV()->Allocate();
+        _rtv[i] = app->GetDescriptorsModule()->GetOffscreenRTV()->Allocate();
         device->CreateRenderTargetView(GetResource(), &desc, _rtv[i].cpu);
         ++desc.Texture2D.MipSlice;
     }
 }
+
 
 DepthBuffer::DepthBuffer(TextureInitInfo info)
 {

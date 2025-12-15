@@ -29,7 +29,7 @@ public:
 	void LoadPipeline();
 	void LoadAssets();
 	void RenderBackground(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle);
-	void RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle);
+	void RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, ImVec2 textureSize);
 	void ToggleDebugDraw();
 	
 	void CreateRootSignature();
@@ -41,6 +41,8 @@ public:
 	constexpr Window* GetWindow() const { return window; }
 	CommandQueue* GetCommandQueue() const { return _commandQueue.get(); }
 	ID3D12GraphicsCommandList4* GetCommandList() const { return m_commandList.Get(); }
+	ID3D12GraphicsCommandList4* GetImGuiCommandList() const { return m_ImGuiCommandList.Get(); }
+	RenderTexture* GetOffscreenRenderTarget() { return &offscreenRenderTarget; }
 
 	constexpr bool* GetShowDebugDrawBool() { return &_showDebugDrawPass; }
 	void SetSampler(const int type) { _sampleType = static_cast<DescriptorsModule::SampleType>(type); }
@@ -76,4 +78,9 @@ private:
 
 	bool _showDebugDrawPass = true;
 	DescriptorsModule::SampleType _sampleType = DescriptorsModule::SampleType::POINT_CLAMP;
+
+	ComPtr<ID3D12GraphicsCommandList4> m_ImGuiCommandList;
+	RenderTexture offscreenRenderTarget{};
+	DepthBuffer offscreenDepthBuffer{};
+	ImVec2 offscreenTextureSize = ImVec2(800, 600);
 };

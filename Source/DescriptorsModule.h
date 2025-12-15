@@ -38,12 +38,15 @@ public:
 	constexpr DescriptorHeap* GetSRV() const { return _srv; }
 	constexpr DescriptorHeap* GetSamplers() const { return _samplers; }
 
+	constexpr DescriptorHeap* GetOffscreenRTV() const { return _offscreenRtv; }
+
 
 private:
 	DescriptorHeap* _rtv{};
 	DescriptorHeap* _dsv{};
 	DescriptorHeap* _srv{};
 	DescriptorHeap* _samplers{};
+	DescriptorHeap* _offscreenRtv{};
 
 	ComPtr<ID3D12Device4> _device{};
 };

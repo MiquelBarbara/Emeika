@@ -20,15 +20,32 @@ void EditorModule::RenderSceneEditorWindow()
     // Get available content region for the scene view
     ImVec2 contentRegion = ImGui::GetContentRegionAvail();
 
-    // Only resize if we have valid dimensions (avoid zero-size textures)
+    // Only resize if we have valid dimensions
     if (contentRegion.x > 0 && contentRegion.y > 0) {
         // Check if we need to resize (with some threshold to avoid constant resizing)
         if (abs(contentRegion.x - _sceneViewSize.x) > 1.0f ||
             abs(contentRegion.y - _sceneViewSize.y) > 1.0f) {
             _sceneViewSize = contentRegion;
+
+            // Request resize of scene texture in D3D12Module
+            D3D12Module* d3d12 = app->GetD3D12Module();
+            // You'll need to add a method to set the resize flag
+            // d3d12->SetSceneTextureSize(_sceneViewSize);
         }
 
-        // Display the scene texture
+        // Display the scene texture if available
+        D3D12Module* d3d12 = app->GetD3D12Module();
+        RenderTexture* sceneTexture = d3d12->GetOffscreenRenderTarget();
+
+        if (sceneTexture && sceneTexture->GetResource()) {
+            // Convert the SRV GPU handle to ImTextureID
+            DescriptorHandle srvHandle = sceneTexture->SRV();
+            ImTextureID textureID = (ImTextureID)srvHandle.gpu.ptr;
+
+            // Display the texture
+            ImGui::Image(textureID, _sceneViewSize);
+        }
+        else {
             // Fallback: draw a placeholder
             ImDrawList* drawList = ImGui::GetWindowDrawList();
             ImVec2 p0 = ImGui::GetCursorScreenPos();
@@ -36,13 +53,12 @@ void EditorModule::RenderSceneEditorWindow()
             drawList->AddRectFilled(p0, p1, IM_COL32(30, 30, 40, 255));
             drawList->AddText(ImVec2(p0.x + 10, p0.y + 10), IM_COL32(255, 255, 255, 255),
                 "Scene View - Render Texture Not Ready");
-        
+        }
     }
 
     // Update viewport hover/focus state
     _isViewportHovered = ImGui::IsWindowHovered();
     _isViewportFocused = ImGui::IsWindowFocused();
-
 
     ImGui::End();
     ImGui::PopStyleVar();
@@ -150,7 +166,8 @@ EditorModule::~EditorModule()
 bool EditorModule::postInit()
 {
 	D3D12Module* _d3d12 = app->GetD3D12Module();
-	_gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle());
+    
+	_gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle(), app->GetDescriptorsModule()->GetSRV()->GetCPUHandle(0), app->GetDescriptorsModule()->GetSRV()->GetGPUHandle(0));
 
 	return true;
 }
@@ -186,7 +203,7 @@ void EditorModule::preRender()
 void EditorModule::render()
 {
 
-	_gui->record(app->GetD3D12Module()->GetCommandList());
+	_gui->record(app->GetD3D12Module()->GetImGuiCommandList());
 
 }
 

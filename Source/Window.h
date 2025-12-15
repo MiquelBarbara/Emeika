@@ -25,7 +25,7 @@ public:
 	Window(HWND hWnd);
 	~Window();
 	ComPtr<SwapChain> CreateSwapChain(HWND hWnd, ComPtr<ID3D12CommandQueue> commandQueue, uint32_t width,  uint32_t height);
-	void Present() const;
+	void Present();
 	void Resize();
 	void CreateRenderTargetViews(ComPtr<ID3D12Device2> device);
 	bool CheckTearingSupport() const;
@@ -33,8 +33,8 @@ public:
 
 	constexpr uint32_t Width() const { return (uint32_t)m_viewport.Width; }
 	constexpr uint32_t Height() const { return (uint32_t)m_viewport.Height; }
-	ID3D12Resource* GetCurrentRenderTarget() const { return m_renderTargets[m_currentBackBufferIndex].resource.Get(); }
-	constexpr DescriptorHandle GetCurrentRenderTargetView() const { return m_renderTargets[m_currentBackBufferIndex].rtv; }
+	ID3D12Resource* GetCurrentRenderTarget() const { return m_renderTargets[GetCurrentBackBufferIndex()].resource.Get(); }
+	constexpr DescriptorHandle GetCurrentRenderTargetView() const { return m_renderTargets[GetCurrentBackBufferIndex()].rtv; }
 	D3D12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView() { return m_depthStencil.DSV(); }
 	constexpr const D3D12_VIEWPORT& GetViewport() { return m_viewport; }
 	constexpr const D3D12_RECT& GetScissorRect() { return m_scissorRect; }
@@ -46,7 +46,6 @@ private:
 	RenderTarget m_renderTargets[bufferCount]{};
 	DepthBuffer m_depthStencil;
 
-	mutable uint32_t m_currentBackBufferIndex{ 0 };
 	UINT32 _flags{ 0 };
 
 	// Viewport and ScissorRect
