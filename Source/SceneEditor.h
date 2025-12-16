@@ -1,21 +1,18 @@
 #pragma once
 #include "Resources.h"
 #include "CameraModule.h"
+#include "EditorWindow.h"
 
-class SceneEditor
+class SceneEditor: public EditorWindow
 {
 public:
-    void Draw() {
-        ImVec2 viewportSize = ImGui::GetContentRegionAvail();
-
-        // Display rendered scene
-        ImGui::Image((ImTextureID)m_RenderTexture.SRV().gpu.ptr,
-            viewportSize,
-            ImVec2(0, 0), ImVec2(1, 1));
-    }
+    SceneEditor(RenderTexture* renderTexture);
+    const char* GetWindowName() const override { return "Scene Editor"; }
+    void Render() override;
 private:
-    RenderTexture m_RenderTexture;
-    CameraModule* m_Camera;
-    float m_ClearColor[4] = { 0.45f, 0.55f, 0.60f, 1.00f };
+    RenderTexture* m_RenderTexture;
+
+    bool _isViewportHovered = false;
+    bool _isViewportFocused = false;
 };
 

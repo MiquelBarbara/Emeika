@@ -7,6 +7,7 @@
 #include "CameraModule.h"
 #include "DescriptorsModule.h"
 #include "TimeModule.h"
+#include "PerformanceProfiler.h"
 #include <thread>
 
 using namespace std::chrono;
@@ -36,9 +37,10 @@ bool Application::init()
 {
 	bool ret = true;
 
+    PERF_BEGIN("Engine Init");
 	for(auto it = modules.begin(); it != modules.end() && ret; ++it)
 		ret = (*it)->init();
-
+    PERF_END("Engine Init");
 	return ret;
 }
 
@@ -57,17 +59,23 @@ void Application::update()
 
     if (!app->paused)
     {
+        PERF_BEGIN("Engine Update");
         for (auto it = modules.begin(); it != modules.end(); ++it)
             (*it)->update();
 
+        PERF_END("Engine Update");
+
+        PERF_BEGIN("Engine Render");
         for (auto it = modules.begin(); it != modules.end(); ++it)
             (*it)->preRender();
+
 
         for (auto it = modules.begin(); it != modules.end(); ++it)
             (*it)->render();
 
         for (auto it = modules.begin(); it != modules.end(); ++it)
             (*it)->postRender();
+        PERF_END("Engine Render");
     }
 
     _timeModule->WaitForNextFrame();

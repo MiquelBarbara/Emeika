@@ -21,6 +21,8 @@ bool DescriptorsModule::init()
 
 bool DescriptorsModule::cleanUp()
 {
+    delete _offscreenRtv;
+    _offscreenRtv = nullptr;
     delete _rtv;
     _rtv = nullptr;
     delete _dsv;

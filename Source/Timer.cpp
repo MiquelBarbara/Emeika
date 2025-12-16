@@ -21,6 +21,6 @@ uint64_t Timer::Stop()
 {
 	_stop = true;
 	_end = steady_clock::now();
-	return duration_cast<milliseconds>(_start - _end).count();
+	return duration_cast<milliseconds>(_end - _start).count();
 }
 

@@ -1,75 +1,105 @@
 #pragma once
-
+#include "EditorWindow.h"
 
 static char* Strdup(const char* s) { IM_ASSERT(s); size_t len = strlen(s) + 1; void* buf = ImGui::MemAlloc(len); IM_ASSERT(buf); return (char*)memcpy(buf, (const void*)s, len); }
 
-class Logger
+class Logger: public EditorWindow
 {
 public:
-    Logger()
+    enum class LogType
     {
-        Clear();
-        InputBuf[0] = '\0';
-    }
+        LOG_INFO,
+        LOG_WARNING,
+        LOG_ERROR
+    };
 
-    void Clear()
+    struct LogEntry
     {
-        for (int i = 0; i < Items.Size; i++)
-            ImGui::MemFree(Items[i]);
-        Items.clear();
-    }
+        LogType type;
+        char* text;
+        float timeStamp;
+        int count;
 
-    void AddLog(const char* msg, ...)  IM_FMTARGS(2)
-    {
-        char buf[1024];
-        va_list args;
-        va_start(args, msg);
-        vsnprintf(buf, IM_ARRAYSIZE(buf), msg, args);
-        buf[IM_ARRAYSIZE(buf) - 1] = 0;
-        va_end(args);
-        Items.push_back(Strdup(buf));
-    }
+        LogEntry(LogType t, const char* msg, float time)
+			: type(t), timeStamp(time), count(1)
+		{
+			text = Strdup(msg);
+		}
 
-    void Draw(const char* title, bool* p_open = NULL)
-    {
-        if (!ImGui::Begin(title, p_open))
-        {
-            ImGui::End();
-            return;
-        }
-
-        // Display log scrolling region
-        ImGui::BeginChild("ScrollingRegion", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), false, ImGuiWindowFlags_HorizontalScrollbar);
-        for (int i = 0; i < Items.Size; i++)
-            ImGui::TextUnformatted(Items[i]);
-
-        if (AutoScroll && ImGui::GetScrollY() >= ImGui::GetScrollMaxY())
-            ImGui::SetScrollHereY(1.0f);
-        ImGui::EndChild();
-
-        // Input box
-        ImGui::Separator();
-        if (ImGui::InputText("Input", InputBuf, IM_ARRAYSIZE(InputBuf), ImGuiInputTextFlags_EnterReturnsTrue))
-        {
-            if (InputBuf[0] != '\0')
-            {
-                AddLog(InputBuf);
-                InputBuf[0] = '\0';
+        ~LogEntry()
+		{
+            if (text) {
+                ImGui::MemFree(text);
             }
-        }
-        ImGui::SameLine();
-        if (ImGui::Button("Clear"))
-            Clear();
+		}
+    };
 
-        ImGui::End();
+    Logger();
+    ~Logger();
+
+    const char* GetWindowName() const override { return "Console"; }
+    void Render() override;
+
+
+    template<typename... Args>
+    static void Log(const char* fmt, Args... args)
+    {
+        Instance()->AddLog(LogType::LOG_INFO, "General", fmt, args...);
     }
+
+    template<typename... Args>
+    static void Warning(const char* fmt, Args... args)
+    {
+        Instance()->AddLog(LogType::LOG_WARNING, "Warning", fmt, args...);
+    }
+
+    template<typename... Args>
+    static void Error(const char* fmt, Args... args)
+    {
+        Instance()->AddLog(LogType::LOG_ERROR, "Error", fmt, args...);
+    }
+
+    static Logger* Instance();
         
 private:
-    char InputBuf[256];
-    ImVector<char*> Items;
-    bool AutoScroll = true;
+    template<typename... Args>
+    void AddLog(LogType type, const char* category, const char* fmt, Args... args)
+    {
+        char buffer[4096];
+        va_list argsList;
+        va_start(argsList, fmt);
+        vsnprintf(buffer, sizeof(buffer), fmt, argsList);
+        buffer[sizeof(buffer) - 1] = 0;
+        va_end(argsList);
 
+        AddLogEntry(type, category, buffer);
+    }
+
+    void AddLogEntry(LogType type, const char* category, const char* text);
+    const char* GetTypePrefix(LogType type);
+    ImU32 GetTypeColor(LogType type);
+
+
+    // Storage
+    ImVector<LogEntry*> m_Items;
+    char m_InputBuf[256];
+    char m_FilterBuf[256];
+
+    // Configuration
+    bool m_AutoScroll = true;
+    bool m_ShowTimestamps = true;
+    bool m_ShowCategory = true;
+    bool m_WrapText = false;
+    int m_MaxEntries = 1000;
+
+    static Logger* s_Instance;
 };
 
-extern Logger* logger;
+#define LOG_INFO(...)     Logger::Log(__VA_ARGS__)
+#define LOG_WARNING(...)  Logger::Warning(__VA_ARGS__)
+#define LOG_ERROR(...)    Logger::Error(__VA_ARGS__)
+#define LOG_DEBUG(...)    Logger::Debug(__VA_ARGS__)
+#define LOG_SUCCESS(...)  Logger::Success(__VA_ARGS__)
+
+#define LOG_CAT(category, ...) Logger::Log(category, __VA_ARGS__)
 

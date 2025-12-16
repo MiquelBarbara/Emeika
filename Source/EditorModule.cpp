@@ -5,65 +5,16 @@
 #include "vector"
 #include <backends/imgui_impl_dx12.h>
 #include "Resources.h"
+#include "SceneEditor.h"
+#include "HardwareWindow.h"
+#include "PerformanceWindow.h"
+#include "EditorWindow.h"
 
 using namespace std;
 
 Logger* logger = nullptr;
 
-void EditorModule::RenderSceneEditorWindow()
-{
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-    ImGui::Begin("Scene Editor", &_showSceneEditor,
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_NoScrollWithMouse);
-
-    // Get available content region for the scene view
-    ImVec2 contentRegion = ImGui::GetContentRegionAvail();
-
-    // Only resize if we have valid dimensions
-    if (contentRegion.x > 0 && contentRegion.y > 0) {
-        // Check if we need to resize (with some threshold to avoid constant resizing)
-        if (abs(contentRegion.x - _sceneViewSize.x) > 1.0f ||
-            abs(contentRegion.y - _sceneViewSize.y) > 1.0f) {
-            _sceneViewSize = contentRegion;
-
-            // Request resize of scene texture in D3D12Module
-            D3D12Module* d3d12 = app->GetD3D12Module();
-            // You'll need to add a method to set the resize flag
-            // d3d12->SetSceneTextureSize(_sceneViewSize);
-        }
-
-        // Display the scene texture if available
-        D3D12Module* d3d12 = app->GetD3D12Module();
-        RenderTexture* sceneTexture = d3d12->GetOffscreenRenderTarget();
-
-        if (sceneTexture && sceneTexture->GetResource()) {
-            // Convert the SRV GPU handle to ImTextureID
-            DescriptorHandle srvHandle = sceneTexture->SRV();
-            ImTextureID textureID = (ImTextureID)srvHandle.gpu.ptr;
-
-            // Display the texture
-            ImGui::Image(textureID, _sceneViewSize);
-        }
-        else {
-            // Fallback: draw a placeholder
-            ImDrawList* drawList = ImGui::GetWindowDrawList();
-            ImVec2 p0 = ImGui::GetCursorScreenPos();
-            ImVec2 p1 = ImVec2(p0.x + contentRegion.x, p0.y + contentRegion.y);
-            drawList->AddRectFilled(p0, p1, IM_COL32(30, 30, 40, 255));
-            drawList->AddText(ImVec2(p0.x + 10, p0.y + 10), IM_COL32(255, 255, 255, 255),
-                "Scene View - Render Texture Not Ready");
-        }
-    }
-
-    // Update viewport hover/focus state
-    _isViewportHovered = ImGui::IsWindowHovered();
-    _isViewportFocused = ImGui::IsWindowFocused();
-
-    ImGui::End();
-    ImGui::PopStyleVar();
-}
-
+// In the future this will be also a EditorWindow
 void MainMenuBar()
 {
     if (ImGui::BeginMainMenuBar())
@@ -74,12 +25,6 @@ void MainMenuBar()
         }
         if (ImGui::BeginMenu("Edit"))
         {
-            if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
-            if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {} // Disabled item
-            ImGui::Separator();
-            if (ImGui::MenuItem("Cut", "CTRL+X")) {}
-            if (ImGui::MenuItem("Copy", "CTRL+C")) {}
-            if (ImGui::MenuItem("Paste", "CTRL+V")) {}
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -90,12 +35,12 @@ void MainDockspace(bool* p_open)
 {
     // Fullscreen window flags
     ImGuiWindowFlags window_flags =
-        ImGuiWindowFlags_NoDocking |
         ImGuiWindowFlags_NoTitleBar |
         ImGuiWindowFlags_NoCollapse |
         ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoBringToFrontOnFocus |
+        ImGuiViewportFlags_NoAutoMerge |
         ImGuiWindowFlags_NoNavFocus;
 
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -110,21 +55,49 @@ void MainDockspace(bool* p_open)
 
     ImGui::PopStyleVar(2);
 
+    MainMenuBar();
     // Create the DockSpace
     ImGuiID dockspace_id = ImGui::GetID("MainDockspace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+    ImGui::DockSpace(dockspace_id, ImVec2(0, 0), ImGuiDockNodeFlags_None);
 
     ImGui::End();
 }
 
-void SetupDockLayout()
+
+void EditorModule::SetupDockLayout()
 {
     ImGuiID dockspace_id = ImGui::GetID("MainDockspace");
 
     // Clear previous layout
     ImGui::DockBuilderRemoveNode(dockspace_id);
     ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
-    ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->WorkSize);
+    ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetIO().DisplaySize);
+
+    ImGuiID dock_main = dockspace_id;
+
+    // Split main dock into left (for Grid/Axis + Texture) and right (for everything else)
+    ImGuiID dock_left, dock_right;
+    ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Left, 0.25f, &dock_left, &dock_right);
+
+    ImGuiID dock_right_top, dock_right_bottom;
+    ImGui::DockBuilderSplitNode(dock_right, ImGuiDir_Down, 0.40f, &dock_right_bottom, &dock_right_top);
+
+    ImGuiID dock_bottom_left, dock_bottom_right;
+    ImGui::DockBuilderSplitNode(dock_right_bottom, ImGuiDir_Left, 0.5f, &dock_bottom_left, &dock_bottom_right);
+
+    ImGuiID dock_bottom_right_top, dock_bottom_right_bottom;
+    ImGui::DockBuilderSplitNode(dock_bottom_right, ImGuiDir_Up, 0.5f, &dock_bottom_right_top, &dock_bottom_right_bottom);
+
+    ImGui::DockBuilderDockWindow("Grid/Axis", dock_left);
+    ImGui::DockBuilderDockWindow("Textures", dock_left);
+
+    ImGui::DockBuilderDockWindow("Scene Editor", dock_right_top);
+
+    ImGui::DockBuilderDockWindow("Console", dock_bottom_left);
+
+    ImGui::DockBuilderDockWindow("Hardware Info", dock_bottom_right_top);
+
+    ImGui::DockBuilderDockWindow("Performance", dock_bottom_right_bottom);
 
     ImGui::DockBuilderFinish(dockspace_id);
 }
@@ -146,67 +119,76 @@ void Style() {
 
 }
 
-
 EditorModule::EditorModule()
 {
     //_console = Console();
-    logger = new Logger();
+    _editorWindows.push_back(_logger = new Logger());
+    _editorWindows.push_back(_hardwareWindow = new HardwareWindow());
+    _editorWindows.push_back(_performanceWindow = new PerformanceWindow());
     _configurationView = new ConfigurationView();
-
 }
 
 EditorModule::~EditorModule()
 {
 	_gui->~ImGuiPass();
     //_sceneView->~SceneView();
-    logger->~Logger();
     _debugDrawPass->~DebugDrawPass();
 }
 
 bool EditorModule::postInit()
 {
 	D3D12Module* _d3d12 = app->GetD3D12Module();
-    
 	_gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle(), app->GetDescriptorsModule()->GetSRV()->GetCPUHandle(0), app->GetDescriptorsModule()->GetSRV()->GetGPUHandle(0));
-
+    _editorWindows.push_back(_sceneView = new SceneEditor(_d3d12->GetOffscreenRenderTarget()));
 	return true;
+}
+
+void EditorModule::update()
+{
+    for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
+        (*it)->Update();
 }
 
 void EditorModule::preRender()
 {
 	_gui->startFrame();
 
-    if(_firstFrame){
-		SetupDockLayout();
-        Style();
-		_firstFrame = false;
-	}
+    MainMenuBar();
+    //MainDockspace(&_showMainDockspace);
+    if (_firstFrame) {
 
-    RenderSceneEditorWindow();
+        for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
+            (*it)->Render();
+
+        SetupDockLayout();
+        Style();
+        _firstFrame = false;
+        ImGui::EndFrame();
+        return;
+    }
+
+
+    for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
+        (*it)->Render();
 
     _configurationView->Update();
     _configurationView->Render();
-
-    D3D12Module* _d3d12 = app->GetD3D12Module();
-
-
-    // TODO: Main Menu Bar, Inspector, Asset Browser, hierarchy, scene.
-    //MainMenuBar();
-    //MainDockspace(&_showMainDockspace);
-
-	ImGui::ShowDemoWindow();
-    logger->Draw("Console");
 
     ImGui::EndFrame();
 }
 
 void EditorModule::render()
 {
-
 	_gui->record(app->GetD3D12Module()->GetImGuiCommandList());
-
 }
 
 void EditorModule::postRender()
 {
+}
+
+bool EditorModule::cleanUp()
+{
+    for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
+        (*it)->CleanUp();
+    return true;
 }

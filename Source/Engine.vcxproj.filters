@@ -55,9 +55,6 @@
     <ClCompile Include="ResourcesModule.cpp">
       <Filter>D3D12\Resources</Filter>
     </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>D3D12</Filter>
-    </ClCompile>
     <ClCompile Include="DebugDrawPass.cpp">
       <Filter>Editor</Filter>
     </ClCompile>
@@ -97,8 +94,26 @@
     <ClCompile Include="CommandQueue.cpp">
       <Filter>D3D12\Wrappers</Filter>
     </ClCompile>
-    <ClCompile Include="SceneEditor.cpp">
+    <ClCompile Include="SwapChain.cpp">
+      <Filter>D3D12\Wrappers</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorWindow.cpp">
       <Filter>Editor</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneEditor.cpp">
+      <Filter>Editor\EditorWindows</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger.cpp">
+      <Filter>Editor\EditorWindows</Filter>
+    </ClCompile>
+    <ClCompile Include="HardwareWindow.cpp">
+      <Filter>Editor\EditorWindows</Filter>
+    </ClCompile>
+    <ClCompile Include="PerformanceWindow.cpp">
+      <Filter>Editor\EditorWindows\Performance</Filter>
+    </ClCompile>
+    <ClCompile Include="PerformanceProfiler.cpp">
+      <Filter>Editor\EditorWindows\Performance</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -159,12 +174,6 @@
     <ClInclude Include="ResourcesModule.h">
       <Filter>D3D12\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="Logger.h">
-      <Filter>Editor</Filter>
-    </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>D3D12</Filter>
-    </ClInclude>
     <ClInclude Include="DebugDrawPass.h">
       <Filter>Editor</Filter>
     </ClInclude>
@@ -213,8 +222,26 @@
     <ClInclude Include="TimeModule.h">
       <Filter>Core\Timers</Filter>
     </ClInclude>
-    <ClInclude Include="SceneEditor.h">
+    <ClInclude Include="SwapChain.h">
+      <Filter>D3D12\Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorWindow.h">
       <Filter>Editor</Filter>
+    </ClInclude>
+    <ClInclude Include="SceneEditor.h">
+      <Filter>Editor\EditorWindows</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Editor\EditorWindows</Filter>
+    </ClInclude>
+    <ClInclude Include="HardwareWindow.h">
+      <Filter>Editor\EditorWindows</Filter>
+    </ClInclude>
+    <ClInclude Include="PerformanceWindow.h">
+      <Filter>Editor\EditorWindows\Performance</Filter>
+    </ClInclude>
+    <ClInclude Include="PerformanceProfiler.h">
+      <Filter>Editor\EditorWindows\Performance</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -288,6 +315,12 @@
     </Filter>
     <Filter Include="D3D12\Wrappers\Descriptors">
       <UniqueIdentifier>{7881f684-8e13-48ef-b782-2e85ff9bfc29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\EditorWindows">
+      <UniqueIdentifier>{a038094e-e82e-4c57-905b-c620699451e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\EditorWindows\Performance">
+      <UniqueIdentifier>{24930ee1-012e-4ad2-89ed-af29a2fd287c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

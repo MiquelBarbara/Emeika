@@ -183,10 +183,12 @@
     <ClInclude Include="DescriptorHeap.h" />
     <ClInclude Include="DescriptorsModule.h" />
     <ClInclude Include="EditorModule.h" />
+    <ClInclude Include="EditorWindow.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GamePad.h" />
     <ClInclude Include="Globals.h" />
+    <ClInclude Include="HardwareWindow.h" />
     <ClInclude Include="ImGuiPass.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Logger.h" />
@@ -196,6 +198,8 @@
     <ClInclude Include="Module.h" />
     <ClInclude Include="InputModule.h" />
     <ClInclude Include="Mouse.h" />
+    <ClInclude Include="PerformanceProfiler.h" />
+    <ClInclude Include="PerformanceWindow.h" />
     <ClInclude Include="PlatformHelpers.h" />
     <ClInclude Include="ReadData.h" />
     <ClInclude Include="Resource.h" />
@@ -206,7 +210,7 @@
     <ClInclude Include="TimeModule.h" />
     <ClInclude Include="Transform.h" />
     <ClInclude Include="UtilityGLFT.h" />
-    <ClInclude Include="Window.h" />
+    <ClInclude Include="SwapChain.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Timer.h" />
   </ItemGroup>
@@ -283,6 +287,7 @@
     <ClCompile Include="DescriptorHeap.cpp" />
     <ClCompile Include="DescriptorsModule.cpp" />
     <ClCompile Include="EditorModule.cpp" />
+    <ClCompile Include="EditorWindow.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="GamePad.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -296,13 +301,17 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="HardwareWindow.cpp" />
     <ClCompile Include="ImGuiPass.cpp" />
     <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="InputModule.cpp" />
+    <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Mouse.cpp" />
+    <ClCompile Include="PerformanceProfiler.cpp" />
+    <ClCompile Include="PerformanceWindow.cpp" />
     <ClCompile Include="Resources.cpp" />
     <ClCompile Include="ResourcesModule.cpp" />
     <ClCompile Include="SceneEditor.cpp" />
@@ -310,7 +319,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Window.cpp" />
+    <ClCompile Include="SwapChain.cpp" />
     <ClCompile Include="Timer.cpp" />
   </ItemGroup>
   <ItemGroup>

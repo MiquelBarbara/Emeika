@@ -8,7 +8,7 @@
 #include "DebugDrawPass.h"
 #include "CommandQueue.h"
 #include "DescriptorsModule.h"
-#include "Window.h"
+#include "SwapChain.h"
 
 // -----------------------------------------------------------------------------
 // D3D12Module
@@ -38,7 +38,7 @@ public:
 
 	ID3D12Device4* GetDevice() const { return m_device.Get(); }
 	constexpr HWND GetWindowHandle() const { return _hwnd; }
-	constexpr Window* GetWindow() const { return window; }
+	constexpr SwapChain* GetSwapChain() const { return _swapChain; }
 	CommandQueue* GetCommandQueue() const { return _commandQueue.get(); }
 	ID3D12GraphicsCommandList4* GetCommandList() const { return m_commandList.Get(); }
 	ID3D12GraphicsCommandList4* GetImGuiCommandList() const { return m_ImGuiCommandList.Get(); }
@@ -47,8 +47,10 @@ public:
 	constexpr bool* GetShowDebugDrawBool() { return &_showDebugDrawPass; }
 	void SetSampler(const int type) { _sampleType = static_cast<DescriptorsModule::SampleType>(type); }
 	constexpr Matrix* GetModelMatrix() { return &model; }
+	IDXGIAdapter4* GetAdapter() const { return m_adapter.Get(); }
+	void ResizeOffscreenRenderTarget(const int width, const int height);
 private:
-
+	ComPtr<IDXGIAdapter4> m_adapter;
 	// The DXGI factory used to create the swap chain and other DXGI objects
 	ComPtr<IDXGIFactory6> m_dxgiFactory;
 	// The main Direct3D 12 device interface used to create resources and command objects
@@ -69,7 +71,7 @@ private:
 
 	std::unique_ptr<DebugDrawPass> debugDrawPass;
 	std::unique_ptr<CommandQueue> _commandQueue;
-	Window* window;
+	SwapChain* _swapChain;
 	HWND _hwnd;
 
 	Matrix model = Matrix::Identity;

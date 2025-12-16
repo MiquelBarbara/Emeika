@@ -181,7 +181,7 @@ void CameraModule::SetFOV(const float fov)
 void CameraModule::SetAspectRatio()
 {
 	unsigned int width, height;
-	app->GetD3D12Module()->GetWindow()->GetWindowSize(width, height);
+	app->GetD3D12Module()->GetSwapChain()->GetWindowSize(width, height);
 	_aspectRatio = (float)width / (float)height;
 
 	// Recompute vertical FOV based on the new aspect ratio
@@ -218,7 +218,7 @@ void CameraModule::LookAt(const Vector3& lookAt)
 void CameraModule::Resize()
 {
 	unsigned int width, height;
-	app->GetD3D12Module()->GetWindow()->GetWindowSize(width, height);
+	app->GetD3D12Module()->GetSwapChain()->GetWindowSize(width, height);
 	if (height == 0) return;
 	SetAspectRatio();
 }

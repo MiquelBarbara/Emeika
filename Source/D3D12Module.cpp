@@ -26,7 +26,7 @@ bool D3D12Module::init()
 }
 
 bool D3D12Module::postInit() {
-    window = new Window(_hwnd);
+    _swapChain = new SwapChain(_hwnd);
     debugDrawPass = std::make_unique<DebugDrawPass>(m_device.Get(), _commandQueue->GetD3D12CommandQueue().Get(), false);
     offscreenRenderTarget = app->GetResourcesModule()->CreateRenderTexture(offscreenTextureSize.x, offscreenTextureSize.y);
     offscreenDepthBuffer = app->GetResourcesModule()->CreateDepthBuffer(offscreenTextureSize.x, offscreenTextureSize.y);
@@ -36,13 +36,13 @@ bool D3D12Module::postInit() {
 
 void D3D12Module::preRender()
 {
-    m_frameIndex = window->GetCurrentBackBufferIndex();
+    m_frameIndex = _swapChain->GetCurrentBackBufferIndex();
     _commandQueue->WaitForFenceValue(m_fenceValues[m_frameIndex]);
 
     // Reset command list and allocator
     m_commandList = _commandQueue->GetCommandList();
 
-    if (offscreenRenderTarget.GetResource()) {
+    /*if (offscreenRenderTarget.GetResource()) {
         // Transition scene texture to render target
         TransitionResource(m_commandList, offscreenRenderTarget.GetResource(),
             D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
@@ -60,23 +60,23 @@ void D3D12Module::preRender()
 
         uint64_t offscreenFence = _commandQueue->ExecuteCommandList(m_commandList);
         _commandQueue->WaitForFenceValue(offscreenFence);
-    }
+    }*/
 
     m_ImGuiCommandList = _commandQueue->GetCommandList();
-    TransitionResource(m_ImGuiCommandList, window->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    RenderBackground(m_ImGuiCommandList.Get(), window->GetCurrentRenderTargetView().cpu, window->GetDepthStencilView());
+    TransitionResource(m_ImGuiCommandList, _swapChain->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    RenderTriangle(m_ImGuiCommandList.Get(), _swapChain->GetCurrentRenderTargetView().cpu, _swapChain->GetDepthStencilView(), ImVec2(_swapChain->GetViewport().Width, _swapChain->GetViewport().Height));
 }
 
 void D3D12Module::render()
 {
     // Indicate that the back buffer will now be used to present.
-    TransitionResource(m_ImGuiCommandList, window->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    TransitionResource(m_ImGuiCommandList, _swapChain->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
     // Execute the command list.
     m_fenceValues[m_frameIndex] = _commandQueue->ExecuteCommandList(m_ImGuiCommandList);
 
     // Present the frame and allow tearing
-    window->Present();
+    _swapChain->Present();
 }
 
 void D3D12Module::postRender()
@@ -91,11 +91,11 @@ bool D3D12Module::cleanUp()
     debugDrawPass.reset();
 
     // 3. Shutdown window
-    if (window)
+    if (_swapChain)
     {
-        window->~Window();
-        delete window;
-        window = nullptr;
+        _swapChain->~SwapChain();
+        delete _swapChain;
+        _swapChain = nullptr;
     }
 
     // 4. Reset pipeline / root signature
@@ -141,9 +141,8 @@ void D3D12Module::LoadPipeline() {
 #else
     CreateDXGIFactory2(0, IID_PPV_ARGS(&m_dxgiFactory));
 #endif
-    ComPtr<IDXGIAdapter1> adapter;
-    DXCall(m_dxgiFactory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&adapter)));
-    D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device));
+    DXCall(m_dxgiFactory->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&m_adapter)));
+    D3D12CreateDevice(m_adapter.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&m_device));
 
 #ifdef  _DEBUG
     //Enable debugging layer. Requires Graphics Tools optional feature in Windows 10 SDK
@@ -153,7 +152,7 @@ void D3D12Module::LoadPipeline() {
 
         info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
         info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-        //info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+        info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
     }
 #endif
 
@@ -165,6 +164,14 @@ void D3D12Module::TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandLi
 {
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(),beforeState, afterState);
     commandList->ResourceBarrier(1, &barrier);
+}
+
+void D3D12Module::ResizeOffscreenRenderTarget(const int width, const int height)
+{
+    _commandQueue->Flush();
+    offscreenRenderTarget = app->GetResourcesModule()->CreateRenderTexture(width, height);
+	offscreenDepthBuffer = app->GetResourcesModule()->CreateDepthBuffer(width, height);
+    offscreenTextureSize = ImVec2(static_cast<float>(width), static_cast<float>(height));
 }
 
 void D3D12Module::CreateRootSignature() {
@@ -243,7 +250,7 @@ void D3D12Module::LoadAssets()
     // Create the vertex buffer.
     {
         unsigned width, height;
-        window->GetWindowSize(width, height);
+        _swapChain->GetWindowSize(width, height);
         float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
         // Define the geometry for a triangle.
