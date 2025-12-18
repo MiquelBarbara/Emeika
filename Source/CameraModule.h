@@ -20,13 +20,13 @@ public:
 	void Focus(Vector3& target);
 	void Orbit(Vector3& pos, Vector3& target);
 
-	void SetFOV(const float fov);
-	void SetAspectRatio();
+	void SetFOV(const float fov, const float width, const float height);
+	void SetAspectRatio(const float width, const float height);
 	void SetPlaneDistances(const float near, const float far);
 	void SetPosition(const Vector3& position);
 	void SetOrientation(const Vector3& orientation);
 	void LookAt(const Vector3& lookAt);
-	void Resize();
+	void Resize(const float width, const float height);
 
 	void CalculateProjectionMatrix();
 	void CalculateViewMatrix();
@@ -56,6 +56,7 @@ private:
 	float _farPlane = 1000.f;
 
 	InputModule* _inputModule = nullptr;
+	Vector2* _size;
 	float _speed = 3.0f;
 };
 

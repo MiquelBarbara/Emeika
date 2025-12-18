@@ -31,7 +31,26 @@ void MainMenuBar()
     }
 }
 
-void MainDockspace(bool* p_open)
+
+void Style() {
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 5.0f;
+    style.FrameRounding = 4.0f;
+    style.ScrollbarRounding = 5.0f;
+    style.GrabRounding = 4.0f;
+
+    style.Colors[ImGuiCol_WindowBg] = ImVec4(0.1f, 0.105f, 0.11f, 1.0f);
+    style.Colors[ImGuiCol_Header] = ImVec4(0.2f, 0.205f, 0.21f, 1.0f);
+    style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.3f, 0.305f, 0.31f, 1.0f);
+    style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.15f, 0.1505f, 0.151f, 1.0f);
+    style.Colors[ImGuiCol_Button] = ImVec4(0.2f, 0.205f, 0.21f, 1.0f);
+    style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.3f, 0.305f, 0.31f, 1.0f);
+    style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.15f, 0.1505f, 0.151f, 1.0f);
+
+}
+
+
+void EditorModule::MainDockspace(bool* p_open)
 {
     // Fullscreen window flags
     ImGuiWindowFlags window_flags =
@@ -60,18 +79,26 @@ void MainDockspace(bool* p_open)
     ImGuiID dockspace_id = ImGui::GetID("MainDockspace");
     ImGui::DockSpace(dockspace_id, ImVec2(0, 0), ImGuiDockNodeFlags_None);
 
+    if (_firstFrame) {
+        for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
+            (*it)->Render();
+
+        SetupDockLayout(dockspace_id);
+        Style();
+        _firstFrame = false;
+    }
+
     ImGui::End();
 }
 
 
-void EditorModule::SetupDockLayout()
+void EditorModule::SetupDockLayout(ImGuiID dockspace_id)
 {
-    ImGuiID dockspace_id = ImGui::GetID("MainDockspace");
 
     // Clear previous layout
     ImGui::DockBuilderRemoveNode(dockspace_id);
-    ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
-    ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetIO().DisplaySize);
+    ImGui::DockBuilderAddNode(dockspace_id);
+    ImGui::DockBuilderSetNodeSize(dockspace_id, ImGui::GetMainViewport()->Size);
 
     ImGuiID dock_main = dockspace_id;
 
@@ -97,26 +124,9 @@ void EditorModule::SetupDockLayout()
 
     ImGui::DockBuilderDockWindow("Hardware Info", dock_bottom_right_top);
 
-    ImGui::DockBuilderDockWindow("Performance", dock_bottom_right_bottom);
+    ImGui::DockBuilderDockWindow("Performance", dock_bottom_right_top);
 
     ImGui::DockBuilderFinish(dockspace_id);
-}
-
-void Style() {
-    ImGuiStyle& style = ImGui::GetStyle();
-	style.WindowRounding = 5.0f;
-	style.FrameRounding = 4.0f;
-	style.ScrollbarRounding = 5.0f;
-	style.GrabRounding = 4.0f;
-
-	style.Colors[ImGuiCol_WindowBg] = ImVec4(0.1f, 0.105f, 0.11f, 1.0f);
-	style.Colors[ImGuiCol_Header] = ImVec4(0.2f, 0.205f, 0.21f, 1.0f);
-	style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.3f, 0.305f, 0.31f, 1.0f);
-	style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.15f, 0.1505f, 0.151f, 1.0f);
-	style.Colors[ImGuiCol_Button] = ImVec4(0.2f, 0.205f, 0.21f, 1.0f);
-	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.3f, 0.305f, 0.31f, 1.0f);
-	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.15f, 0.1505f, 0.151f, 1.0f);
-
 }
 
 EditorModule::EditorModule()
@@ -154,19 +164,10 @@ void EditorModule::preRender()
 	_gui->startFrame();
 
     MainMenuBar();
-    //MainDockspace(&_showMainDockspace);
-    if (_firstFrame) {
+    MainDockspace(&_showMainDockspace);
 
-        for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
-            (*it)->Render();
-
-        SetupDockLayout();
-        Style();
-        _firstFrame = false;
-        ImGui::EndFrame();
-        return;
-    }
-
+    for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
+        (*it)->Update();
 
     for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
         (*it)->Render();
@@ -179,7 +180,7 @@ void EditorModule::preRender()
 
 void EditorModule::render()
 {
-	_gui->record(app->GetD3D12Module()->GetImGuiCommandList());
+	_gui->record(app->GetD3D12Module()->GetCommandList());
 }
 
 void EditorModule::postRender()

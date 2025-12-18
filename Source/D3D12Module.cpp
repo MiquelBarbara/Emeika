@@ -28,8 +28,12 @@ bool D3D12Module::init()
 bool D3D12Module::postInit() {
     _swapChain = new SwapChain(_hwnd);
     debugDrawPass = std::make_unique<DebugDrawPass>(m_device.Get(), _commandQueue->GetD3D12CommandQueue().Get(), false);
+    
     offscreenRenderTarget = app->GetResourcesModule()->CreateRenderTexture(offscreenTextureSize.x, offscreenTextureSize.y);
+
     offscreenDepthBuffer = app->GetResourcesModule()->CreateDepthBuffer(offscreenTextureSize.x, offscreenTextureSize.y);
+
+    app->GetCameraModule()->SetAspectRatio(static_cast<float>(offscreenTextureSize.x), static_cast<float>(offscreenTextureSize.y));
     LoadAssets();
     return true;
 }
@@ -38,43 +42,42 @@ void D3D12Module::preRender()
 {
     m_frameIndex = _swapChain->GetCurrentBackBufferIndex();
     _commandQueue->WaitForFenceValue(m_fenceValues[m_frameIndex]);
+    m_lastCompletedFenceValue = max(m_lastCompletedFenceValue, m_fenceValues[m_frameIndex]);
 
     // Reset command list and allocator
     m_commandList = _commandQueue->GetCommandList();
 
-    /*if (offscreenRenderTarget.GetResource()) {
+    auto newSize = app->GetEditorModule()->GetSceneEditorSize();
+    if (offscreenTextureSize.x != newSize.x || offscreenTextureSize.y != newSize.y) {
+        _commandQueue->Flush();
+        offscreenTextureSize = newSize;
+        offscreenRenderTarget = app->GetResourcesModule()->CreateRenderTexture(newSize.x, newSize.y);
+        offscreenDepthBuffer = app->GetResourcesModule()->CreateDepthBuffer(newSize.x, newSize.y);
+        app->GetCameraModule()->Resize(newSize.x, newSize.y);
+    }
+
+    if (offscreenRenderTarget->GetResource()) {
         // Transition scene texture to render target
-        TransitionResource(m_commandList, offscreenRenderTarget.GetResource(),
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-            D3D12_RESOURCE_STATE_RENDER_TARGET);
+        TransitionResource(m_commandList, offscreenRenderTarget->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         // Render triangle to scene texture
-        RenderTriangle(m_commandList.Get(),
-            offscreenRenderTarget.RTV(0),
-            offscreenDepthBuffer.DSV(), offscreenTextureSize);
+        RenderTriangle(m_commandList.Get(), offscreenRenderTarget->RTV(0).cpu , offscreenDepthBuffer->DSV().cpu, offscreenTextureSize.x, offscreenTextureSize.y);
 
         // Transition back to shader resource state
-        TransitionResource(m_commandList, offscreenRenderTarget.GetResource(),
-            D3D12_RESOURCE_STATE_RENDER_TARGET,
-            D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+        TransitionResource(m_commandList, offscreenRenderTarget->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    }
 
-        uint64_t offscreenFence = _commandQueue->ExecuteCommandList(m_commandList);
-        _commandQueue->WaitForFenceValue(offscreenFence);
-    }*/
-
-    m_ImGuiCommandList = _commandQueue->GetCommandList();
-    TransitionResource(m_ImGuiCommandList, _swapChain->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-    RenderTriangle(m_ImGuiCommandList.Get(), _swapChain->GetCurrentRenderTargetView().cpu, _swapChain->GetDepthStencilView(), ImVec2(_swapChain->GetViewport().Width, _swapChain->GetViewport().Height));
+    TransitionResource(m_commandList, _swapChain->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+    RenderBackground(m_commandList.Get(), _swapChain->GetCurrentRenderTargetView().cpu, _swapChain->GetDepthStencilView(), _swapChain->GetViewport().Width, _swapChain->GetViewport().Height);
 }
 
 void D3D12Module::render()
 {
     // Indicate that the back buffer will now be used to present.
-    TransitionResource(m_ImGuiCommandList, _swapChain->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+    TransitionResource(m_commandList, _swapChain->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 
     // Execute the command list.
-    m_fenceValues[m_frameIndex] = _commandQueue->ExecuteCommandList(m_ImGuiCommandList);
-
+    m_fenceValues[m_frameIndex] = _commandQueue->ExecuteCommandList(m_commandList);
     // Present the frame and allow tearing
     _swapChain->Present();
 }
@@ -86,13 +89,13 @@ void D3D12Module::postRender()
 
 bool D3D12Module::cleanUp()
 {
-
+    texture.reset();
+    offscreenRenderTarget.reset();
+    offscreenDepthBuffer.reset();
     // 2. Destroy debug pass
     debugDrawPass.reset();
 
-    // 3. Shutdown window
-    if (_swapChain)
-    {
+    if (_swapChain) {
         _swapChain->~SwapChain();
         delete _swapChain;
         _swapChain = nullptr;
@@ -152,7 +155,7 @@ void D3D12Module::LoadPipeline() {
 
         info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
         info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-        info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+        //info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
     }
 #endif
 
@@ -164,14 +167,6 @@ void D3D12Module::TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandLi
 {
     CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(resource.Get(),beforeState, afterState);
     commandList->ResourceBarrier(1, &barrier);
-}
-
-void D3D12Module::ResizeOffscreenRenderTarget(const int width, const int height)
-{
-    _commandQueue->Flush();
-    offscreenRenderTarget = app->GetResourcesModule()->CreateRenderTexture(width, height);
-	offscreenDepthBuffer = app->GetResourcesModule()->CreateDepthBuffer(width, height);
-    offscreenTextureSize = ImVec2(static_cast<float>(width), static_cast<float>(height));
 }
 
 void D3D12Module::CreateRootSignature() {
@@ -276,19 +271,26 @@ void D3D12Module::LoadAssets()
     texture = app->GetResourcesModule()->CreateTexture2DFromFile(L"Assets/Textures/dog.dds", "DogBuffer");
 }
 
-void D3D12Module::RenderBackground(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle)
+void D3D12Module::RenderBackground(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, float width, float height)
 {
     const float clearColor[] = { 0.0f, 0.2f, 0.4f, 1.0f };
     commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
     commandList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
     commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &dsvHandle);
+
+    // Setup viewport & scissor
+    D3D12_VIEWPORT offscreenViewport = { 0,0, width, height, 0.0f, 1.0f };
+    D3D12_RECT offscreenScissorRect = { 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
+
+    commandList->RSSetViewports(1, &offscreenViewport);
+    commandList->RSSetScissorRects(1, &offscreenScissorRect);
 }
 
-void D3D12Module::RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, ImVec2 textureSize)
+void D3D12Module::RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, float width, float height)
 {
     // Clear + draw
-    RenderBackground(commandList, rtvHandle, dsvHandle);
+    RenderBackground(commandList, rtvHandle, dsvHandle, width, height);
 
     // Bind root signature (must be set before any draw calls)
     commandList->SetPipelineState(m_pipelineState.Get());
@@ -298,24 +300,6 @@ void D3D12Module::RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_
     commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 
-    // Setup viewport & scissor
-    D3D12_VIEWPORT offscreenViewport = {};
-    offscreenViewport.TopLeftX = 0;
-    offscreenViewport.TopLeftY = 0;
-    offscreenViewport.Width = textureSize.x;
-    offscreenViewport.Height = textureSize.y;
-    offscreenViewport.MinDepth = 0.0f;
-    offscreenViewport.MaxDepth = 1.0f;
-
-    D3D12_RECT offscreenScissorRect = {};
-    offscreenScissorRect.left = 0;
-    offscreenScissorRect.top = 0;
-    offscreenScissorRect.right = static_cast<LONG>(textureSize.x);
-    offscreenScissorRect.bottom = static_cast<LONG>(textureSize.y);
-
-    commandList->RSSetViewports(1, &offscreenViewport);
-    commandList->RSSetScissorRects(1, &offscreenScissorRect);
-
     ID3D12DescriptorHeap* descriptorHeaps[] = { app->GetDescriptorsModule()->GetSRV()->GetHeap(), app->GetDescriptorsModule()->GetSamplers()->GetHeap() };
     commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
@@ -323,7 +307,7 @@ void D3D12Module::RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_
     auto camera = app->GetCameraModule();
     Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
     commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, texture.SRV().gpu);
+    commandList->SetGraphicsRootDescriptorTable(1, texture->SRV().gpu);
     commandList->SetGraphicsRootDescriptorTable(2, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));
 
     commandList->DrawInstanced(6, 1, 0, 0);
@@ -331,7 +315,7 @@ void D3D12Module::RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_
     if (_showDebugDrawPass) {
         dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
         dd::axisTriad(ddConvert(Matrix::Identity), 0.1f, 1.0f);
-        debugDrawPass->record(commandList, offscreenViewport.Width, offscreenViewport.Height, camera->GetViewMatrix(), camera->GetProjectionMatrix());
+        debugDrawPass->record(commandList, width, height, camera->GetViewMatrix(), camera->GetProjectionMatrix());
     }
 }
 

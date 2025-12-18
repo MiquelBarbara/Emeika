@@ -84,10 +84,10 @@ void ImGuiPass::record(ID3D12GraphicsCommandList* commandList)
 
     // It's not optimal but makes ImGuiPass independent from ModuleDescriptor slides
 
-    ID3D12DescriptorHeap* descriptorHeaps[] = {
+    /*ID3D12DescriptorHeap* descriptorHeaps[] = {
         app->GetDescriptorsModule()->GetSRV()->GetHeap()
     };
-    commandList->SetDescriptorHeaps(1, descriptorHeaps);
+    commandList->SetDescriptorHeaps(1, descriptorHeaps);*/
 
     ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
 

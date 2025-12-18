@@ -1,13 +1,15 @@
 #include "Globals.h"
 #include "Application.h"
 #include "D3D12Module.h"
+#include "ResourcesModule.h"
 #include "Resources.h"
+#include "Globals.h"
 
 Texture::Texture(TextureInitInfo info)
 {
     auto device = app->GetD3D12Module()->GetDevice();
 
-    D3D12_CLEAR_VALUE* const clear_value 
+    D3D12_CLEAR_VALUE* const clear_value
     {
         (info.desc &&
             (info.desc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET ||
@@ -47,6 +49,12 @@ Texture::Texture(TextureInitInfo info)
     device->CreateShaderResourceView(_resource.Get(), info.srvDesc, _srv.cpu);
 }
 
+void Texture::Release()
+{
+    app->GetDescriptorsModule()->DefferDescriptorRelease((Handle)_srv.index);
+	app->GetResourcesModule()->DefferResourceRelease(_resource);
+}
+
 RenderTexture::RenderTexture(TextureInitInfo info): _texture(info)
 {
     assert(info.desc);
@@ -65,6 +73,15 @@ RenderTexture::RenderTexture(TextureInitInfo info): _texture(info)
         device->CreateRenderTargetView(GetResource(), &desc, _rtv[i].cpu);
         ++desc.Texture2D.MipSlice;
     }
+}
+
+
+void RenderTexture::Release()
+{
+    for (uint32_t i = 0; i < _mipCount; ++i) {
+        app->GetDescriptorsModule()->GetOffscreenRTV()->Free(_rtv[i].index);
+    }
+    _mipCount = 0;
 }
 
 
@@ -100,4 +117,9 @@ DepthBuffer::DepthBuffer(TextureInitInfo info)
     auto device = app->GetD3D12Module()->GetDevice();
 
     device->CreateDepthStencilView(GetResource(), &dsv_desc, _dsv.cpu);
+}
+
+void DepthBuffer::Release()
+{
+    app->GetDescriptorsModule()->GetDSV()->Free(_dsv.index);
 }

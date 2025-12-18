@@ -139,6 +139,11 @@ void CommandQueue::WaitForFenceValue(uint64_t fenceValue)
     }
 }
 
+uint64_t CommandQueue::GetCompletedFenceValue() const
+{
+    return m_d3d12Fence->GetCompletedValue();
+}
+
 void CommandQueue::Flush()
 {
     // Signal a new fence value

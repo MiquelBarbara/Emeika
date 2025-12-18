@@ -34,8 +34,8 @@ public:
 	constexpr uint32_t Width() const { return (uint32_t)m_viewport.Width; }
 	constexpr uint32_t Height() const { return (uint32_t)m_viewport.Height; }
 	ID3D12Resource* GetCurrentRenderTarget() const { return m_renderTargets[GetCurrentBackBufferIndex()].resource.Get(); }
-	constexpr DescriptorHandle GetCurrentRenderTargetView() const { return m_renderTargets[GetCurrentBackBufferIndex()].rtv; }
-	D3D12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView() { return m_depthStencil.DSV(); }
+	DescriptorHandle GetCurrentRenderTargetView() const { return m_renderTargets[GetCurrentBackBufferIndex()].rtv; }
+	D3D12_CPU_DESCRIPTOR_HANDLE GetDepthStencilView() { return m_depthStencil->DSV().cpu; }
 	constexpr const D3D12_VIEWPORT& GetViewport() { return m_viewport; }
 	constexpr const D3D12_RECT& GetScissorRect() { return m_scissorRect; }
 	constexpr uint32_t GetCurrentBackBufferIndex() const { return m_swapChain.Get()->GetCurrentBackBufferIndex(); }
@@ -44,7 +44,7 @@ private:
 
 	ComPtr<D3D12SwapChain> m_swapChain;
 	RenderTarget m_renderTargets[bufferCount]{};
-	DepthBuffer m_depthStencil;
+	std::unique_ptr<DepthBuffer> m_depthStencil;
 
 	UINT32 _flags{ 0 };
 

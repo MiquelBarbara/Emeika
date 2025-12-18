@@ -20,27 +20,70 @@ DescriptorHeap::DescriptorHeap(const D3D12_DESCRIPTOR_HEAP_TYPE type, const uint
 	_descriptorSize = device->GetDescriptorHandleIncrementSize(_type);
 	_cpuStart = _heap->GetCPUDescriptorHandleForHeapStart();
 	_gpuStart = isShaderVisible ? _heap->GetGPUDescriptorHandleForHeapStart() : D3D12_GPU_DESCRIPTOR_HANDLE{ 0 };
+
+	UINT nextFreeIndex = 0;
+	_handles.resize(_numDescriptors);
+	for (Handle& handle : _handles) {
+		handle.index = ++nextFreeIndex;
+		handle.generation = 0;
+	}
 }
 
+bool DescriptorHeap::HasSpace() const
+{
+	return firstFree < _numDescriptors;
+}
+
+uint32_t DescriptorHeap::FreeSpace() const
+{
+	return _numDescriptors - firstFree;
+}
 
 DescriptorHandle DescriptorHeap::Allocate()
 {
-	if (_nextFreeIndex == _numDescriptors) {
-		Reset();
-	}
+	if (HasSpace()) {
+		UINT index = firstFree;
 
-	DescriptorHandle handle{};
-	const uint32_t offset{ _nextFreeIndex * _descriptorSize };
-	handle.cpu.ptr = _cpuStart.ptr + offset;
-	handle.gpu.ptr = _gpuStart.ptr + offset;
-	handle.index = _nextFreeIndex;
+		Handle& handle = _handles[index];
+		firstFree = handle.index;
+		genNumber = (genNumber + 1) % (1 << 8);
 
-	++_nextFreeIndex;
+		if(index == -1 && genNumber == 0)
+		{
+			++genNumber;
+		}
 
-	return handle;
+		handle.index = index;
+		handle.generation = genNumber;
+		
+		DescriptorHandle descriptorHandle;
+		descriptorHandle.cpu = GetCPUHandle(handle);
+		if (IsShaderVisible()) {
+			descriptorHandle.gpu = GetGPUHandle(handle);
+		}
+		descriptorHandle.index = handle;
+		return descriptorHandle;
+	} 
+
+	return DescriptorHandle();
 }
 
-void DescriptorHeap::Reset()
+void DescriptorHeap::Free(UINT handle)
 {
-	_nextFreeIndex = 0;
+	if (!ValidHandle(Handle(handle).index, Handle(handle).generation)) return;
+	UINT index = Handle(handle).index;
+	Handle& h = _handles[index];
+	h.index = firstFree;
+
+	firstFree = index;
 }
+
+void DescriptorHeap::ReleaseStaleDescriptors(uint64_t frameNumber)
+{
+}
+
+bool DescriptorHeap::ValidHandle(UINT index, UINT genNumber)
+{
+	return index < _handles.size() && _handles[index].index == index && _handles[index].generation == genNumber;
+}
+

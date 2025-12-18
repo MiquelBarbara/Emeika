@@ -3,6 +3,12 @@
 #include "DescriptorHeap.h"
 #include "Resources.h"
 
+
+struct DefferedDescriptor {
+	uint64_t frame = 0;
+	Handle handle;
+};
+
 // -----------------------------------------------------------------------------
 // DescriptorsModule
 // -----------------------------------------------------------------------------
@@ -27,11 +33,11 @@ public:
 		COUNT
 	};
 
+	~DescriptorsModule();
 	bool init() override;
+	void preRender() override;
 	bool cleanUp() override;
 	void CreateDefaultSamplers();
-
-
 
 	constexpr DescriptorHeap* GetRTV() const { return _rtv; }
 	constexpr DescriptorHeap* GetDSV() const { return _dsv; }
@@ -39,7 +45,7 @@ public:
 	constexpr DescriptorHeap* GetSamplers() const { return _samplers; }
 
 	constexpr DescriptorHeap* GetOffscreenRTV() const { return _offscreenRtv; }
-
+	void DefferDescriptorRelease(Handle handle);
 
 private:
 	DescriptorHeap* _rtv{};
@@ -49,5 +55,6 @@ private:
 	DescriptorHeap* _offscreenRtv{};
 
 	ComPtr<ID3D12Device4> _device{};
+	std::vector<DefferedDescriptor> _defferedDescriptors{};
 };
 

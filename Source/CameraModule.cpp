@@ -5,6 +5,8 @@
 #include "TimeModule.h"
 #include "Application.h"
 #include "D3D12Module.h"
+#include "EditorModule.h"
+#include "SceneEditor.h"
 
 
 CameraModule::~CameraModule()
@@ -153,6 +155,10 @@ void CameraModule::update()
 		_isDirty = false;
 	}
 
+	if (!app->GetEditorModule()->GetSceneEditor()->IsFocused()) {
+		return;
+	}
+
 	float speed = SpeedBoost(_speed);
 	Vector3 newPos = _eye;
 	Vector3 newTarget = _target;
@@ -170,18 +176,16 @@ void CameraModule::update()
 	SetOrientation(newTarget);
 }
 
-void CameraModule::SetFOV(const float fov)
+void CameraModule::SetFOV(const float fov, const float width, const float height)
 {
 	_fovH = fov;
-	SetAspectRatio();
+	SetAspectRatio(width, height);
 
 	_isDirty = true;
 }
 
-void CameraModule::SetAspectRatio()
+void CameraModule::SetAspectRatio(float width, float height)
 {
-	unsigned int width, height;
-	app->GetD3D12Module()->GetSwapChain()->GetWindowSize(width, height);
 	_aspectRatio = (float)width / (float)height;
 
 	// Recompute vertical FOV based on the new aspect ratio
@@ -215,12 +219,9 @@ void CameraModule::LookAt(const Vector3& lookAt)
 	_isDirty = true;
 }
 
-void CameraModule::Resize()
+void CameraModule::Resize(float width, float height)
 {
-	unsigned int width, height;
-	app->GetD3D12Module()->GetSwapChain()->GetWindowSize(width, height);
-	if (height == 0) return;
-	SetAspectRatio();
+	SetAspectRatio(width, height);
 }
 
 void CameraModule::CalculateProjectionMatrix()

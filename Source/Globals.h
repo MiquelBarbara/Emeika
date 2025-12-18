@@ -57,6 +57,8 @@ inline size_t alignUp(size_t value, size_t alignment)
 #include <imgui.h>
 #include <imgui_internal.h>
 
+
+
 //Assert that COM call to D3D API succeeded
 #ifdef _DEBUG
 #ifndef DXCall
@@ -85,3 +87,5 @@ if(FAILED(x)) {													\
 //Sets the name of the COM object and outputs a debug string in Visual Studio's output window
 #define NAME_D3D12_OBJECT(obj, name) obj->SetName(name); OutputDebugString(L"::D3D12 Object Created: "); OutputDebugString(name); OutputDebugString(L"\n");
 #endif
+
+

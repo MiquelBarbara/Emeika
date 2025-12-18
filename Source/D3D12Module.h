@@ -28,8 +28,8 @@ public:
 
 	void LoadPipeline();
 	void LoadAssets();
-	void RenderBackground(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle);
-	void RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, ImVec2 textureSize);
+	void RenderBackground(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, float width, float height);
+	void RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, float width, float height);
 	void ToggleDebugDraw();
 	
 	void CreateRootSignature();
@@ -41,14 +41,15 @@ public:
 	constexpr SwapChain* GetSwapChain() const { return _swapChain; }
 	CommandQueue* GetCommandQueue() const { return _commandQueue.get(); }
 	ID3D12GraphicsCommandList4* GetCommandList() const { return m_commandList.Get(); }
-	ID3D12GraphicsCommandList4* GetImGuiCommandList() const { return m_ImGuiCommandList.Get(); }
-	RenderTexture* GetOffscreenRenderTarget() { return &offscreenRenderTarget; }
+	RenderTexture* GetOffscreenRenderTarget() { return offscreenRenderTarget.get(); }
 
 	constexpr bool* GetShowDebugDrawBool() { return &_showDebugDrawPass; }
 	void SetSampler(const int type) { _sampleType = static_cast<DescriptorsModule::SampleType>(type); }
 	constexpr Matrix* GetModelMatrix() { return &model; }
 	IDXGIAdapter4* GetAdapter() const { return m_adapter.Get(); }
-	void ResizeOffscreenRenderTarget(const int width, const int height);
+
+	uint64_t GetCurrentFrame() const { return m_fenceValues[m_frameIndex]; }
+	uint64_t GetLastCompletedFrame() const { return m_lastCompletedFenceValue; }
 private:
 	ComPtr<IDXGIAdapter4> m_adapter;
 	// The DXGI factory used to create the swap chain and other DXGI objects
@@ -61,8 +62,9 @@ private:
 	ComPtr<ID3D12PipelineState> m_pipelineState;
 
 	//Synchronization values
-	uint16_t m_frameIndex;
-	uint16_t m_fenceValues[bufferCount];
+	uint64_t m_frameIndex;
+	uint64_t m_fenceValues[bufferCount];
+	uint64_t m_lastCompletedFenceValue;
 
 	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 
@@ -76,13 +78,13 @@ private:
 
 	Matrix model = Matrix::Identity;
 
-	Texture texture{};
+	std::unique_ptr<Texture> texture{};
 
 	bool _showDebugDrawPass = true;
 	DescriptorsModule::SampleType _sampleType = DescriptorsModule::SampleType::POINT_CLAMP;
 
-	ComPtr<ID3D12GraphicsCommandList4> m_ImGuiCommandList;
-	RenderTexture offscreenRenderTarget{};
-	DepthBuffer offscreenDepthBuffer{};
+	//Scene Editor Offscreen Render Target
+	std::unique_ptr<RenderTexture> offscreenRenderTarget{};
+	std::unique_ptr<DepthBuffer> offscreenDepthBuffer{};
 	ImVec2 offscreenTextureSize = ImVec2(800, 600);
 };

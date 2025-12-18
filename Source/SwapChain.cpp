@@ -60,14 +60,7 @@ SwapChain::SwapChain(HWND hWnd): _hwnd(hWnd)
 
 SwapChain::~SwapChain()
 {
-    
-    // 1. Release render targets
-    for (int i = 0; i < bufferCount; ++i)
-        m_renderTargets[i].resource.Reset();
-
-    // 2. Release depth stencil
-    m_depthStencil.GetResource() == nullptr;
-
+    m_depthStencil.reset();
     // 3. Flush GPU commands
     app->GetD3D12Module()->GetCommandQueue()->Flush();
 
@@ -101,7 +94,6 @@ void SwapChain::Resize()
         m_viewport = D3D12_VIEWPORT{ 0.0, 0.0, float(windowWidth), float(windowHeight) , 0.0, 1.0 };
         m_scissorRect = D3D12_RECT{ 0, 0, long(windowWidth), long(windowHeight) };
 
-        app->GetCameraModule()->Resize();
         app->GetD3D12Module()->GetCommandQueue()->Flush();
 
         // Release the render targets
@@ -118,6 +110,11 @@ void SwapChain::Resize()
         DXCall(m_swapChain->ResizeBuffers(bufferCount, width, height, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
 
         // Recreate the render target views
+        for (UINT n = 0; n < bufferCount; n++)
+        {
+            app->GetDescriptorsModule()->GetRTV()->Free(m_renderTargets[n].rtv.index);
+            app->GetResourcesModule()->DefferResourceRelease(m_renderTargets[n].resource);
+        }
         CreateRenderTargetViews(app->GetD3D12Module()->GetDevice());
         m_depthStencil = app->GetResourcesModule()->CreateDepthBuffer(windowWidth, windowHeight);
     }

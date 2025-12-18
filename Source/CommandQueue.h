@@ -16,6 +16,7 @@ using GraphicsCommandList = ID3D12GraphicsCommandList4;
 /// command queue. It maintains small pools of command allocators and command
 /// lists, recycling them once the GPU has finished executing the work that
 /// depends on them.
+/// This class was implemented following this article: https://www.3dgep.com/learning-directx-12-2/
 /// </summary>
 class CommandQueue
 {
@@ -33,6 +34,7 @@ public:
     uint64_t Signal();
     bool IsFenceComplete(uint64_t fenceValue);
     void WaitForFenceValue(uint64_t fenceValue);
+    uint64_t GetCompletedFenceValue() const;
     void Flush();
 
     ComPtr<ID3D12CommandQueue> GetD3D12CommandQueue() const;

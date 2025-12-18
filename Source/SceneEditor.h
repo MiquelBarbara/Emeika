@@ -9,10 +9,11 @@ public:
     SceneEditor(RenderTexture* renderTexture);
     const char* GetWindowName() const override { return "Scene Editor"; }
     void Render() override;
-private:
-    RenderTexture* m_RenderTexture;
 
-    bool _isViewportHovered = false;
-    bool _isViewportFocused = false;
+    void Resize(ImVec2 contentRegion);
+
+private:
+    CameraModule m_Camera;
+
 };
 

@@ -7,6 +7,7 @@
 #include <ConfigurationView.h>
 #include "DescriptorHeap.h"
 #include "EditorWindow.h"
+#include "SceneEditor.h"
 #include <vector>
 
 class ImGuiPass;
@@ -29,10 +30,13 @@ public:
 	void postRender() override;
 	bool cleanUp() override;
 
-
+	SceneEditor* GetSceneEditor() { return _sceneView; }
+	ImVec2 GetSceneEditorSize() { return _sceneView->GetSize();}
 	ImGuiPass* GetImGuiPass() { return _gui; }
 private:
-	void SetupDockLayout();
+	void SetupDockLayout(ImGuiID dockspace_id);
+	void MainDockspace(bool* p_open);
+
 	std::vector<EditorWindow*> _editorWindows;
 	Logger* _logger = nullptr;
 	ConfigurationView* _configurationView = nullptr;

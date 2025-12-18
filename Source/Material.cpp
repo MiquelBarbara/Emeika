@@ -16,7 +16,7 @@ namespace Emeika {
 			const tinygltf::Image& image = model.images[texture.source];
 			if (!image.uri.empty())
 			{
-				_textureColor = app->GetResourcesModule()->CreateTexture2DFromFile(std::string(basePath) + image.uri, "Texture").GetResource();
+				_textureColor = app->GetResourcesModule()->CreateTexture2DFromFile(std::string(basePath) + image.uri, "Texture")->GetResource();
 			}
 		}
 	}

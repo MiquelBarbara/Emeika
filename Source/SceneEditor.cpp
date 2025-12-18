@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "D3D12Module.h"
 
-SceneEditor::SceneEditor(RenderTexture* renderTexture): m_RenderTexture(renderTexture)
+SceneEditor::SceneEditor(RenderTexture* renderTexture)
 {
 }
 
@@ -19,16 +19,7 @@ void SceneEditor::Render()
 
     // Only resize if we have valid dimensions
     if (contentRegion.x > 0 && contentRegion.y > 0) {
-        // Check if we need to resize (with some threshold to avoid constant resizing)
-        if (abs(contentRegion.x - m_Size.x) > 1.0f ||
-            abs(contentRegion.y - m_Size.y) > 1.0f) {
-            m_Size = contentRegion;
-
-            // Request resize of scene texture in D3D12Module
-            D3D12Module* d3d12 = app->GetD3D12Module();
-            //d3d12->ResizeOffscreenRenderTarget((UINT)m_Size.x, (UINT)m_Size.y);
-        }
-
+        Resize(contentRegion);
         // Display the scene texture if available
         D3D12Module* d3d12 = app->GetD3D12Module();
         RenderTexture* sceneTexture = d3d12->GetOffscreenRenderTarget();
@@ -49,4 +40,12 @@ void SceneEditor::Render()
 
     ImGui::End();
     ImGui::PopStyleVar();
+}
+
+void SceneEditor::Resize(ImVec2 contentRegion)
+{
+    if (abs(contentRegion.x - m_Size.x) > 1.0f ||
+        abs(contentRegion.y - m_Size.y) > 1.0f) {
+        SetSize(contentRegion);
+    }
 }
