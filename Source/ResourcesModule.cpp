@@ -169,6 +169,23 @@ std::unique_ptr<Texture> ResourcesModule::CreateTexture2DFromFile(const path& fi
 	return texture;
 }
 
+std::unique_ptr<Texture> ResourcesModule::CreateNullTexture2D()
+{
+	TextureInitInfo info{};
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // Standard format
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	info.srvDesc = &srvDesc;
+	auto texture = std::make_unique<Texture>(info);
+	return texture;
+}
+
 std::unique_ptr<RenderTexture> ResourcesModule::CreateRenderTexture(float windowWidth, float windowHeight)
 {
 	TextureInitInfo info{};

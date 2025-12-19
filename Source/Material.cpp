@@ -10,15 +10,26 @@ namespace Emeika {
 	{
 		_color = Vector4(float(material.baseColorFactor[0]), float(material.baseColorFactor[1]),
 			float(material.baseColorFactor[2]), float(material.baseColorFactor[3]));
+
+		MaterialData materialData;
+		materialData.baseColor = _color;
+
 		if (material.baseColorTexture.index >= 0)
 		{
 			const tinygltf::Texture& texture = model.textures[material.baseColorTexture.index];
 			const tinygltf::Image& image = model.images[texture.source];
 			if (!image.uri.empty())
 			{
-				_textureColor = app->GetResourcesModule()->CreateTexture2DFromFile(std::string(basePath) + image.uri, "Texture")->GetResource();
+				_textureColor = app->GetResourcesModule()->CreateTexture2DFromFile(std::string(basePath) + image.uri, "Texture");
+				materialData.hasColourTexture = true;
 			}
 		}
+		else {
+			_textureColor = app->GetResourcesModule()->CreateNullTexture2D();
+			materialData.hasColourTexture = false;
+		}
+
+		materialBuffer = app->GetResourcesModule()->CreateDefaultBuffer(&materialData, alignUp(sizeof(MaterialData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), "Materialbuffer");
 	}
 }
 

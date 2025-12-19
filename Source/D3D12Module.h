@@ -9,6 +9,7 @@
 #include "CommandQueue.h"
 #include "DescriptorsModule.h"
 #include "SwapChain.h"
+#include "Model.h"
 
 // -----------------------------------------------------------------------------
 // D3D12Module
@@ -29,7 +30,7 @@ public:
 	void LoadPipeline();
 	void LoadAssets();
 	void RenderBackground(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, float width, float height);
-	void RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, float width, float height);
+	void RenderScene(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, float width, float height);
 	void ToggleDebugDraw();
 	
 	void CreateRootSignature();
@@ -87,4 +88,7 @@ private:
 	std::unique_ptr<RenderTexture> offscreenRenderTarget{};
 	std::unique_ptr<DepthBuffer> offscreenDepthBuffer{};
 	ImVec2 offscreenTextureSize = ImVec2(800, 600);
+
+	std::vector<Emeika::Model*> _models;
+	Emeika::Model duck;
 };

@@ -44,7 +44,6 @@ Texture::Texture(TextureInitInfo info)
         ));
     }
 
-    assert(_resource);
     _srv = app->GetDescriptorsModule()->GetSRV()->Allocate();
     device->CreateShaderResourceView(_resource.Get(), info.srvDesc, _srv.cpu);
 }

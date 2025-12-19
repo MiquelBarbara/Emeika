@@ -9,9 +9,12 @@ namespace Emeika {
 	class Model
 	{
 	public:
-		void Load(const char* fileName);
+		void Load(const char* fileName, const char* basePath);
 		Transform& GetTransform() { return _transform; }
 		Matrix& GetWorldMatrix() { return _transform.GetWorldMatrix(); }
+
+		std::vector<Emeika::Mesh*> GetMeshes() { return _meshes; }
+		std::vector<Emeika::Material*> GetMaterials() { return _materials; }
 	private:
 		// In future both both Transform and Model should be components in an ECS pattern
 		Transform _transform;

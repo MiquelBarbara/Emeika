@@ -12,7 +12,7 @@
 #pragma warning(pop)
 
 namespace Emeika {
-	void Model::Load(const char* fileName)
+	void Model::Load(const char* fileName, const char* basePath)
 	{
 		tinygltf::TinyGLTF gltfContext;
 		tinygltf::Model model;
@@ -31,7 +31,8 @@ namespace Emeika {
 				//Create pbrMetallicRoughness materials
 				for (tinygltf::Material material : model.materials) {
 					Emeika::Material* myMaterial = new Emeika::Material;
-					myMaterial->Load(model, material.pbrMetallicRoughness, fileName);
+					myMaterial->Load(model, material.pbrMetallicRoughness, basePath);
+					_materials.push_back(myMaterial);
 				}
 			}
 		}

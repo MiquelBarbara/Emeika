@@ -27,10 +27,13 @@ D3D12_VERTEX_BUFFER_VIEW CreteVertexBufferView(D3D12_GPU_VIRTUAL_ADDRESS adress,
 
 void Emeika::Mesh::Load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const tinygltf::Primitive& primitive)
 {
+
+	_materialIndex = primitive.material;
+
 	const auto& itPos = primitive.attributes.find("POSITION");
 	if (itPos != primitive.attributes.end()) // If no position no geometry data
 	{
-		uint32_t numVertices = uint32_t(model.accessors[itPos->second].count);
+		numVertices = uint32_t(model.accessors[itPos->second].count);
 		Vertex* vertices = new Vertex[numVertices];
 		uint8_t* vertexData = (uint8_t*)vertices; // Casts Vertex Buffer to Bytes (uint8_t*) buffer
 		LoadAccessorData(vertexData + offsetof(Vertex, position), sizeof(Vector3), sizeof(Vertex),
@@ -41,14 +44,14 @@ void Emeika::Mesh::Load(const tinygltf::Model& model, const tinygltf::Mesh& mesh
 		_vertexBuffer = app->GetResourcesModule()->CreateDefaultBuffer(vertices, numVertices * sizeof(Vertex), "VertexBuffer");
 		_vertexBufferView = CreteVertexBufferView(_vertexBuffer->GetGPUVirtualAddress(), sizeof(Vertex), numVertices);
 
-		if (primitive.indices > 0) {
+		if (primitive.indices >= 0) {
 			const tinygltf::Accessor& indAcc = model.accessors[primitive.indices];
 			if (indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT ||
 				indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT ||
 				indAcc.componentType == TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE)
 			{
 				uint32_t indexElementSize = tinygltf::GetComponentSizeInBytes(indAcc.componentType);
-				uint32_t numIndices = uint32_t(indAcc.count);
+				numIndices = uint32_t(indAcc.count);
 				uint8_t* indices = new uint8_t[numIndices * indexElementSize];
 				LoadAccessorData(indices, indexElementSize, indexElementSize, numIndices, model, primitive.indices);
 

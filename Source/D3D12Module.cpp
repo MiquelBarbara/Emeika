@@ -61,7 +61,7 @@ void D3D12Module::preRender()
         TransitionResource(m_commandList, offscreenRenderTarget->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
         // Render triangle to scene texture
-        RenderTriangle(m_commandList.Get(), offscreenRenderTarget->RTV(0).cpu , offscreenDepthBuffer->DSV().cpu, offscreenTextureSize.x, offscreenTextureSize.y);
+        RenderScene(m_commandList.Get(), offscreenRenderTarget->RTV(0).cpu , offscreenDepthBuffer->DSV().cpu, offscreenTextureSize.x, offscreenTextureSize.y);
 
         // Transition back to shader resource state
         TransitionResource(m_commandList, offscreenRenderTarget->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
@@ -92,6 +92,8 @@ bool D3D12Module::cleanUp()
     texture.reset();
     offscreenRenderTarget.reset();
     offscreenDepthBuffer.reset();
+
+
     // 2. Destroy debug pass
     debugDrawPass.reset();
 
@@ -171,17 +173,18 @@ void D3D12Module::TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandLi
 
 void D3D12Module::CreateRootSignature() {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[3] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
     CD3DX12_DESCRIPTOR_RANGE srvRange, sampRange;
 
     srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0); // 1 range of 1 SRV descriptor
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, DescriptorsModule::SampleType::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL); // The descriptor table
-    rootParameters[2].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[2].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL); // The descriptor table
+    rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(3, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(4, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
@@ -212,7 +215,7 @@ void D3D12Module::CreatePipelineStateObject() {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0}
     };
-
+     
     // Describe and create the graphics pipeline state object (PSO).
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
     psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
@@ -220,6 +223,7 @@ void D3D12Module::CreatePipelineStateObject() {
     psoDesc.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob.Get());
     psoDesc.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob.Get());
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.RasterizerState.FrontCounterClockwise = TRUE;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
     psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
@@ -269,6 +273,9 @@ void D3D12Module::LoadAssets()
     }
 
     texture = app->GetResourcesModule()->CreateTexture2DFromFile(L"Assets/Textures/dog.dds", "DogBuffer");
+    duck = Emeika::Model();
+    duck.Load("Assets/Geometry/Duck/Duck.gltf", "Assets/Geometry/Duck/");
+    _models.push_back(&duck);
 }
 
 void D3D12Module::RenderBackground(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, float width, float height)
@@ -287,7 +294,7 @@ void D3D12Module::RenderBackground(ID3D12GraphicsCommandList4* commandList, D3D1
     commandList->RSSetScissorRects(1, &offscreenScissorRect);
 }
 
-void D3D12Module::RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, float width, float height)
+void D3D12Module::RenderScene(ID3D12GraphicsCommandList4* commandList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle, float width, float height)
 {
     // Clear + draw
     RenderBackground(commandList, rtvHandle, dsvHandle, width, height);
@@ -297,20 +304,36 @@ void D3D12Module::RenderTriangle(ID3D12GraphicsCommandList4* commandList, D3D12_
     commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
     //Set input assembler
-    commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-
     ID3D12DescriptorHeap* descriptorHeaps[] = { app->GetDescriptorsModule()->GetSRV()->GetHeap(), app->GetDescriptorsModule()->GetSamplers()->GetHeap() };
     commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
     //Assign composed MVP matrix
     auto camera = app->GetCameraModule();
     Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
-    commandList->SetGraphicsRootDescriptorTable(1, texture->SRV().gpu);
-    commandList->SetGraphicsRootDescriptorTable(2, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));
+    commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0); // Change it later for the real Transform?
+    commandList->SetGraphicsRootDescriptorTable(3, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));
 
-    commandList->DrawInstanced(6, 1, 0, 0);
+    //Load all models
+    for (int i = 0; i < _models.size(); ++i) {
+        std::vector<Emeika::Mesh*> _meshes = _models[i]->GetMeshes();
+        for (int j = 0; j < _meshes.size(); ++j) {
+
+            Emeika::Material* material = _models[i]->GetMaterials()[_meshes[j]->GetMaterialIndex()];
+
+            commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            commandList->IASetVertexBuffers(0, 1, _meshes[j]->GetVertexBufferView());
+            commandList->SetGraphicsRootConstantBufferView(1, material->GetMaterialBuffer()->GetGPUVirtualAddress());
+            commandList->SetGraphicsRootDescriptorTable(2, material->GetTexture()->SRV().gpu);
+
+            if (_meshes[j]->HasIndexBuffer()) {
+                commandList->IASetIndexBuffer(_meshes[j]->GetIndexBufferView());
+                commandList->DrawIndexedInstanced(_meshes[j]->GetNumIndices(),1,0,0,0);
+            }
+            else {
+                commandList->DrawInstanced(_meshes[j]->GetNumVertices(), 1, 0, 0);
+            }
+        }
+    }
 
     if (_showDebugDrawPass) {
         dd::xzSquareGrid(-10.0f, 10.f, 0.0f, 1.0f, dd::colors::LightGray);
