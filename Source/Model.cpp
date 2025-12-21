@@ -20,21 +20,22 @@ namespace Emeika {
 		bool loadOk = gltfContext.LoadASCIIFromFile(&model, &error, &warning, fileName);
 		if (loadOk)
 		{
-			for (tinygltf::Mesh mesh : model.meshes) {
-				//Create for each primitive a mesh
-				for (tinygltf::Primitive primitive : mesh.primitives) {
-					Emeika::Mesh* myMesh = new Emeika::Mesh;
-					myMesh->Load(model, mesh, primitive);
-					_meshes.push_back(myMesh);
-				}
+            // First, load all materials for the entire model
+            for (tinygltf::Material material : model.materials) {
+                Emeika::Material* myMaterial = new Emeika::Material;
+                myMaterial->Load(model, material.pbrMetallicRoughness, basePath);
+                _materials.push_back(myMaterial);
+            }
 
-				//Create pbrMetallicRoughness materials
-				for (tinygltf::Material material : model.materials) {
-					Emeika::Material* myMaterial = new Emeika::Material;
-					myMaterial->Load(model, material.pbrMetallicRoughness, basePath);
-					_materials.push_back(myMaterial);
-				}
-			}
+            // Then, load all meshes
+            for (tinygltf::Mesh mesh : model.meshes) {
+                // Create for each primitive a mesh
+                for (tinygltf::Primitive primitive : mesh.primitives) {
+                    Emeika::Mesh* myMesh = new Emeika::Mesh;
+                    myMesh->Load(model, mesh, primitive);
+                    _meshes.push_back(myMesh);
+                }
+            }
 		}
 		else LOG("Error loading %s: %s", fileName, error.c_str());
 

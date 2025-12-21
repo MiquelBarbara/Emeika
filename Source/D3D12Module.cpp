@@ -5,6 +5,7 @@
 #include "CameraModule.h"
 #include "DescriptorsModule.h"
 #include "EditorModule.h"
+#include "Transform.h"
 #include <d3dcompiler.h>
 
 D3D12Module::D3D12Module(HWND hwnd) 
@@ -89,7 +90,6 @@ void D3D12Module::postRender()
 
 bool D3D12Module::cleanUp()
 {
-    texture.reset();
     offscreenRenderTarget.reset();
     offscreenDepthBuffer.reset();
 
@@ -109,10 +109,6 @@ bool D3D12Module::cleanUp()
 
     // 5. Reset command list
     m_commandList.Reset();
-
-    // 6. Reset other resources
-    buffer.Reset();
-    depthBuffer.Reset();
 
     // 7. Reset command queue
     _commandQueue.reset();
@@ -173,7 +169,7 @@ void D3D12Module::TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandLi
 
 void D3D12Module::CreateRootSignature() {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[4] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[_numRootParameters] = {};
     CD3DX12_DESCRIPTOR_RANGE srvRange, sampRange;
 
     srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0); // 1 range of 1 SRV descriptor
@@ -184,7 +180,7 @@ void D3D12Module::CreateRootSignature() {
     rootParameters[2].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL); // The descriptor table
     rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(4, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(_numRootParameters, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
@@ -246,35 +242,9 @@ void D3D12Module::LoadAssets()
     // Create the pipeline state, which includes compiling and loading shaders.
     CreatePipelineStateObject();
 
-    // Create the vertex buffer.
-    {
-        unsigned width, height;
-        _swapChain->GetWindowSize(width, height);
-        float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-
-        // Define the geometry for a triangle.
-        Vertex triangleVertices[] =
-        {
-            { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(-0.2f, 1.2f) },
-            { Vector3(-1.0f, 1.0f, 0.0f),   Vector2(-0.2f, -0.2f) },
-            { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.2f, -0.2f) },
-            { Vector3(-1.0f, -1.0f, 0.0f),  Vector2(-0.2f, 1.2f) },
-            { Vector3(1.0f, 1.0f, 0.0f),    Vector2(1.2f, -0.2f) },
-            { Vector3(1.0f, -1.0f, 0.0f),   Vector2(1.2f, 1.2f) }
-        };
-
-        const UINT vertexBufferSize = sizeof(triangleVertices);
-
-        buffer = app->GetResourcesModule()->CreateDefaultBuffer(triangleVertices, vertexBufferSize, "VertexBuffer");
-
-        m_vertexBufferView.BufferLocation = buffer->GetGPUVirtualAddress();
-        m_vertexBufferView.StrideInBytes = sizeof(Vertex);
-        m_vertexBufferView.SizeInBytes = vertexBufferSize;
-    }
-
-    texture = app->GetResourcesModule()->CreateTexture2DFromFile(L"Assets/Textures/dog.dds", "DogBuffer");
     duck = Emeika::Model();
     duck.Load("Assets/Geometry/Duck/Duck.gltf", "Assets/Geometry/Duck/");
+    duck.GetTransform().SetScale(Vector3(0.01f, 0.01f, 0.01f));
     _models.push_back(&duck);
 }
 
@@ -309,28 +279,51 @@ void D3D12Module::RenderScene(ID3D12GraphicsCommandList4* commandList, D3D12_CPU
 
     //Assign composed MVP matrix
     auto camera = app->GetCameraModule();
-    Matrix mvp = (model * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
-    commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0); // Change it later for the real Transform?
+
     commandList->SetGraphicsRootDescriptorTable(3, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));
 
     //Load all models
     for (int i = 0; i < _models.size(); ++i) {
         std::vector<Emeika::Mesh*> _meshes = _models[i]->GetMeshes();
+        std::vector<Emeika::Material*> _materials = _models[i]->GetMaterials(); // Get materials for this model
+
+        Matrix mvp = (_models[i]->GetWorldMatrix() * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
+        commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
+
         for (int j = 0; j < _meshes.size(); ++j) {
+            int32_t materialIndex = _meshes[j]->GetMaterialIndex();
 
-            Emeika::Material* material = _models[i]->GetMaterials()[_meshes[j]->GetMaterialIndex()];
+            // Check if material index is valid
+            if (materialIndex >= 0 && materialIndex < _materials.size()) {
+                Emeika::Material* material = _materials[materialIndex];
 
-            commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            commandList->IASetVertexBuffers(0, 1, _meshes[j]->GetVertexBufferView());
-            commandList->SetGraphicsRootConstantBufferView(1, material->GetMaterialBuffer()->GetGPUVirtualAddress());
-            commandList->SetGraphicsRootDescriptorTable(2, material->GetTexture()->SRV().gpu);
+                commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+                commandList->IASetVertexBuffers(0, 1, _meshes[j]->GetVertexBufferView());
 
-            if (_meshes[j]->HasIndexBuffer()) {
-                commandList->IASetIndexBuffer(_meshes[j]->GetIndexBufferView());
-                commandList->DrawIndexedInstanced(_meshes[j]->GetNumIndices(),1,0,0,0);
+                // Set material constant buffer
+                commandList->SetGraphicsRootConstantBufferView(1, material->GetMaterialBuffer()->GetGPUVirtualAddress());
+
+                // Set texture SRV
+                if (material->GetTexture()) {
+                    commandList->SetGraphicsRootDescriptorTable(2, material->GetTexture()->SRV().gpu);
+                }
+                else {
+                    // Set a default null descriptor if no texture
+                    commandList->SetGraphicsRootDescriptorTable(2, app->GetDescriptorsModule()->GetSRV()->GetGPUHandle(0));
+                }
+
+                if (_meshes[j]->HasIndexBuffer()) {
+                    commandList->IASetIndexBuffer(_meshes[j]->GetIndexBufferView());
+                    commandList->DrawIndexedInstanced(_meshes[j]->GetNumIndices(), 1, 0, 0, 0);
+                }
+                else {
+                    commandList->DrawInstanced(_meshes[j]->GetNumVertices(), 1, 0, 0);
+                }
             }
             else {
-                commandList->DrawInstanced(_meshes[j]->GetNumVertices(), 1, 0, 0);
+                // Handle case with no material or invalid material index
+                LOG("Warning: Mesh %d has invalid material index %d", j, materialIndex);
+                continue;
             }
         }
     }

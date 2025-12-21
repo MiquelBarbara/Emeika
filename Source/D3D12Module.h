@@ -67,19 +67,12 @@ private:
 	uint64_t m_fenceValues[bufferCount];
 	uint64_t m_lastCompletedFenceValue;
 
-	D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
-
-	ComPtr<ID3D12Resource> buffer;
-	ComPtr<ID3D12Resource> depthBuffer;
-
 	std::unique_ptr<DebugDrawPass> debugDrawPass;
 	std::unique_ptr<CommandQueue> _commandQueue;
 	SwapChain* _swapChain;
 	HWND _hwnd;
 
 	Matrix model = Matrix::Identity;
-
-	std::unique_ptr<Texture> texture{};
 
 	bool _showDebugDrawPass = true;
 	DescriptorsModule::SampleType _sampleType = DescriptorsModule::SampleType::POINT_CLAMP;
@@ -91,4 +84,6 @@ private:
 
 	std::vector<Emeika::Model*> _models;
 	Emeika::Model duck;
+
+	const static int _numRootParameters = 4;
 };
