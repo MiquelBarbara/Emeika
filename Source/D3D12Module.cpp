@@ -232,8 +232,6 @@ void D3D12Module::CreatePipelineStateObject() {
     DXCall(m_device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pipelineState)));
 }
 
-
-
 void D3D12Module::LoadAssets()
 {
     // Create an empty root signature.

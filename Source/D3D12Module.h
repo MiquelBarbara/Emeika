@@ -46,8 +46,8 @@ public:
 
 	constexpr bool* GetShowDebugDrawBool() { return &_showDebugDrawPass; }
 	void SetSampler(const int type) { _sampleType = static_cast<DescriptorsModule::SampleType>(type); }
-	constexpr Matrix* GetModelMatrix() { return &model; }
 	IDXGIAdapter4* GetAdapter() const { return m_adapter.Get(); }
+	Emeika::Model* GetDuck() { return &duck; }
 
 	uint64_t GetCurrentFrame() const { return m_fenceValues[m_frameIndex]; }
 	uint64_t GetLastCompletedFrame() const { return m_lastCompletedFenceValue; }

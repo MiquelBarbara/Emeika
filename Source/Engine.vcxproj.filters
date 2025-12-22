@@ -115,6 +115,9 @@
     <ClCompile Include="PerformanceProfiler.cpp">
       <Filter>Editor\EditorWindows\Performance</Filter>
     </ClCompile>
+    <ClCompile Include="EditorTransform.cpp">
+      <Filter>Editor\EditorComponents</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug_draw.hpp" />
@@ -243,6 +246,9 @@
     <ClInclude Include="PerformanceProfiler.h">
       <Filter>Editor\EditorWindows\Performance</Filter>
     </ClInclude>
+    <ClInclude Include="EditorTransform.h">
+      <Filter>Editor\EditorComponents</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Engine.ico">
@@ -321,6 +327,9 @@
     </Filter>
     <Filter Include="Editor\EditorWindows\Performance">
       <UniqueIdentifier>{24930ee1-012e-4ad2-89ed-af29a2fd287c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\EditorComponents">
+      <UniqueIdentifier>{ba7dc379-0b66-46a4-b108-aeb4a3a4e122}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

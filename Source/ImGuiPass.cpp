@@ -10,6 +10,7 @@
 #include "backends/imgui_impl_dx12.h"
 
 
+
 ImGuiPass::ImGuiPass(ID3D12Device2* device, HWND hWnd, D3D12_CPU_DESCRIPTOR_HANDLE cpuTextHandle, D3D12_GPU_DESCRIPTOR_HANDLE gpuTextHandle)
 {
 

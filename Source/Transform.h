@@ -26,6 +26,10 @@ public:
 			Matrix::CreateTranslation(position);
 		return worldMatrix;
 	}
+
+	void SetWorldMatrix(Matrix& matrix) {
+		matrix.Decompose(scale, rotation, position);
+	}
 private:
 	Vector3 position = Vector3::Zero;
 	Quaternion rotation = Quaternion::Identity;

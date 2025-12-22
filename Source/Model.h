@@ -12,6 +12,7 @@ namespace Emeika {
 		void Load(const char* fileName, const char* basePath);
 		Transform& GetTransform() { return _transform; }
 		Matrix& GetWorldMatrix() { return _transform.GetWorldMatrix(); }
+		void SetWorldMatrix(Matrix& matrix) { _transform.SetWorldMatrix(matrix); }
 
 		std::vector<Emeika::Mesh*> GetMeshes() { return _meshes; }
 		std::vector<Emeika::Material*> GetMaterials() { return _materials; }

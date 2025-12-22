@@ -9,6 +9,8 @@
 #include "HardwareWindow.h"
 #include "PerformanceWindow.h"
 #include "EditorWindow.h"
+#include "EditorTransform.h"
+#include "ImGuizmo.h"
 
 using namespace std;
 
@@ -150,6 +152,13 @@ bool EditorModule::postInit()
 	D3D12Module* _d3d12 = app->GetD3D12Module();
 	_gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle(), app->GetDescriptorsModule()->GetSRV()->GetCPUHandle(0), app->GetDescriptorsModule()->GetSRV()->GetGPUHandle(0));
     _editorWindows.push_back(_sceneView = new SceneEditor(_d3d12->GetOffscreenRenderTarget()));
+    
+    auto duckModel = app->GetD3D12Module()->GetDuck();
+    // Set the duck model in SceneEditor
+    _sceneView->SetSelectedModel(duckModel);
+    // Create EditorTransform and pass the SceneEditor reference
+    _editorWindows.push_back(new EditorTransform(duckModel, _sceneView));
+
 	return true;
 }
 
@@ -162,12 +171,10 @@ void EditorModule::update()
 void EditorModule::preRender()
 {
 	_gui->startFrame();
+    ImGuizmo::BeginFrame();
 
     MainMenuBar();
     MainDockspace(&_showMainDockspace);
-
-    for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
-        (*it)->Update();
 
     for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
         (*it)->Render();
