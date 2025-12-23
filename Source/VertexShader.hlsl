@@ -17,7 +17,7 @@ VertexOutput main(float3 position : POSITION, float2 texCoord : TEXCOORD, float3
 {
     VertexOutput output;
     output.worldPos = mul(float4(position, 1.0), model).xyz;
-    output.normal = mul(normal, (float3x3)normalMat);
+    output.normal = normalize(mul(normal, (float3x3)normalMat));
     output.texCoord = texCoord;
     output.position = mul(float4(position, 1.0f), mvp);
  

@@ -22,8 +22,6 @@ RingBuffer::~RingBuffer() {
 	}
 }
 
-
-
 D3D12_GPU_VIRTUAL_ADDRESS RingBuffer::Allocate(const void* srcData, size_t size, UINT currentFrame)
 {
     if (!mappedData || !buffer)
@@ -79,7 +77,7 @@ D3D12_GPU_VIRTUAL_ADDRESS RingBuffer::Allocate(const void* srcData, size_t size,
 
 void RingBuffer::Free(UINT lastCompletedFrame)
 {
-	while (!allocationQueue.empty() && allocationQueue.front().frameIndex <= lastCompletedFrame)
+	while (!allocationQueue.empty() && allocationQueue.front().frameIndex < lastCompletedFrame)
 	{
         const AllocationInfo& frontAlloc = allocationQueue.front();
 
@@ -95,6 +93,10 @@ void RingBuffer::Free(UINT lastCompletedFrame)
 
         allocationQueue.pop();
 	}
+
+    if (allocationQueue.empty()) {
+        head = tail;
+    }
 }
 
 void RingBuffer::Reset()

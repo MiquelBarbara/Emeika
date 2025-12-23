@@ -31,8 +31,8 @@ struct SceneData {
 };
 
 struct Light {
-	Vector3 direction = Vector3::One * (-0.5f);
-	Vector3 color = Vector3::Zero;
+	Vector3 direction = Vector3::One * (-0.7f);
+	Vector3 color = Vector3(1.0f, 1.0f, 1.0f);
 	Vector3 ambientColor = Vector3::One * (0.1f);
 };
 
