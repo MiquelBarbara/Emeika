@@ -10,6 +10,34 @@
 #include "DescriptorsModule.h"
 #include "SwapChain.h"
 #include "Model.h"
+#include "Material.h"
+
+
+struct ModelData {
+	Matrix model;
+	Matrix normalMat;
+	Emeika::Material::PhongMaterialData material;
+};
+
+struct SceneData {
+	Vector3 lightDirection;
+	float pad0;
+	Vector3 lightColor;
+	float pad1;
+	Vector3 ambientColor;
+	float pad2;
+	Vector3 view;
+	float pad3;
+};
+
+struct Light {
+	Vector3 direction = Vector3::One * (-0.5f);
+	Vector3 color = Vector3::Zero;
+	Vector3 ambientColor = Vector3::One * (0.1f);
+};
+
+
+class RingBuffer;
 
 // -----------------------------------------------------------------------------
 // D3D12Module
@@ -84,6 +112,10 @@ private:
 
 	std::vector<Emeika::Model*> _models;
 	Emeika::Model duck;
+	RingBuffer* ringBuffer;
+	Light light;
 
 	const static int _numRootParameters = 4;
+
+
 };

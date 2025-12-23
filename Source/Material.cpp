@@ -8,11 +8,13 @@ namespace Emeika {
 	void Material::Load(const tinygltf::Model& model, const tinygltf::PbrMetallicRoughness& material,
 		const char* basePath)
 	{
-		_color = Vector4(float(material.baseColorFactor[0]), float(material.baseColorFactor[1]),
+		auto color = Vector4(float(material.baseColorFactor[0]), float(material.baseColorFactor[1]),
 			float(material.baseColorFactor[2]), float(material.baseColorFactor[3]));
 
-		MaterialData materialData;
-		materialData.baseColor = _color;
+		materialData.diffuseColour = color;
+		materialData.Kd = 0.85f;
+		materialData.Ks = 0.35f;
+		materialData.shininess = 32.0f;
 
 		if (material.baseColorTexture.index >= 0)
 		{
@@ -21,12 +23,12 @@ namespace Emeika {
 			if (!image.uri.empty())
 			{
 				_textureColor = app->GetResourcesModule()->CreateTexture2DFromFile(std::string(basePath) + image.uri, "Texture");
-				materialData.hasColourTexture = true;
+				materialData.hasDiffuseTex = true;
 			}
 		}
 		else {
 			_textureColor = app->GetResourcesModule()->CreateNullTexture2D();
-			materialData.hasColourTexture = false;
+			materialData.hasDiffuseTex = false;
 		}
 
 		materialBuffer = app->GetResourcesModule()->CreateDefaultBuffer(&materialData, alignUp(sizeof(MaterialData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), "Materialbuffer");

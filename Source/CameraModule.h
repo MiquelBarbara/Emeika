@@ -33,6 +33,7 @@ public:
 
 	constexpr Matrix& GetProjectionMatrix() { return _proj; }
 	constexpr Matrix& GetViewMatrix() { return _view; }
+	constexpr Vector3& GetPosition() { return _eye; }
 private:
 	Matrix _view = Matrix::Identity;
 	Matrix _proj = Matrix::Identity;

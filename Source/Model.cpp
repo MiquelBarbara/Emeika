@@ -12,7 +12,20 @@
 #pragma warning(pop)
 
 namespace Emeika {
-	void Model::Load(const char* fileName, const char* basePath)
+    Model::~Model()
+    {
+        for (int i = 0; i < _meshes.size(); i++) {
+            delete _meshes[i];
+            _meshes[i] = nullptr;
+        }
+
+        for (int i = 0; i < _materials.size(); i++) {
+            delete _materials[i];
+            _materials[i] = nullptr;
+        }
+
+    }
+    void Model::Load(const char* fileName, const char* basePath)
 	{
 		tinygltf::TinyGLTF gltfContext;
 		tinygltf::Model model;

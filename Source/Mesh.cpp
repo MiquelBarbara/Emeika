@@ -36,10 +36,9 @@ void Emeika::Mesh::Load(const tinygltf::Model& model, const tinygltf::Mesh& mesh
 		numVertices = uint32_t(model.accessors[itPos->second].count);
 		Vertex* vertices = new Vertex[numVertices];
 		uint8_t* vertexData = (uint8_t*)vertices; // Casts Vertex Buffer to Bytes (uint8_t*) buffer
-		LoadAccessorData(vertexData + offsetof(Vertex, position), sizeof(Vector3), sizeof(Vertex),
-			numVertices, model, itPos->second);
-		LoadAccessorData(vertexData + offsetof(Vertex, texCoord0), sizeof(Vector2), sizeof(Vertex),
-			numVertices, model, primitive.attributes, "TEXCOORD_0");
+		LoadAccessorData(vertexData + offsetof(Vertex, position), sizeof(Vector3), sizeof(Vertex), numVertices, model, itPos->second);
+		LoadAccessorData(vertexData + offsetof(Vertex, texCoord0), sizeof(Vector2), sizeof(Vertex), numVertices, model, primitive.attributes, "TEXCOORD_0");
+		LoadAccessorData(vertexData + offsetof(Vertex, normal), sizeof(Vector3), sizeof(Vertex), numVertices, model, primitive.attributes, "NORMAL");
 
 		_vertexBuffer = app->GetResourcesModule()->CreateDefaultBuffer(vertices, numVertices * sizeof(Vertex), "VertexBuffer");
 		_vertexBufferView = CreteVertexBufferView(_vertexBuffer->GetGPUVirtualAddress(), sizeof(Vertex), numVertices);

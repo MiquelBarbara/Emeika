@@ -57,10 +57,6 @@ void SceneEditor::Render()
     ImGuizmo::SetRect(contentPos.x, contentPos.y, contentSize.x, contentSize.y);
     ImGuizmo::Enable(true);
 
-    // ===== SHOW GIZMO CONTROLS INSIDE SCENE EDITOR =====
-    if (ImGui::BeginChild("GizmoControls", ImVec2(200, 80), true))
-    {
-        ImGui::Text("Gizmo Controls:");
 
         if (ImGui::IsKeyPressed(ImGuiKey_T))
             m_CurrentGizmoOperation = ImGuizmo::TRANSLATE;
@@ -68,28 +64,6 @@ void SceneEditor::Render()
             m_CurrentGizmoOperation = ImGuizmo::ROTATE;
         if (ImGui::IsKeyPressed(ImGuiKey_R))
             m_CurrentGizmoOperation = ImGuizmo::SCALE;
-
-        if (ImGui::RadioButton("Translate", m_CurrentGizmoOperation == ImGuizmo::TRANSLATE))
-            m_CurrentGizmoOperation = ImGuizmo::TRANSLATE;
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Rotate", m_CurrentGizmoOperation == ImGuizmo::ROTATE))
-            m_CurrentGizmoOperation = ImGuizmo::ROTATE;
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Scale", m_CurrentGizmoOperation == ImGuizmo::SCALE))
-            m_CurrentGizmoOperation = ImGuizmo::SCALE;
-
-        // Mode selection (only for translate/rotate)
-        if (m_CurrentGizmoOperation != ImGuizmo::SCALE)
-        {
-            if (ImGui::RadioButton("Local", m_CurrentGizmoMode == ImGuizmo::LOCAL))
-                m_CurrentGizmoMode = ImGuizmo::LOCAL;
-            ImGui::SameLine();
-            if (ImGui::RadioButton("World", m_CurrentGizmoMode == ImGuizmo::WORLD))
-                m_CurrentGizmoMode = ImGuizmo::WORLD;
-        }
-
-        ImGui::EndChild();
-    }
 
     // ===== APPLY GIZMO TO SELECTED MODEL =====
     if (m_SelectedModel && m_Camera && ImGui::IsWindowHovered())

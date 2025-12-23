@@ -7,6 +7,7 @@
 #include "EditorModule.h"
 #include "Transform.h"
 #include <d3dcompiler.h>
+#include "RingBuffer.h"
 
 D3D12Module::D3D12Module(HWND hwnd) 
 {
@@ -31,11 +32,13 @@ bool D3D12Module::postInit() {
     debugDrawPass = std::make_unique<DebugDrawPass>(m_device.Get(), _commandQueue->GetD3D12CommandQueue().Get(), false);
     
     offscreenRenderTarget = app->GetResourcesModule()->CreateRenderTexture(offscreenTextureSize.x, offscreenTextureSize.y);
-
     offscreenDepthBuffer = app->GetResourcesModule()->CreateDepthBuffer(offscreenTextureSize.x, offscreenTextureSize.y);
 
     app->GetCameraModule()->SetAspectRatio(static_cast<float>(offscreenTextureSize.x), static_cast<float>(offscreenTextureSize.y));
     LoadAssets();
+
+    ringBuffer = new RingBuffer(m_device.Get(), 10);
+
     return true;
 }
 
@@ -45,9 +48,12 @@ void D3D12Module::preRender()
     _commandQueue->WaitForFenceValue(m_fenceValues[m_frameIndex]);
     m_lastCompletedFenceValue = max(m_lastCompletedFenceValue, m_fenceValues[m_frameIndex]);
 
+    ringBuffer->Free(m_lastCompletedFenceValue);
+
     // Reset command list and allocator
     m_commandList = _commandQueue->GetCommandList();
 
+    // TODO: Decouple EditorModule to D3D12Module
     auto newSize = app->GetEditorModule()->GetSceneEditorSize();
     if (offscreenTextureSize.x != newSize.x || offscreenTextureSize.y != newSize.y) {
         _commandQueue->Flush();
@@ -61,7 +67,7 @@ void D3D12Module::preRender()
         // Transition scene texture to render target
         TransitionResource(m_commandList, offscreenRenderTarget->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-        // Render triangle to scene texture
+        // Render the scene to texture
         RenderScene(m_commandList.Get(), offscreenRenderTarget->RTV(0).cpu , offscreenDepthBuffer->DSV().cpu, offscreenTextureSize.x, offscreenTextureSize.y);
 
         // Transition back to shader resource state
@@ -90,6 +96,10 @@ void D3D12Module::postRender()
 
 bool D3D12Module::cleanUp()
 {
+    for (int i = 0; i < _models.size(); i++) {
+        _models[i]->~Model();
+    }
+
     offscreenRenderTarget.reset();
     offscreenDepthBuffer.reset();
 
@@ -169,18 +179,19 @@ void D3D12Module::TransitionResource(ComPtr<ID3D12GraphicsCommandList> commandLi
 
 void D3D12Module::CreateRootSignature() {
     CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-    CD3DX12_ROOT_PARAMETER rootParameters[_numRootParameters] = {};
+    CD3DX12_ROOT_PARAMETER rootParameters[5] = {};
     CD3DX12_DESCRIPTOR_RANGE srvRange, sampRange;
 
     srvRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0); // 1 range of 1 SRV descriptor
     sampRange.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, DescriptorsModule::SampleType::COUNT, 0);
 
     rootParameters[0].InitAsConstants((sizeof(Matrix) / sizeof(UINT32)), 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
-    rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_PIXEL);
-    rootParameters[2].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL); // The descriptor table
-    rootParameters[3].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
+    rootParameters[1].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameters[2].InitAsConstantBufferView(2, 0, D3D12_SHADER_VISIBILITY_ALL);
+    rootParameters[3].InitAsDescriptorTable(1, &srvRange, D3D12_SHADER_VISIBILITY_PIXEL); // The descriptor table
+    rootParameters[4].InitAsDescriptorTable(1, &sampRange, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    rootSignatureDesc.Init(_numRootParameters, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    rootSignatureDesc.Init(5, rootParameters, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     ComPtr<ID3DBlob> signature;
     ComPtr<ID3DBlob> error;
@@ -209,7 +220,8 @@ void D3D12Module::CreatePipelineStateObject() {
     D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0}
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,0},
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
     };
      
     // Describe and create the graphics pipeline state object (PSO).
@@ -277,13 +289,22 @@ void D3D12Module::RenderScene(ID3D12GraphicsCommandList4* commandList, D3D12_CPU
 
     //Assign composed MVP matrix
     auto camera = app->GetCameraModule();
+    SceneData sceneData;
+    sceneData.lightDirection = light.direction;
+    sceneData.lightColor = light.color;
+    sceneData.ambientColor = light.ambientColor;
+    sceneData.view = camera->GetPosition();
 
-    commandList->SetGraphicsRootDescriptorTable(3, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));
+    sceneData.lightDirection.Normalize();
+
+
+    commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->Allocate(&sceneData, sizeof(SceneData), GetCurrentFrame()));
+    commandList->SetGraphicsRootDescriptorTable(4, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));
 
     //Load all models
     for (int i = 0; i < _models.size(); ++i) {
         std::vector<Emeika::Mesh*> _meshes = _models[i]->GetMeshes();
-        std::vector<Emeika::Material*> _materials = _models[i]->GetMaterials(); // Get materials for this model
+        std::vector<Emeika::Material*> _materials = _models[i]->GetMaterials();
 
         Matrix mvp = (_models[i]->GetWorldMatrix() * camera->GetViewMatrix() * camera->GetProjectionMatrix()).Transpose();
         commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / sizeof(UINT32), &mvp, 0);
@@ -293,22 +314,17 @@ void D3D12Module::RenderScene(ID3D12GraphicsCommandList4* commandList, D3D12_CPU
 
             // Check if material index is valid
             if (materialIndex >= 0 && materialIndex < _materials.size()) {
-                Emeika::Material* material = _materials[materialIndex];
+
+                ModelData modelData;
+                modelData.model = _models[i]->GetWorldMatrix().Transpose();
+                modelData.material = _materials[materialIndex]->GetMaterial();
+                modelData.normalMat = _models[i]->GetNormalMatrix();
+
+                commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->Allocate(&modelData, sizeof(ModelData), GetCurrentFrame()));
+                commandList->SetGraphicsRootDescriptorTable(3, _materials[materialIndex]->GetTexture()->SRV().gpu);
 
                 commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
                 commandList->IASetVertexBuffers(0, 1, _meshes[j]->GetVertexBufferView());
-
-                // Set material constant buffer
-                commandList->SetGraphicsRootConstantBufferView(1, material->GetMaterialBuffer()->GetGPUVirtualAddress());
-
-                // Set texture SRV
-                if (material->GetTexture()) {
-                    commandList->SetGraphicsRootDescriptorTable(2, material->GetTexture()->SRV().gpu);
-                }
-                else {
-                    // Set a default null descriptor if no texture
-                    commandList->SetGraphicsRootDescriptorTable(2, app->GetDescriptorsModule()->GetSRV()->GetGPUHandle(0));
-                }
 
                 if (_meshes[j]->HasIndexBuffer()) {
                     commandList->IASetIndexBuffer(_meshes[j]->GetIndexBufferView());

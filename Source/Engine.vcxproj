@@ -206,6 +206,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="ResourcesModule.h" />
+    <ClInclude Include="RingBuffer.h" />
     <ClInclude Include="SceneEditor.h" />
     <ClInclude Include="SimpleMath.h" />
     <ClInclude Include="TimeModule.h" />
@@ -316,6 +317,7 @@
     <ClCompile Include="PerformanceWindow.cpp" />
     <ClCompile Include="Resources.cpp" />
     <ClCompile Include="ResourcesModule.cpp" />
+    <ClCompile Include="RingBuffer.cpp" />
     <ClCompile Include="SceneEditor.cpp" />
     <ClCompile Include="SimpleMath.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -332,6 +334,9 @@
     <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="CBuffers.hlsli">
+      <FileType>Document</FileType>
+    </None>
     <None Include="SimpleMath.inl" />
   </ItemGroup>
   <ItemGroup>
