@@ -122,3 +122,29 @@ void DepthBuffer::Release()
 {
     app->GetDescriptorsModule()->GetDSV()->Free(_dsv.index);
 }
+
+void Resource::SetName(const std::wstring& name)
+{
+    m_Name = name;
+    m_Resource->SetName(name.c_str());
+}
+
+Resource::Resource(ID3D12Device4& device, const D3D12_RESOURCE_DESC& resourceDesc, const D3D12_CLEAR_VALUE* clearValue)
+{
+    if (clearValue) {
+        m_ClearValue = std::make_unique<CD3DX12_CLEAR_VALUE>(*clearValue);
+    }
+
+    auto heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+    device.CreateCommittedResource(
+        &heap, D3D12_HEAP_FLAG_NONE, &resourceDesc,
+        D3D12_RESOURCE_STATE_COMMON, m_ClearValue.get(), IID_PPV_ARGS(&m_Resource));
+}
+
+Resource::Resource(ID3D12Device4& device, ComPtr<ID3D12Resource> resource, const D3D12_CLEAR_VALUE* clearValue): m_Resource(resource)
+{
+    if (clearValue)
+    {
+        m_ClearValue = std::make_unique<D3D12_CLEAR_VALUE>(*clearValue);
+    }
+}

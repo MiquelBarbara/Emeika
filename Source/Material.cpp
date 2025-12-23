@@ -8,12 +8,11 @@ namespace Emeika {
 	void Material::Load(const tinygltf::Model& model, const tinygltf::PbrMetallicRoughness& material,
 		const char* basePath)
 	{
-		auto color = Vector4(float(material.baseColorFactor[0]), float(material.baseColorFactor[1]),
-			float(material.baseColorFactor[2]), float(material.baseColorFactor[3]));
+		auto color = Vector3(float(material.baseColorFactor[0]), float(material.baseColorFactor[1]),
+			float(material.baseColorFactor[2]));
 
 		materialData.diffuseColour = color;
-		materialData.Kd = 0.85f;
-		materialData.Ks = 0.35f;
+		materialData.specularColour = Vector3(0.1f, 0.1f, 0.1f);
 		materialData.shininess = 32.0f;
 
 		if (material.baseColorTexture.index >= 0)

@@ -323,16 +323,7 @@ void D3D12Module::RenderScene(ID3D12GraphicsCommandList4* commandList, D3D12_CPU
                 commandList->SetGraphicsRootConstantBufferView(2, ringBuffer->Allocate(&modelData, sizeof(ModelData), GetCurrentFrame()));
                 commandList->SetGraphicsRootDescriptorTable(3, _materials[materialIndex]->GetTexture()->SRV().gpu);
 
-                commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-                commandList->IASetVertexBuffers(0, 1, _meshes[j]->GetVertexBufferView());
-
-                if (_meshes[j]->HasIndexBuffer()) {
-                    commandList->IASetIndexBuffer(_meshes[j]->GetIndexBufferView());
-                    commandList->DrawIndexedInstanced(_meshes[j]->GetNumIndices(), 1, 0, 0, 0);
-                }
-                else {
-                    commandList->DrawInstanced(_meshes[j]->GetNumVertices(), 1, 0, 0);
-                }
+                _meshes[j]->Draw(commandList);
             }
             else {
                 // Handle case with no material or invalid material index

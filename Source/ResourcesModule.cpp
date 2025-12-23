@@ -6,6 +6,9 @@
 #include <DirectXTex.h>
 #include <iostream>
 
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+
 ResourcesModule::~ResourcesModule()
 {
 	_defferedResources.clear();
@@ -216,6 +219,20 @@ void ResourcesModule::DefferResourceRelease(ComPtr<ID3D12Resource> resource)
 	defferedResource.frame = app->GetD3D12Module()->GetCurrentFrame();
 	defferedResource.resource = resource;
 	_defferedResources.push_back(defferedResource);
+}
+
+VertexBuffer* ResourcesModule::CreateVertexBuffer(const void* data, size_t numVertices, size_t vertexStride)
+{
+	ComPtr<ID3D12Resource> defaultBuffer = CreateDefaultBuffer(data, numVertices * vertexStride, "VertexBuffer");
+	ID3D12Device4& pDevice = *_device.Get();
+	return new VertexBuffer(pDevice, defaultBuffer, numVertices, vertexStride);
+}
+
+IndexBuffer* ResourcesModule::CreateIndexBuffer(const void* data, size_t numIndices, DXGI_FORMAT indexFormat)
+{
+	ComPtr<ID3D12Resource> defaultBuffer = CreateDefaultBuffer(data, numIndices * GetSizeByFormat(indexFormat), "VertexBuffer");
+	ID3D12Device4& pDevice = *_device.Get();
+	return new IndexBuffer(pDevice, defaultBuffer, numIndices, indexFormat);
 }
 
 

@@ -16,7 +16,7 @@
 struct ModelData {
 	Matrix model;
 	Matrix normalMat;
-	Emeika::Material::PhongMaterialData material;
+	Emeika::Material::BDRFPhongMaterialData material;
 };
 
 struct SceneData {
@@ -116,6 +116,4 @@ private:
 	Light light;
 
 	const static int _numRootParameters = 4;
-
-
 };

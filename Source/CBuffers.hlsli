@@ -11,9 +11,9 @@ cbuffer ModelData : register(b2)
 	float4x4 model;
 	float4x4 normalMat;
     
-	float4 diffuseColour;
-	float Kd;
-	float Ks;
+	float3 diffuseColour;
+    bool hasDiffuseTex;
+    float3 specularColour;
 	float shininess;
-	bool hasDiffuseTex;
+
 };

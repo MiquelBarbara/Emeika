@@ -2,21 +2,6 @@
 #include "DescriptorHeap.h"
 
 
-#ifndef DISABLE_COPY
-#define DISABLE_COPY(T) \
-	explicit T(const T&) = delete; \
-	T& operator=(const T&) = delete; 
-#endif
-
-#ifndef DISABLE_MOVE
-#define DISABLE_MOVE(T) \
-	explicit T(T&&) = delete; \
-	T& operator=(T&&) = delete;
-#endif
-
-#ifndef DISABLE_COPY_AND_MOVE
-#define DISABLE_COPY_AND_MOVE(T) DISABLE_COPY(T) DISABLE_MOVE(T)
-#endif
 
 struct TextureInitInfo {
 	ID3D12Heap1* heap{ nullptr };
@@ -26,6 +11,45 @@ struct TextureInitInfo {
 	D3D12_RESOURCE_ALLOCATION_INFO1 allocInfo{};
 	D3D12_RESOURCE_STATES initialState{ };
 	D3D12_CLEAR_VALUE clearValue{  };
+};
+
+
+class Resource {
+public:
+	ComPtr<ID3D12Resource> GetD3D12Resource() const
+	{
+		return m_Resource;
+	}
+
+	D3D12_RESOURCE_DESC GetD3D12ResourceDesc() const
+	{
+		D3D12_RESOURCE_DESC resDesc = {};
+		if (m_Resource)
+		{
+			resDesc = m_Resource->GetDesc();
+		}
+
+		return resDesc;
+	}
+
+	void SetName(const std::wstring& name);
+	const std::wstring& GetName() const
+	{
+		return m_Name;
+	}
+protected:
+
+	Resource(ID3D12Device4& device, const D3D12_RESOURCE_DESC& resourceDesc,
+		const D3D12_CLEAR_VALUE* clearValue = nullptr);
+	Resource(ID3D12Device4& device, ComPtr<ID3D12Resource> resource,
+		const D3D12_CLEAR_VALUE* clearValue = nullptr);
+
+	virtual ~Resource() = default;
+
+	ComPtr<ID3D12Resource> m_Resource;
+	D3D12_FEATURE_DATA_FORMAT_SUPPORT m_FormatSupport;
+	std::unique_ptr<D3D12_CLEAR_VALUE> m_ClearValue;
+	std::wstring m_Name;
 };
 
 

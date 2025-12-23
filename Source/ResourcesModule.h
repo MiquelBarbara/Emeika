@@ -21,6 +21,10 @@ struct DefferedResource {
 	ComPtr<ID3D12Resource> resource;
 };
 
+//Forward declarations
+class VertexBuffer;
+class IndexBuffer;
+
 // -----------------------------------------------------------------------------
 // ResourcesModule
 // -----------------------------------------------------------------------------
@@ -42,7 +46,9 @@ public:
 	std::unique_ptr<Texture> CreateNullTexture2D();
 	std::unique_ptr<RenderTexture> CreateRenderTexture(float windowWidth, float windowHeight);
 	void DefferResourceRelease(ComPtr<ID3D12Resource> resource);
-	void ForceAllResourcesRelease();
+
+	VertexBuffer* CreateVertexBuffer(const void* data, size_t numVertices, size_t vertexStride);
+	IndexBuffer* CreateIndexBuffer(const void* data, size_t numIndices, DXGI_FORMAT indexFormat);
 private:
 	ComPtr<ID3D12Device4> _device;
 	CommandQueue* _queue;

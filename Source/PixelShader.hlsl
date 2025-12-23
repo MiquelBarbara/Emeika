@@ -16,13 +16,15 @@ float4 main(float3 worldPos : POSITION, float3 normal : NORMAL, float2 texCoord 
     float3 R = reflect(L, N);
 
     // Calculate lighting components
-    float3 diffuse = saturate(-dot(L, N));
-    float3 specular = pow(saturate(dot(V, R)), shininess);
+    float diffuse = saturate(-dot(L, N));
+    float specular = pow(saturate(dot(V, R)), shininess);
+
+    float Rf_max = max(max(specularColour.r, specularColour.g), specularColour.b);
+    float energyConservation = (shininess + 2) / 2 ;
+    float fresnel = specularColour + (1 - specularColour) * pow(1 - diffuse, 5);
 
     // Combine lighting
-    float3 phongColour = Cd * Kd * diffuse * lightColor +
-                         ambientColor * Cd +
-                         Ks * lightColor * specular;
+    float3 brdfPhongColour = ((Cd * (1 - Rf_max)) + energyConservation * fresnel * specular) * lightColor * diffuse + ambientColor * Cd;
 
-    return float4(phongColour, 1.0f);
+    return float4(brdfPhongColour, 1.0f);
 }

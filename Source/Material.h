@@ -21,15 +21,22 @@ namespace Emeika {
 			BOOL     hasDiffuseTex;
 		};
 
+		struct BDRFPhongMaterialData {
+			Vector3 diffuseColour;
+			BOOL hasDiffuseTex;
+			Vector3 specularColour;
+			float shininess;
+		};
+
 		void Load(const tinygltf::Model& model, const tinygltf::PbrMetallicRoughness& material, const char* basePath);
 		ComPtr<ID3D12Resource> GetMaterialBuffer() const { return materialBuffer; }
 		Texture* GetTexture() const { return _textureColor.get(); }
-		PhongMaterialData& GetMaterial() { return materialData;  }
+		BDRFPhongMaterialData& GetMaterial() { return materialData;  }
 	private:
 		uint32_t index;
 		std::unique_ptr<Texture> _textureColor;
 		ComPtr<ID3D12Resource> materialBuffer;
-		PhongMaterialData materialData;
+		BDRFPhongMaterialData materialData;
 	};
 }
 	
