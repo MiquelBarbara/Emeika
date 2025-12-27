@@ -46,7 +46,7 @@ void D3D12Module::preRender()
 {
     m_frameIndex = _swapChain->GetCurrentBackBufferIndex();
     _commandQueue->WaitForFenceValue(m_fenceValues[m_frameIndex]);
-    m_lastCompletedFenceValue = max(m_lastCompletedFenceValue, m_fenceValues[m_frameIndex]);
+    m_lastCompletedFenceValue = std::max(m_lastCompletedFenceValue, m_fenceValues[m_frameIndex]);
 
     ringBuffer->Free(m_lastCompletedFenceValue);
 
@@ -82,7 +82,6 @@ void D3D12Module::render()
 {
     // Indicate that the back buffer will now be used to present.
     TransitionResource(m_commandList, _swapChain->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-
     // Execute the command list.
     m_fenceValues[m_frameIndex] = _commandQueue->ExecuteCommandList(m_commandList);
     // Present the frame and allow tearing

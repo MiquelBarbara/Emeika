@@ -98,8 +98,6 @@ private:
 #define LOG_INFO(...)     Logger::Log(__VA_ARGS__)
 #define LOG_WARNING(...)  Logger::Warning(__VA_ARGS__)
 #define LOG_ERROR(...)    Logger::Error(__VA_ARGS__)
-#define LOG_DEBUG(...)    Logger::Debug(__VA_ARGS__)
-#define LOG_SUCCESS(...)  Logger::Success(__VA_ARGS__)
 
 #define LOG_CAT(category, ...) Logger::Log(category, __VA_ARGS__)
 

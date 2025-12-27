@@ -130,6 +130,15 @@
     <ClCompile Include="RingBuffer.cpp">
       <Filter>D3D12\Resources\Buffers\RingBuffer</Filter>
     </ClCompile>
+    <ClCompile Include="GameObject.cpp">
+      <Filter>GameEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="GameObjectManager.cpp">
+      <Filter>GameEntity</Filter>
+    </ClCompile>
+    <ClCompile Include="Hierarchy.cpp">
+      <Filter>Editor\Hierarchy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug_draw.hpp" />
@@ -273,6 +282,24 @@
     <ClInclude Include="RingBuffer.h">
       <Filter>D3D12\Resources\Buffers\RingBuffer</Filter>
     </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>GameEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="Component.h">
+      <Filter>GameEntity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="ScriptComponent.h">
+      <Filter>GameEntity\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="Id.h">
+      <Filter>GameEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjectManager.h">
+      <Filter>GameEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="Hierarchy.h">
+      <Filter>Editor\Hierarchy</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Engine.ico">
@@ -358,9 +385,6 @@
     <Filter Include="D3D12\Resources\Buffers">
       <UniqueIdentifier>{e3267ec7-8f64-4d4b-be4a-4aeaedf9a5f3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ECS">
-      <UniqueIdentifier>{eff4dbb4-71dc-44e9-b5a9-afbe5403513f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="D3D12\Resources\Buffers\IndexBuffer">
       <UniqueIdentifier>{11d308b1-02f9-402f-977a-a0fb9e623f5f}</UniqueIdentifier>
     </Filter>
@@ -369,6 +393,15 @@
     </Filter>
     <Filter Include="D3D12\Resources\Buffers\RingBuffer">
       <UniqueIdentifier>{d46f0b6c-ab6c-44b7-a23d-b3340f067747}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEntity">
+      <UniqueIdentifier>{eff4dbb4-71dc-44e9-b5a9-afbe5403513f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GameEntity\Components">
+      <UniqueIdentifier>{8282f70e-5018-4bd5-84c6-112035a6869a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\Hierarchy">
+      <UniqueIdentifier>{318d021a-20db-41d1-9cc7-097580be7c80}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

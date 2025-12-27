@@ -1,21 +1,20 @@
 #pragma once
 #include <Module.h>
-#include <ImGuiPass.h>
 #include "Application.h"
-#include "Logger.h"
-#include <DebugDrawPass.h>
-#include <ConfigurationView.h>
 #include "DescriptorHeap.h"
 #include "EditorWindow.h"
 #include "SceneEditor.h"
 #include <vector>
+#include "GameObjectManager.h"
 
 class ImGuiPass;
+
 class Logger;
 class HardwareWindow;
 class PerformanceWindow;
 class SceneEditor;
-
+class Hierarchy;
+class DebugDrawPass;
 
 class EditorModule: public Module
 {
@@ -39,7 +38,6 @@ private:
 
 	std::vector<EditorWindow*> _editorWindows;
 	Logger* _logger = nullptr;
-	ConfigurationView* _configurationView = nullptr;
 	HardwareWindow* _hardwareWindow = nullptr;
 	PerformanceWindow* _performanceWindow = nullptr;
 	SceneEditor* _sceneView = nullptr;
@@ -50,6 +48,9 @@ private:
     bool _showMainDockspace = true;
 
     bool _firstFrame = true;
+
+	//For now the GameObjectManager will be stored here
+	GameObjectManager* gameMaster = nullptr;;
 
 };
 

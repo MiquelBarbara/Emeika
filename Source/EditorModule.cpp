@@ -11,6 +11,9 @@
 #include "EditorWindow.h"
 #include "EditorTransform.h"
 #include "ImGuizmo.h"
+#include "Logger.h"
+#include "ImGuiPass.h"
+#include "Hierarchy.h"
 
 using namespace std;
 
@@ -116,9 +119,8 @@ void EditorModule::SetupDockLayout(ImGuiID dockspace_id)
 
     ImGuiID dock_bottom_right_top, dock_bottom_right_bottom;
     ImGui::DockBuilderSplitNode(dock_bottom_right, ImGuiDir_Up, 0.5f, &dock_bottom_right_top, &dock_bottom_right_bottom);
-
-    ImGui::DockBuilderDockWindow("Grid/Axis", dock_left);
-    ImGui::DockBuilderDockWindow("Textures", dock_left);
+    
+    ImGui::DockBuilderDockWindow("Hierarchy", dock_left);
 
     ImGui::DockBuilderDockWindow("Scene Editor", dock_right_top);
 
@@ -137,7 +139,8 @@ EditorModule::EditorModule()
     _editorWindows.push_back(_logger = new Logger());
     _editorWindows.push_back(_hardwareWindow = new HardwareWindow());
     _editorWindows.push_back(_performanceWindow = new PerformanceWindow());
-    _configurationView = new ConfigurationView();
+
+    gameMaster = new GameObjectManager();
 }
 
 EditorModule::~EditorModule()
@@ -159,6 +162,8 @@ bool EditorModule::postInit()
     // Create EditorTransform and pass the SceneEditor reference
     _editorWindows.push_back(new EditorTransform(duckModel, _sceneView));
 
+    _editorWindows.push_back(new Hierarchy());
+
 	return true;
 }
 
@@ -178,9 +183,6 @@ void EditorModule::preRender()
 
     for (auto it = _editorWindows.begin(); it != _editorWindows.end(); ++it)
         (*it)->Render();
-
-    _configurationView->Update();
-    _configurationView->Render();
 
     ImGui::EndFrame();
 }

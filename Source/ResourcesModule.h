@@ -47,6 +47,7 @@ public:
 	std::unique_ptr<RenderTexture> CreateRenderTexture(float windowWidth, float windowHeight);
 	void DefferResourceRelease(ComPtr<ID3D12Resource> resource);
 
+	// This function are well implemented since this is the only way to create Vertex and Index Buffers
 	VertexBuffer* CreateVertexBuffer(const void* data, size_t numVertices, size_t vertexStride);
 	IndexBuffer* CreateIndexBuffer(const void* data, size_t numIndices, DXGI_FORMAT indexFormat);
 private:

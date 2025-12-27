@@ -1,10 +1,11 @@
 #pragma once
 #include "Globals.h"
+#include "Component.h"
 
 /// <summary>
 /// Represents a 3D transformation including position, rotation, and scale.
 /// </summary>
-class Transform
+class Transform: public Component
 {
 public:
 	Transform() = default;
