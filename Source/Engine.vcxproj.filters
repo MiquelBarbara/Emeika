@@ -61,9 +61,6 @@
     <ClCompile Include="CameraModule.cpp">
       <Filter>D3D12</Filter>
     </ClCompile>
-    <ClCompile Include="ConfigurationView.cpp">
-      <Filter>Editor</Filter>
-    </ClCompile>
     <ClCompile Include="DescriptorsModule.cpp">
       <Filter>D3D12\Wrappers\Descriptors</Filter>
     </ClCompile>
@@ -137,7 +134,22 @@
       <Filter>GameEntity</Filter>
     </ClCompile>
     <ClCompile Include="Hierarchy.cpp">
-      <Filter>Editor\Hierarchy</Filter>
+      <Filter>Editor\EditorWindows\Hierarchy</Filter>
+    </ClCompile>
+    <ClCompile Include="Inspector.cpp">
+      <Filter>Editor\EditorWindows\Inspector</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshRenderer.cpp">
+      <Filter>D3D12\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="EditorMeshRenderer.cpp">
+      <Filter>Editor\EditorComponents</Filter>
+    </ClCompile>
+    <ClCompile Include="Scene.cpp">
+      <Filter>D3D12\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderModule.cpp">
+      <Filter>D3D12\Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -203,9 +215,6 @@
     </ClInclude>
     <ClInclude Include="CameraModule.h">
       <Filter>D3D12</Filter>
-    </ClInclude>
-    <ClInclude Include="ConfigurationView.h">
-      <Filter>Editor</Filter>
     </ClInclude>
     <ClInclude Include="Transform.h">
       <Filter>D3D12\Geometry</Filter>
@@ -298,7 +307,25 @@
       <Filter>GameEntity</Filter>
     </ClInclude>
     <ClInclude Include="Hierarchy.h">
-      <Filter>Editor\Hierarchy</Filter>
+      <Filter>Editor\EditorWindows\Hierarchy</Filter>
+    </ClInclude>
+    <ClInclude Include="Inspector.h">
+      <Filter>Editor\EditorWindows\Inspector</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorComponent.h">
+      <Filter>Editor\EditorComponents</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshRenderer.h">
+      <Filter>D3D12\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorMeshRenderer.h">
+      <Filter>Editor\EditorComponents</Filter>
+    </ClInclude>
+    <ClInclude Include="Scene.h">
+      <Filter>D3D12\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderModule.h">
+      <Filter>D3D12\Rendering</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -400,8 +427,14 @@
     <Filter Include="GameEntity\Components">
       <UniqueIdentifier>{8282f70e-5018-4bd5-84c6-112035a6869a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Editor\Hierarchy">
+    <Filter Include="Editor\EditorWindows\Hierarchy">
       <UniqueIdentifier>{318d021a-20db-41d1-9cc7-097580be7c80}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Editor\EditorWindows\Inspector">
+      <UniqueIdentifier>{8d8770ea-210a-4dc3-8b2a-be29d2ae3343}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="D3D12\Rendering">
+      <UniqueIdentifier>{f8d98a8f-e8f1-4a90-b4c9-9473b976ab71}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

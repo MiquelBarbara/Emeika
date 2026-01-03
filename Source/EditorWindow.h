@@ -17,6 +17,7 @@ public:
     virtual ImGuiWindowFlags GetWindowFlags() const { return ImGuiWindowFlags_None; }
     virtual bool IsDockable() const { return true; }
 
+    //TODO: Changes names for a intuitive API
     ImVec2 GetSize() const { return m_Size; }
     void SetSize(const ImVec2& size) { m_Size = size; }
     float GetWindowX() const { return windowX; }

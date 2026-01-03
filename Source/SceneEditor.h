@@ -2,26 +2,35 @@
 #include "Resources.h"
 #include "CameraModule.h"
 #include "EditorWindow.h"
-#include "Model.h"
 #include "ImGuizmo.h"
+
+class Transform;
+class DebugDrawPass;
 
 class SceneEditor: public EditorWindow
 {
 public:
-    SceneEditor(RenderTexture* renderTexture);
+    SceneEditor();
     const char* GetWindowName() const override { return "Scene Editor"; }
     void Render() override;
-    void Resize(ImVec2 contentRegion);
+    bool Resize(ImVec2 contentRegion);
 
-    void SetSelectedModel(Emeika::Model* model) { m_SelectedModel = model; }
+    void SetSelectedGameObject(Transform* transform) { this->transform = transform; }
 
     ImGuizmo::OPERATION GetCurrentOperation() const { return m_CurrentGizmoOperation; }
     ImGuizmo::MODE GetCurrentMode() const { return m_CurrentGizmoMode; }
 
-private:
-    CameraModule* m_Camera;
+    void RenderDebugDrawPass(ID3D12GraphicsCommandList* commandList);
 
-    Emeika::Model* m_SelectedModel;
+private:
+    //DebugDrawPass
+    std::unique_ptr<DebugDrawPass> debugDrawPass;
+    bool _showGrid = true;
+    bool _showAxis = true;
+
+    CameraModule* m_Camera;
+    Transform* transform;
+
     ImGuizmo::OPERATION m_CurrentGizmoOperation = ImGuizmo::TRANSLATE;
     ImGuizmo::MODE m_CurrentGizmoMode = ImGuizmo::LOCAL;
 };

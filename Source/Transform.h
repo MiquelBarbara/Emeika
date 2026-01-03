@@ -28,6 +28,15 @@ public:
 		return worldMatrix;
 	}
 
+	Matrix& GetNormalMatrix() {
+		Matrix normal = GetWorldMatrix();
+		normal.Translation(Vector3::Zero);
+		normal.Invert();
+		normal.Transpose();
+
+		return normal;
+	}
+
 	void SetWorldMatrix(Matrix& matrix) {
 		matrix.Decompose(scale, rotation, position);
 	}

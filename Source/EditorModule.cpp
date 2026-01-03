@@ -14,6 +14,7 @@
 #include "Logger.h"
 #include "ImGuiPass.h"
 #include "Hierarchy.h"
+#include "Inspector.h"
 
 using namespace std;
 
@@ -107,28 +108,22 @@ void EditorModule::SetupDockLayout(ImGuiID dockspace_id)
 
     ImGuiID dock_main = dockspace_id;
 
-    // Split main dock into left (for Grid/Axis + Texture) and right (for everything else)
-    ImGuiID dock_left, dock_right;
-    ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Left, 0.25f, &dock_left, &dock_right);
+    ImGuiID dock_left, dock_inspector;
+    ImGui::DockBuilderSplitNode(dock_main, ImGuiDir_Left, 0.75f, &dock_left, &dock_inspector);
 
-    ImGuiID dock_right_top, dock_right_bottom;
-    ImGui::DockBuilderSplitNode(dock_right, ImGuiDir_Down, 0.40f, &dock_right_bottom, &dock_right_top);
+    ImGuiID dock_bottom, dock_top;
+    ImGui::DockBuilderSplitNode(dock_left, ImGuiDir_Down, 0.25f, &dock_bottom, &dock_top);
 
-    ImGuiID dock_bottom_left, dock_bottom_right;
-    ImGui::DockBuilderSplitNode(dock_right_bottom, ImGuiDir_Left, 0.5f, &dock_bottom_left, &dock_bottom_right);
+    ImGuiID dock_hierarchy, dock_scene;
+    ImGui::DockBuilderSplitNode(dock_top, ImGuiDir_Left, 0.25f, &dock_hierarchy, &dock_scene);
 
-    ImGuiID dock_bottom_right_top, dock_bottom_right_bottom;
-    ImGui::DockBuilderSplitNode(dock_bottom_right, ImGuiDir_Up, 0.5f, &dock_bottom_right_top, &dock_bottom_right_bottom);
-    
-    ImGui::DockBuilderDockWindow("Hierarchy", dock_left);
+    ImGui::DockBuilderDockWindow("Inspector", dock_inspector);
+    ImGui::DockBuilderDockWindow("Hierarchy", dock_hierarchy);
+    ImGui::DockBuilderDockWindow("Scene Editor", dock_scene);
 
-    ImGui::DockBuilderDockWindow("Scene Editor", dock_right_top);
-
-    ImGui::DockBuilderDockWindow("Console", dock_bottom_left);
-
-    ImGui::DockBuilderDockWindow("Hardware Info", dock_bottom_right_top);
-
-    ImGui::DockBuilderDockWindow("Performance", dock_bottom_right_top);
+    ImGui::DockBuilderDockWindow("Console", dock_bottom);
+    ImGui::DockBuilderDockWindow("Hardware Info", dock_bottom);
+    ImGui::DockBuilderDockWindow("Performance", dock_bottom);
 
     ImGui::DockBuilderFinish(dockspace_id);
 }
@@ -154,15 +149,17 @@ bool EditorModule::postInit()
 {
 	D3D12Module* _d3d12 = app->GetD3D12Module();
 	_gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle(), app->GetDescriptorsModule()->GetSRV()->GetCPUHandle(0), app->GetDescriptorsModule()->GetSRV()->GetGPUHandle(0));
-    _editorWindows.push_back(_sceneView = new SceneEditor(_d3d12->GetOffscreenRenderTarget()));
+    SceneEditor* scene = new SceneEditor();
+    _sceneView = scene;
+    _editorWindows.push_back(scene);
     
-    auto duckModel = app->GetD3D12Module()->GetDuck();
-    // Set the duck model in SceneEditor
-    _sceneView->SetSelectedModel(duckModel);
-    // Create EditorTransform and pass the SceneEditor reference
-    _editorWindows.push_back(new EditorTransform(duckModel, _sceneView));
+    Hierarchy* hierarchy = new Hierarchy();
+    Inspector* inspector = new Inspector();
+    hierarchy->SetOnSelectedGameObject([inspector](GameObject* g) { inspector->SetSelectedGameObject(g); });
+    hierarchy->SetOnSelectedGameObject([scene](GameObject* g) { scene->SetSelectedGameObject(g->GetComponent<Transform>()); });
 
-    _editorWindows.push_back(new Hierarchy());
+    _editorWindows.push_back(hierarchy);
+    _editorWindows.push_back(inspector);
 
 	return true;
 }
@@ -189,7 +186,8 @@ void EditorModule::preRender()
 
 void EditorModule::render()
 {
-	_gui->record(app->GetD3D12Module()->GetCommandList());
+    auto commandList = app->GetD3D12Module()->GetCommandList();
+	_gui->record(commandList);
 }
 
 void EditorModule::postRender()

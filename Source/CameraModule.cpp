@@ -114,8 +114,7 @@ void CameraModule::Focus(Vector3& target)
 {
 	if (_inputModule->IsKeyDown(Keyboard::F))
 	{
-		Matrix* model = &app->GetD3D12Module()->GetDuck()->GetWorldMatrix();
-		target = Vector3::Transform(Vector3::Zero, *model);
+		//TODO: Focus the gameObject that is selected
 	}
 }
 

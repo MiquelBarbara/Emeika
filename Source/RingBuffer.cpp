@@ -3,7 +3,7 @@
 #include "Application.h"
 #include "ResourcesModule.h"
 
-RingBuffer::RingBuffer(ID3D12Device4* device, uint32_t size)
+RingBuffer::RingBuffer(uint32_t size)
 {
 	totalMemorySize = alignUp(size * (1 << 20), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 

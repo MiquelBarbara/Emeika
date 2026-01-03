@@ -4,16 +4,11 @@
 #include "CameraModule.h"
 #include "SceneEditor.h"
 #include "D3D12Module.h"
-
-EditorTransform::EditorTransform(Emeika::Model* model, SceneEditor* sceneEditor) :
-    model(model), m_SceneEditor(sceneEditor)
-{
-
-}
+#include "Transform.h"
 
 void EditorTransform::Render()
 {
-    if (!ImGui::Begin(GetWindowName(), GetOpenPtr(),
+    if (!ImGui::Begin(GetName(), GetOpenPtr(),
         ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::End();
@@ -21,7 +16,8 @@ void EditorTransform::Render()
     }
 
     // Get current model matrix
-    auto modelMatrix = model->GetWorldMatrix();
+    auto transform = GetComponent();
+    auto modelMatrix = transform->GetWorldMatrix();
 
     // Decompose matrix for manual editing
     float matrixTranslation[3], matrixRotation[3], matrixScale[3];
@@ -32,19 +28,19 @@ void EditorTransform::Render()
     if (ImGui::InputFloat3("Position", matrixTranslation))
     {
         ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, (float*)&modelMatrix);
-        model->SetWorldMatrix(modelMatrix);
+        transform->SetWorldMatrix(modelMatrix);
     }
 
     if (ImGui::InputFloat3("Rotation", matrixRotation))
     {
         ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, (float*)&modelMatrix);
-        model->SetWorldMatrix(modelMatrix);
+        transform->SetWorldMatrix(modelMatrix);
     }
 
     if (ImGui::InputFloat3("Scale", matrixScale))
     {
         ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, (float*)&modelMatrix);
-        model->SetWorldMatrix(modelMatrix);
+        transform->SetWorldMatrix(modelMatrix);
     }
 
     ImGui::End();

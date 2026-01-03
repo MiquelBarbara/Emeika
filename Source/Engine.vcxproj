@@ -178,12 +178,13 @@
     <ClInclude Include="CameraModule.h" />
     <ClInclude Include="CommandQueue.h" />
     <ClInclude Include="Component.h" />
-    <ClInclude Include="ConfigurationView.h" />
     <ClInclude Include="D3D12Module.h" />
     <ClInclude Include="DebugDrawPass.h" />
     <ClInclude Include="debug_draw.hpp" />
     <ClInclude Include="DescriptorHeap.h" />
     <ClInclude Include="DescriptorsModule.h" />
+    <ClInclude Include="EditorComponent.h" />
+    <ClInclude Include="EditorMeshRenderer.h" />
     <ClInclude Include="EditorModule.h" />
     <ClInclude Include="EditorTransform.h" />
     <ClInclude Include="EditorWindow.h" />
@@ -198,10 +199,12 @@
     <ClInclude Include="Id.h" />
     <ClInclude Include="ImGuiPass.h" />
     <ClInclude Include="IndexBuffer.h" />
+    <ClInclude Include="Inspector.h" />
     <ClInclude Include="Keyboard.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MeshRenderer.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Module.h" />
     <ClInclude Include="InputModule.h" />
@@ -210,10 +213,12 @@
     <ClInclude Include="PerformanceWindow.h" />
     <ClInclude Include="PlatformHelpers.h" />
     <ClInclude Include="ReadData.h" />
+    <ClInclude Include="RenderModule.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="ResourcesModule.h" />
     <ClInclude Include="RingBuffer.h" />
+    <ClInclude Include="Scene.h" />
     <ClInclude Include="SceneEditor.h" />
     <ClInclude Include="ScriptComponent.h" />
     <ClInclude Include="SimpleMath.h" />
@@ -290,7 +295,6 @@
     <ClCompile Include="Buffer.cpp" />
     <ClCompile Include="CameraModule.cpp" />
     <ClCompile Include="CommandQueue.cpp" />
-    <ClCompile Include="ConfigurationView.cpp" />
     <ClCompile Include="D3D12Module.cpp" />
     <ClCompile Include="DebugDrawPass.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
@@ -298,6 +302,7 @@
     </ClCompile>
     <ClCompile Include="DescriptorHeap.cpp" />
     <ClCompile Include="DescriptorsModule.cpp" />
+    <ClCompile Include="EditorMeshRenderer.cpp" />
     <ClCompile Include="EditorModule.cpp" />
     <ClCompile Include="EditorTransform.cpp" />
     <ClCompile Include="EditorWindow.cpp" />
@@ -320,18 +325,22 @@
     <ClCompile Include="Hierarchy.cpp" />
     <ClCompile Include="ImGuiPass.cpp" />
     <ClCompile Include="IndexBuffer.cpp" />
+    <ClCompile Include="Inspector.cpp" />
     <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="InputModule.cpp" />
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Material.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="MeshRenderer.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="Mouse.cpp" />
     <ClCompile Include="PerformanceProfiler.cpp" />
     <ClCompile Include="PerformanceWindow.cpp" />
+    <ClCompile Include="RenderModule.cpp" />
     <ClCompile Include="Resources.cpp" />
     <ClCompile Include="ResourcesModule.cpp" />
     <ClCompile Include="RingBuffer.cpp" />
+    <ClCompile Include="Scene.cpp" />
     <ClCompile Include="SceneEditor.cpp" />
     <ClCompile Include="SimpleMath.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>

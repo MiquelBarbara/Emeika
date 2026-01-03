@@ -8,8 +8,8 @@ void PerformanceWindow::Update()
 {
 	if (fps_log.size() >= 100)
 	{
-		fps_log.erase(fps_log.begin());
-		ms_log.erase(ms_log.begin());
+		fps_log.pop_front();
+		ms_log.pop_front();
 	}
 
 	fps_log.push_back(1.0f / app->GetTimeModule()->deltaTime());

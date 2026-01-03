@@ -2,18 +2,14 @@
 #include "EditorWindow.h"
 #include "Model.h"
 #include "ImGuizmo.h"
+#include "EditorComponent.h"
 
-class SceneEditor; // Forward declaration
+#include "Transform.h"
 
-class EditorTransform : public EditorWindow
+class EditorTransform : public EditorComponent<Transform>
 {
 public:
-	EditorTransform(Emeika::Model* model, SceneEditor* sceneEditor);
-	const char* GetWindowName() const override { return "Transform"; }
+	const char* GetName() const override { return "Transform"; }
 
 	void Render() override;
-
-private:
-	Emeika::Model* model;
-	SceneEditor* m_SceneEditor;
 };

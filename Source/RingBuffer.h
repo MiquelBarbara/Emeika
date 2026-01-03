@@ -12,7 +12,7 @@ struct AllocationInfo
 class RingBuffer
 {
 public:
-    RingBuffer(ID3D12Device4* device, uint32_t sizeInMB);
+    RingBuffer(uint32_t sizeInMB);
     ~RingBuffer();
 
     D3D12_GPU_VIRTUAL_ADDRESS Allocate(const void* data, size_t size, UINT currentFrame);

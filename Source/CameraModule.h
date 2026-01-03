@@ -13,13 +13,6 @@ public:
 
 	void UpdateAxes(const Vector3& pos, const Vector3& target);
 
-	float SpeedBoost(float baseSpeed) const;
-	void Zoom(Vector3& pos, Vector3& target);
-	void MouseLook(Vector3& pos, Vector3& target);
-	void Movement(Vector3& pos, Vector3& target, float speed);
-	void Focus(Vector3& target);
-	void Orbit(Vector3& pos, Vector3& target);
-
 	void SetFOV(const float fov, const float width, const float height);
 	void SetAspectRatio(const float width, const float height);
 	void SetPlaneDistances(const float near, const float far);
@@ -35,6 +28,14 @@ public:
 	constexpr Matrix& GetViewMatrix() { return _view; }
 	constexpr Vector3& GetPosition() { return _eye; }
 private:
+	float SpeedBoost(float baseSpeed) const;
+	void Zoom(Vector3& pos, Vector3& target);
+	void MouseLook(Vector3& pos, Vector3& target);
+	void Movement(Vector3& pos, Vector3& target, float speed);
+	void Focus(Vector3& target);
+	void Orbit(Vector3& pos, Vector3& target);
+
+
 	Matrix _view = Matrix::Identity;
 	Matrix _proj = Matrix::Identity;
 

@@ -1,7 +1,7 @@
 #pragma once
 #include "EditorWindow.h"
-#include <vector>
-using std::vector;
+#include <deque>
+using std::deque;
 
 class PerformanceWindow: public EditorWindow
 {
@@ -10,9 +10,8 @@ class PerformanceWindow: public EditorWindow
 	void Update() override;
 	void Render() override;
 
-
 private:
-	vector<float> fps_log;
-	vector<float> ms_log;
+	deque<float> fps_log;
+	deque<float> ms_log;
 };
 

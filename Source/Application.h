@@ -16,6 +16,7 @@ class SampleModule;
 class ShaderDescriptorsModule;
 class DescriptorsModule;
 class TimeModule;
+class RenderModule;
 
 class Application
 {
@@ -36,6 +37,7 @@ public:
     CameraModule* GetCameraModule() { return _cameraModule; }
     DescriptorsModule* GetDescriptorsModule() { return _descriptorsModule; }
     TimeModule*                GetTimeModule() { return _timeModule; }
+    RenderModule* GetRenderModule() { return _renderModule; }
 
     bool                        isPaused() const { return paused; }
     bool                        setPaused(bool p) { paused = p; return paused; }
@@ -49,6 +51,7 @@ private:
     InputModule* _inputModule = nullptr;
     DescriptorsModule* _descriptorsModule = nullptr;
     TimeModule* _timeModule = nullptr;
+    RenderModule* _renderModule = nullptr;
 
     bool      paused = false;
 
