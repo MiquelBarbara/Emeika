@@ -4,16 +4,18 @@
 #include "TimeModule.h"
 #include "PerformanceProfiler.h"
 
+PerformanceWindow::PerformanceWindow()
+{
+   
+}
+
 void PerformanceWindow::Update()
 {
-	if (fps_log.size() >= 100)
-	{
-		fps_log.pop_front();
-		ms_log.pop_front();
-	}
+    float deltaTime = app->GetTimeModule()->deltaTime();
+    float fps = (deltaTime > 0.0f) ? 1.0f / deltaTime : 0.0f;
 
-	fps_log.push_back(1.0f / app->GetTimeModule()->deltaTime());
-	ms_log.push_back(app->GetTimeModule()->deltaTime() * 1000.0f);
+    fps_log.push_back(fps);
+    ms_log.push_back(deltaTime * 1000.0f);
 }
 
 void PerformanceWindow::Render()
@@ -25,11 +27,14 @@ void PerformanceWindow::Render()
 		return;
 	}
 
+    auto fps = fps_log.linearized();
+    auto ms = ms_log.linearized();
+
 	char title[64];
-	sprintf_s(title, sizeof(title), "Framerate %.1f", fps_log[fps_log.size() - 1]);
-	ImGui::PlotHistogram("##framerate", &fps_log[0], fps_log.size(), 0, title, 0.0f, 100.0f, ImVec2(310, 100));
-	sprintf_s(title, sizeof(title), "Milliseconds %0.1f", ms_log[ms_log.size() - 1]);
-	ImGui::PlotHistogram("##milliseconds", &ms_log[0], ms_log.size(), 0, title, 0.0f, 50.0f, ImVec2(310, 100));
+	sprintf_s(title, sizeof(title), "Framerate %.1f", fps.back());
+	ImGui::PlotHistogram("##framerate", &fps[0], fps.size(), 0, title, 0.0f, 100.0f, ImVec2(310, 100));
+	sprintf_s(title, sizeof(title), "Milliseconds %0.1f", ms.back());
+	ImGui::PlotHistogram("##milliseconds", &ms[0], ms.size(), 0, title, 0.0f, 50.0f, ImVec2(310, 100));
 
     ImGui::Separator();
     ImGui::TextDisabled("CPU Profiling");

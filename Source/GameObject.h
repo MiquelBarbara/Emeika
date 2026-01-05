@@ -28,6 +28,7 @@ public:
 
 	ID_TYPE GetId() const { return _id; }
 	const char* GetName() { return (char*)_name.c_str(); }
+	void SetName(const char* name) { _name = name; }
 protected:
 private:
 	std::vector<Component*> components;

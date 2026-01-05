@@ -327,6 +327,7 @@
     <ClInclude Include="RenderModule.h">
       <Filter>D3D12\Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="cvector.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Engine.ico">

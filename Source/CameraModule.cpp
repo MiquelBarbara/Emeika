@@ -11,7 +11,7 @@
 
 CameraModule::~CameraModule()
 {
-	_inputModule = nullptr;
+
 }
 
 bool CameraModule::init()
@@ -22,7 +22,6 @@ bool CameraModule::init()
 
 bool CameraModule::postInit()
 {
-	_inputModule = app->GetInputModule();
 	return true;
 }
 
@@ -35,114 +34,47 @@ void CameraModule::UpdateAxes(const Vector3& pos, const Vector3& target)
 	_right.Normalize();
 }
 
-float CameraModule::SpeedBoost(float baseSpeed) const
+void CameraModule::Zoom(float amount)
 {
-	if (_inputModule->IsKeyDown(Keyboard::LeftShift))
-		return baseSpeed * 2.0f;
-
-	return baseSpeed;
+	_eye += _forward * amount;
+	_target += _forward * amount;
+	_isDirty = true;
+	UpdateAxes(_eye, _target);
 }
 
-void CameraModule::Zoom(Vector3& pos, Vector3& target)
+
+void CameraModule::Move(const Vector3& translation)
 {
-	float wheel = 0.0f;
-	_inputModule->GetMouseWheel(wheel);
-
-	if (wheel == 0.0f)
-		return;
-
-	float delta = wheel * app->GetTimeModule()->deltaTime();
-	pos += _forward * _speed * delta;
-	target += _forward * _speed * delta;
+	_eye += translation;
+	_target += translation;
+	_isDirty = true;
 }
 
-void CameraModule::MouseLook(Vector3& pos, Vector3& target)
+
+void CameraModule::Focus(const Vector3& position, const Vector3& target)
 {
-	if (!_inputModule->IsRightMouseDown())
-		return;
-
-	float deltaX = 0.0f, deltaY = 0.0f;
-	_inputModule->GetMouseDelta(deltaX, deltaY);
-
-	Quaternion yaw = Quaternion::CreateFromAxisAngle(_up, deltaX * _sensitivity);
-	Quaternion pitch = Quaternion::CreateFromAxisAngle(_right, deltaY * _sensitivity);
-	_rotation = yaw * pitch;
-
-	Vector3 dir = target - pos;
-	dir = Vector3::Transform(dir, Matrix::CreateFromQuaternion(_rotation));
-
-	target = pos + dir;
-
-	// Recompute axes after rotation
-	UpdateAxes(pos, target);
+	_eye = position;
+	_target = target;
+	_isDirty = true;
+	UpdateAxes(_eye, _target);
 }
 
-void CameraModule::Movement(Vector3& pos, Vector3& target, float speed)
+void CameraModule::Rotate(const Quaternion& rotation)
 {
-	if (!_inputModule->IsRightMouseDown())
-		return;
-
-	float dt = app->GetTimeModule()->deltaTime();
-
-	if (_inputModule->IsKeyDown(Keyboard::W)) {
-		pos += _forward * speed * dt;
-		target += _forward * speed * dt;
-	}
-	if (_inputModule->IsKeyDown(Keyboard::S)) {
-		pos -= _forward * speed * dt;
-		target -= _forward * speed * dt;
-	}
-	if (_inputModule->IsKeyDown(Keyboard::A)) {
-		pos -= _right * speed * dt;
-		target -= _right * speed * dt;
-	}
-	if (_inputModule->IsKeyDown(Keyboard::D)) {
-		pos += _right * speed * dt;
-		target += _right * speed * dt;
-	}
-	if (_inputModule->IsKeyDown(Keyboard::Q)) {
-		pos.y += speed * dt;
-		target.y += speed * dt;
-	}
-	if (_inputModule->IsKeyDown(Keyboard::E)) {
-		pos.y -= speed * dt;
-		target.y -= speed * dt;
-	}
+	Vector3 dir = _target - _eye;
+	dir = Vector3::Transform(dir, Matrix::CreateFromQuaternion(rotation));
+	_target = _eye + dir;
+	_isDirty = true;
+	UpdateAxes(_eye, _target);
 }
 
-void CameraModule::Focus(Vector3& target)
+void CameraModule::Orbit(const Quaternion& rotation, const Vector3& pivot)
 {
-	if (_inputModule->IsKeyDown(Keyboard::F))
-	{
-		//TODO: Focus the gameObject that is selected
-	}
-}
-
-void CameraModule::Orbit(Vector3& pos, Vector3& target)
-{
-	// Orbit is active only when: ALT + Left Mouse
-	if (!_inputModule->IsKeyDown(Keyboard::LeftAlt) ||
-		!_inputModule->IsLeftMouseDown())
-		return;
-
-	float deltaX = 0.0f, deltaY = 0.0f;
-	_inputModule->GetMouseDelta(deltaX, deltaY);
-
-	Vector3 offset = pos - target;
-	float radius = offset.Length();
-
-	Quaternion yaw = Quaternion::CreateFromAxisAngle(_up, -deltaX * _sensitivity);
-	Quaternion pitch = Quaternion::CreateFromAxisAngle(_right, -deltaY * _sensitivity);
-	_rotation = yaw * pitch;
-
-	// Rotate offset around target
-	offset = Vector3::Transform(offset, Matrix::CreateFromQuaternion(_rotation));
-
-	// Update camera position
-	pos = target + offset;
-
-	// Camera now looks at the target
-	UpdateAxes(pos, target);
+	Vector3 offset = _eye - pivot;
+	offset = Vector3::Transform(offset, Matrix::CreateFromQuaternion(rotation));
+	_eye = pivot + offset;
+	_isDirty = true;
+	UpdateAxes(_eye, _target);
 }
 
 
@@ -153,26 +85,6 @@ void CameraModule::update()
 		CalculateProjectionMatrix();
 		_isDirty = false;
 	}
-
-	if (!app->GetEditorModule()->GetSceneEditor()->IsFocused()) {
-		return;
-	}
-
-	float speed = SpeedBoost(_speed);
-	Vector3 newPos = _eye;
-	Vector3 newTarget = _target;
-
-	UpdateAxes(newPos, newTarget);
-
-	Zoom(newPos, newTarget);
-	MouseLook(newPos, newTarget);
-	Orbit(newPos, newTarget);
-	Movement(newPos, newTarget, speed);
-	Focus(newTarget);
-
-
-	SetPosition(newPos);
-	SetOrientation(newTarget);
 }
 
 void CameraModule::SetFOV(const float fov, const float width, const float height)

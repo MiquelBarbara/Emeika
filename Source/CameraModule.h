@@ -2,6 +2,45 @@
 #include "Module.h"
 #include "InputModule.h"
 
+class CameraModule;
+
+struct CameraCommand {
+
+	enum Type {
+		MOVE_FORWARD,
+		MOVE_BACKWARD,
+		MOVE_LEFT,
+		MOVE_RIGHT,
+		MOVE_UP,
+		MOVE_DOWN,
+		LOOK,
+		FOCUS,
+		ZOOM,
+		ORBIT,
+
+		COUNT
+	};
+
+	using Condition = std::function<bool()>;
+	using Action = std::function<void(CameraModule*, float)>;
+
+	Condition condition;
+	Action action;
+	Type type;
+
+	CameraCommand(const Type type, Condition cond, Action act): type(type), condition(cond), action(act) {}
+
+	bool Execute(CameraModule* camera, float deltaTime) const
+	{
+		if (condition && condition())
+		{
+			action(camera, deltaTime);
+			return true;
+		}
+		return false;
+	}
+};
+
 class CameraModule: public Module
 {
 public:
@@ -27,14 +66,22 @@ public:
 	constexpr Matrix& GetProjectionMatrix() { return _proj; }
 	constexpr Matrix& GetViewMatrix() { return _view; }
 	constexpr Vector3& GetPosition() { return _eye; }
-private:
-	float SpeedBoost(float baseSpeed) const;
-	void Zoom(Vector3& pos, Vector3& target);
-	void MouseLook(Vector3& pos, Vector3& target);
-	void Movement(Vector3& pos, Vector3& target, float speed);
-	void Focus(Vector3& target);
-	void Orbit(Vector3& pos, Vector3& target);
 
+	constexpr float GetSpeed() { return _speed; }
+	constexpr float GetSensitivity() { return _sensitivity; }
+	constexpr Vector3& GetRight() { return _right; }
+	constexpr Vector3& GetUp() { return _up; }
+	constexpr Vector3& GetTarget() { return _target; }
+
+
+	//Camera Manipulation
+	void Zoom(float amount);
+	void Move(const Vector3& translation);
+	void Focus(const Vector3& position, const Vector3& target);
+	void Rotate(const Quaternion& rotation);
+	void Orbit(const Quaternion& rotation, const Vector3& pivot);
+
+private:
 
 	Matrix _view = Matrix::Identity;
 	Matrix _proj = Matrix::Identity;
@@ -57,7 +104,6 @@ private:
 	float _nearPlane = 1.0f;
 	float _farPlane = 1000.f;
 
-	InputModule* _inputModule = nullptr;
 	Vector2* _size;
 	float _speed = 3.0f;
 };

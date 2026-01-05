@@ -1,9 +1,9 @@
 #pragma once
 #include "EditorComponent.h"
 
-class Model;
+namespace Emeika { class Model; }
 
-class EditorMeshRenderer: EditorComponent<Model>
+class EditorMeshRenderer: public EditorComponent<Emeika::Model>
 {
 public:
 	const char* GetName() const override { return "Mesh Renderer"; }

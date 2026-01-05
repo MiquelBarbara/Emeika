@@ -1,17 +1,18 @@
 #pragma once
 #include "EditorWindow.h"
-#include <deque>
-using std::deque;
+#include "cvector.h"
+
 
 class PerformanceWindow: public EditorWindow
 {
-	public:
+public:
+	PerformanceWindow();
 	const char* GetWindowName() const override { return "Performance"; }
 	void Update() override;
 	void Render() override;
 
 private:
-	deque<float> fps_log;
-	deque<float> ms_log;
+	cvector<float> fps_log{ 100 };
+	cvector<float> ms_log{ 100 };
 };
 

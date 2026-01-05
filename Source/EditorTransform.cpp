@@ -8,13 +8,6 @@
 
 void EditorTransform::Render()
 {
-    if (!ImGui::Begin(GetName(), GetOpenPtr(),
-        ImGuiWindowFlags_AlwaysAutoResize))
-    {
-        ImGui::End();
-        return;
-    }
-
     // Get current model matrix
     auto transform = GetComponent();
     auto modelMatrix = transform->GetWorldMatrix();
@@ -42,6 +35,4 @@ void EditorTransform::Render()
         ImGuizmo::RecomposeMatrixFromComponents(matrixTranslation, matrixRotation, matrixScale, (float*)&modelMatrix);
         transform->SetWorldMatrix(modelMatrix);
     }
-
-    ImGui::End();
 }
