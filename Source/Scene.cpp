@@ -3,6 +3,7 @@
 
 #include "Model.h"
 #include "Transform.h"
+#include "Light.h"
 
 #include "Application.h"
 #include "RenderModule.h"
@@ -21,6 +22,12 @@ Scene::Scene()
     duck->AddComponent<Model>(model);
 
     gameObjects.push_back(duck);
+
+
+    GameObject* light = new GameObject("Light");
+    light->AddComponent<Light>();
+
+    gameObjects.push_back(light);
 }
 
 void Scene::Add(GameObject* gameObject)
@@ -69,4 +76,28 @@ void Scene::Render(ID3D12GraphicsCommandList* commandList, Matrix& viewMatrix, M
             }
         }
     }
+}
+
+SceneData& Emeika::Scene::GetData()
+{
+    Light* light = new Light();
+    Transform* transform = new Transform();
+    //Search for the first light component
+    for(GameObject* gameObject : gameObjects)
+    {
+        auto component = gameObject->GetComponent<Light>();
+        if (component) {
+            transform = gameObject->GetComponent<Transform>();
+            light = component;
+            break;
+        }
+    }
+
+    sceneData.lightDirection = transform->GetForward();
+    sceneData.lightColor = light->GetColor();
+    sceneData.ambientColor = light->GetAmbientColor();
+
+    sceneData.lightDirection.Normalize();
+
+    return sceneData;
 }

@@ -151,6 +151,9 @@
     <ClCompile Include="RenderModule.cpp">
       <Filter>D3D12\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="Light.cpp">
+      <Filter>D3D12\Rendering</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug_draw.hpp" />
@@ -328,6 +331,9 @@
       <Filter>D3D12\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="cvector.h" />
+    <ClInclude Include="Light.h">
+      <Filter>D3D12\Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Engine.ico">

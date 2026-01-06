@@ -2,22 +2,6 @@
 #include "Module.h"
 #include "DescriptorsModule.h"
 
-struct SceneData {
-	Vector3 lightDirection;
-	float pad0;
-	Vector3 lightColor;
-	float pad1;
-	Vector3 ambientColor;
-	float pad2;
-	Vector3 view;
-	float pad3;
-};
-
-struct Light {
-	Vector3 direction = Vector3::One * (-0.7f);
-	Vector3 color = Vector3(1.0f, 1.0f, 1.0f);
-	Vector3 ambientColor = Vector3::One * (0.1f);
-};
 
 namespace Emeika { class Scene; }
 class RingBuffer;
@@ -47,7 +31,6 @@ private:
 	ComPtr<ID3D12PipelineState> m_pipelineState;
 
 	RingBuffer* ringBuffer;
-	Light light;
 	DescriptorsModule::SampleType _sampleType = DescriptorsModule::SampleType::POINT_CLAMP;
 
 	Emeika::Scene* scene;

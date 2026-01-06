@@ -113,15 +113,8 @@ void RenderModule::RenderScene(ID3D12GraphicsCommandList4* commandList, D3D12_CP
     ID3D12DescriptorHeap* descriptorHeaps[] = { app->GetDescriptorsModule()->GetSRV()->GetHeap(), app->GetDescriptorsModule()->GetSamplers()->GetHeap() };
     commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-    //Assign composed MVP matrix
-    auto camera = app->GetCameraModule();
-    SceneData sceneData;
-    sceneData.lightDirection = light.direction;
-    sceneData.lightColor = light.color;
-    sceneData.ambientColor = light.ambientColor;
-    sceneData.view = camera->GetPosition();
-
-    sceneData.lightDirection.Normalize();
+    SceneData& sceneData = scene->GetData();
+    sceneData.view = app->GetCameraModule()->GetPosition();
 
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->Allocate(&sceneData, sizeof(SceneData), app->GetD3D12Module()->GetCurrentFrame()));
     commandList->SetGraphicsRootDescriptorTable(4, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));

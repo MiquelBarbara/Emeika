@@ -20,6 +20,11 @@ public:
 	const Vector3& GetScale() const { return scale; }
 	void SetScale(const Vector3& scl) { scale = scl; }
 
+	Vector3 GetForward() const
+	{
+		return Vector3::Transform(Vector3::Forward, rotation);
+	}
+
 	Matrix& GetWorldMatrix()
 	{
 		worldMatrix = Matrix::CreateScale(scale) *
