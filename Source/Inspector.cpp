@@ -4,14 +4,17 @@
 
 #include "Transform.h"
 #include "Model.h"
+#include "Light.h"
 
 #include "EditorTransform.h"
 #include "EditorMeshRenderer.h"
+#include "LightEditor.h"
 
 Inspector::Inspector()
 {
     editorTransform = new EditorTransform();
     editorMeshRenderer = new EditorMeshRenderer();
+    editorLight = new LightEditor();
 }
 
 void Inspector::Render()
@@ -62,6 +65,13 @@ void Inspector::Render()
             editorMeshRenderer->Render();
             ImGui::Unindent();
         }
+
+        auto light = _selectedGameObject->GetComponent<Light>();
+        if (light && ImGui::CollapsingHeader(editorLight->GetName(), ImGuiTreeNodeFlags_DefaultOpen)) {
+            ImGui::Indent();
+            editorLight->Render();
+            ImGui::Unindent();
+        }
     }
 
     ImGui::End();
@@ -72,4 +82,5 @@ void Inspector::SetSelectedGameObject(GameObject* gameObject)
     _selectedGameObject = gameObject;
     editorTransform->SetGameObject(_selectedGameObject);
     editorMeshRenderer->SetGameObject(_selectedGameObject);
+    editorLight->SetGameObject(_selectedGameObject);
 }

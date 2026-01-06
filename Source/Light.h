@@ -19,11 +19,14 @@ public:
 	};
 
 	Light(Type type = Type::DIRECTIONAL) : type(type){}
-	constexpr Vector3& GetColor() { return color; }
-	constexpr Vector3& GetAmbientColor() { return ambientColor; }
+	constexpr Vector3& GetColour() { return colour; }
+	constexpr Vector3& GetAmbientColour() { return ambientColour; }
+
+	void SetColour(Vector3& colour) { this->colour = colour; }
+	void SetAmbientColour(Vector3& colour) { this->ambientColour = colour; }
 private:
 	Type type;
-	Vector3 ambientColor = Vector3::One * (0.1f);
-	Vector3 color = Vector3(1.0f, 1.0f, 1.0f);
+	Vector3 ambientColour = Vector3::One * (0.1f);
+	Vector3 colour = Vector3(1.0f, 1.0f, 1.0f);
 };
 

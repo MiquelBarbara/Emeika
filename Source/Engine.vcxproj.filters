@@ -154,6 +154,9 @@
     <ClCompile Include="Light.cpp">
       <Filter>D3D12\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="LightEditor.cpp">
+      <Filter>Editor\EditorComponents</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="debug_draw.hpp" />
@@ -333,6 +336,9 @@
     <ClInclude Include="cvector.h" />
     <ClInclude Include="Light.h">
       <Filter>D3D12\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="LightEditor.h">
+      <Filter>Editor\EditorComponents</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

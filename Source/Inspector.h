@@ -4,6 +4,7 @@
 class GameObject;
 class EditorTransform;
 class EditorMeshRenderer;
+class LightEditor;
 
 //TODO: Handle more thinks like models, assets... Right now only the inspector works for the GameObjects
 class Inspector: public EditorWindow
@@ -20,5 +21,6 @@ private:
 	//PROVISIONAL
 	EditorTransform* editorTransform;
 	EditorMeshRenderer* editorMeshRenderer;
+	LightEditor* editorLight;
 };
 

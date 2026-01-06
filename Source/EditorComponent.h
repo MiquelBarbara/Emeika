@@ -16,6 +16,14 @@ public:
 	bool IsOpen() const { return m_IsOpen; }
 	void SetOpen(bool open) { m_IsOpen = open; }
 	bool* GetOpenPtr() { return &m_IsOpen; }
+
+protected:
+	//This should go in a utility class
+	void VecToFloat(Vector3& vec, float arr[3]) {
+		arr[0] = vec.x;
+		arr[1] = vec.y;
+		arr[2] = vec.z;
+	}
 private:
 	bool m_IsOpen = true;
 

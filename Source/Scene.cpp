@@ -105,8 +105,8 @@ SceneData& Emeika::Scene::GetData()
     }
 
     sceneData.lightDirection = transform->GetForward();
-    sceneData.lightColor = light->GetColor();
-    sceneData.ambientColor = light->GetAmbientColor();
+    sceneData.lightColor = light->GetColour();
+    sceneData.ambientColor = light->GetAmbientColour();
 
     sceneData.lightDirection.Normalize();
 

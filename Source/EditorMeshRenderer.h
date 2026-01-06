@@ -1,5 +1,6 @@
 #pragma once
 #include "EditorComponent.h"
+#include "Model.h"
 
 namespace Emeika { class Model; }
 
