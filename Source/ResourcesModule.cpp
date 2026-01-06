@@ -230,7 +230,7 @@ VertexBuffer* ResourcesModule::CreateVertexBuffer(const void* data, size_t numVe
 
 IndexBuffer* ResourcesModule::CreateIndexBuffer(const void* data, size_t numIndices, DXGI_FORMAT indexFormat)
 {
-	ComPtr<ID3D12Resource> defaultBuffer = CreateDefaultBuffer(data, numIndices * GetSizeByFormat(indexFormat), "VertexBuffer");
+	ComPtr<ID3D12Resource> defaultBuffer = CreateDefaultBuffer(data, numIndices * GetSizeByFormat(indexFormat), "IndexBuffer");
 	ID3D12Device4& pDevice = *_device.Get();
 	return new IndexBuffer(pDevice, defaultBuffer, numIndices, indexFormat);
 }

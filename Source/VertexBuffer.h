@@ -2,6 +2,7 @@
 #include "Buffer.h"
 
 class ResourcesModule;
+namespace Emeika { class Mesh; };
 
 class VertexBuffer: public Buffer
 {
@@ -17,6 +18,7 @@ public:
     }
 
     friend class ResourcesModule;
+    friend class Emeika::Mesh;
 protected:
     VertexBuffer(ID3D12Device4& device, size_t numVertices, size_t vertexStride);
     VertexBuffer(ID3D12Device4& device, ComPtr<ID3D12Resource> resource, size_t numVertices, size_t vertexStride);

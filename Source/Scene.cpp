@@ -30,6 +30,17 @@ Scene::Scene()
     gameObjects.push_back(light);
 }
 
+Emeika::Scene::~Scene()
+{
+    for (GameObject* gameObject : gameObjects) {
+        auto components = gameObject->GetComponents();
+        for (Component* component : components) {
+            delete component;
+        }
+        delete gameObject;
+    }
+}
+
 void Scene::Add(GameObject* gameObject)
 {
     if (!gameObject) {

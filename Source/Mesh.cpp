@@ -6,6 +6,12 @@
 #include "VertexBuffer.h"
 #include "Mesh.h"
 
+Emeika::Mesh::~Mesh()
+{
+	delete vertexBuffer;
+	delete indexBuffer;
+}
+
 void Emeika::Mesh::Load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const tinygltf::Primitive& primitive)
 {
 	_materialIndex = primitive.material;

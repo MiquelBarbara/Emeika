@@ -43,7 +43,9 @@ void RenderModule::preRender()
         app->GetD3D12Module()->GetCommandQueue()->Flush();
         size = newSize;
         screenRT = app->GetResourcesModule()->CreateRenderTexture(newSize.x, newSize.y);
+        screenRT->GetResource()->SetName(L"ScreenRT");
         screenDS = app->GetResourcesModule()->CreateDepthBuffer(newSize.x, newSize.y);
+        screenDS->GetResource()->SetName(L"ScreenDS");
         app->GetCameraModule()->Resize(newSize.x, newSize.y);
     }
 
@@ -66,6 +68,17 @@ void RenderModule::render()
     auto _swapChain = app->GetD3D12Module()->GetSwapChain();
 
     TransitionResource(m_commandList, _swapChain->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+}
+
+bool RenderModule::cleanUp()
+{
+    screenRT.reset();
+    screenDS.reset();
+
+    delete scene;
+    delete ringBuffer;
+
+    return true;
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE RenderModule::GetGPUScreenRT()

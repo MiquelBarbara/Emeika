@@ -11,6 +11,7 @@ public:
 	friend class GameObjectManager;
 
 	GameObject();
+	~GameObject() = default;
 	GameObject(const std::string& name);
 
 	template<class... Component>
@@ -25,6 +26,8 @@ public:
 	// For now we iterate throw all the vector, which is not optimal
 	template<class Component>
 	Component* GetComponent();
+
+	std::vector<Component*> GetComponents() { return components; }
 
 	ID_TYPE GetId() const { return _id; }
 	const char* GetName() { return (char*)_name.c_str(); }

@@ -9,6 +9,7 @@ namespace Emeika {
 
 	class Mesh {
 	public:
+		~Mesh();
 		void Load(const tinygltf::Model& model, const tinygltf::Mesh& mesh, const tinygltf::Primitive& primitive);
 		IndexBuffer* GetVertexBuffer() { return indexBuffer; }
 		VertexBuffer* GetIndexBuffer() { return vertexBuffer; }

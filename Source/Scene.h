@@ -18,6 +18,7 @@ namespace Emeika {
 	{
 	public:
 		Scene();
+		~Scene();
 		void Add(GameObject* gameObject);
 		void Remove(GameObject* gameObject);
 

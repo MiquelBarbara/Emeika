@@ -30,7 +30,7 @@ namespace Emeika {
 			materialData.hasDiffuseTex = false;
 		}
 
-		materialBuffer = app->GetResourcesModule()->CreateDefaultBuffer(&materialData, alignUp(sizeof(MaterialData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), "Materialbuffer");
+		materialBuffer = app->GetResourcesModule()->CreateDefaultBuffer(&materialData, alignUp(sizeof(MaterialData), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT), "MaterialBuffer");
 	}
 }
 

@@ -46,6 +46,7 @@ Texture::Texture(TextureInitInfo info)
 
     _srv = app->GetDescriptorsModule()->GetSRV()->Allocate();
     device->CreateShaderResourceView(_resource.Get(), info.srvDesc, _srv.cpu);
+    _resource->SetName(L"Texture");
 }
 
 void Texture::Release()

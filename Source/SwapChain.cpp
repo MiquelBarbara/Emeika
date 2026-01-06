@@ -117,6 +117,7 @@ void SwapChain::Resize()
         }
         CreateRenderTargetViews(app->GetD3D12Module()->GetDevice());
         m_depthStencil = app->GetResourcesModule()->CreateDepthBuffer(windowWidth, windowHeight);
+        m_depthStencil->GetResource()->SetName(L"SwapChainDS");
     }
 }
 

@@ -15,6 +15,7 @@ public:
 	bool postInit();
 	void preRender();
 	void render();
+	bool cleanUp();
 
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUScreenRT();
 	Emeika::Scene* GetScene() { return scene; }

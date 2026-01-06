@@ -8,6 +8,7 @@ static int GetSizeByFormat(DXGI_FORMAT format) {
 }
 
 class ResourcesModule;
+namespace Emeika { class Mesh; }
 
 class IndexBuffer: public Buffer
 {
@@ -29,6 +30,7 @@ public:
     }
 
     friend class ResourcesModule;
+    friend class Emeika::Mesh;
 protected:
     IndexBuffer(ID3D12Device4& device, size_t numIndices, DXGI_FORMAT indexFormat);
     IndexBuffer(ID3D12Device4& device, ComPtr<ID3D12Resource> resource, size_t numIndices, DXGI_FORMAT indexFormat);
