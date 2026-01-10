@@ -102,7 +102,21 @@ std::unique_ptr<DepthBuffer> ResourcesModule::CreateDepthBuffer(float windowWidt
 	CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, windowWidth, windowHeight, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 	info.desc = &desc;
 
-	auto buffer = std::make_unique<DepthBuffer>(info);
+	D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+	if (info.desc->Format == DXGI_FORMAT_D32_FLOAT) {
+		srv_desc.Format = DXGI_FORMAT_R32_FLOAT;
+	}
+
+	srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srv_desc.Texture2D.MipLevels = 1;
+	srv_desc.Texture2D.MostDetailedMip = 0;
+	srv_desc.Texture2D.PlaneSlice = 0;
+	srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	info.srvDesc = &srv_desc;
+
+	auto buffer = std::make_unique<DepthBuffer>(*_device.Get(), info);
 
 	return buffer;
 }
@@ -121,12 +135,12 @@ std::unique_ptr<Texture> ResourcesModule::CreateTexture2DFromFile(const path& fi
 	}
 
 	if (image.GetImageCount() == 0) {
-		return std::make_unique<Texture>();
+		return CreateNullTexture2D();
 	}
 
 	TexMetadata metaData = image.GetMetadata();
 	if (metaData.dimension != TEX_DIMENSION_TEXTURE2D) {
-		return std::make_unique<Texture>();
+		return CreateNullTexture2D();
 	}
 
 	if (metaData.mipLevels == 1 && (metaData.width > 1 || metaData.height > 1))
@@ -145,9 +159,9 @@ std::unique_ptr<Texture> ResourcesModule::CreateTexture2DFromFile(const path& fi
 	CD3DX12_RESOURCE_DESC desc = CD3DX12_RESOURCE_DESC::Tex2D(metaData.format, UINT64(metaData.width), UINT(metaData.height), UINT16(metaData.arraySize), UINT16(metaData.mipLevels));
 	info.desc = &desc;
 	info.initialState = D3D12_RESOURCE_STATE_COPY_DEST;
-	auto texture = std::make_unique<Texture>(info);
+	auto texture = std::make_unique<Texture>(*_device.Get(), info);
 
-	ComPtr<ID3D12Resource> stagingBuffer = CreateUploadBuffer(GetRequiredIntermediateSize(texture->GetResource(), 0, image.GetImageCount()));
+	ComPtr<ID3D12Resource> stagingBuffer = CreateUploadBuffer(GetRequiredIntermediateSize(texture->GetD3D12Resource().Get(), 0, image.GetImageCount()));
 
 	std::vector<D3D12_SUBRESOURCE_DATA> subData;
 	subData.reserve(image.GetImageCount());
@@ -162,9 +176,9 @@ std::unique_ptr<Texture> ResourcesModule::CreateTexture2DFromFile(const path& fi
 		}
 	}
 	ComPtr<ID3D12GraphicsCommandList4> commandList = _queue->GetCommandList();
-	UpdateSubresources(commandList.Get(), texture->GetResource(), stagingBuffer.Get(), 0, 0, UINT(image.GetImageCount()), subData.data());
+	UpdateSubresources(commandList.Get(), texture->GetD3D12Resource().Get(), stagingBuffer.Get(), 0, 0, UINT(image.GetImageCount()), subData.data());
 
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture->GetResource(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(texture->GetD3D12Resource().Get(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 	commandList->ResourceBarrier(1, &barrier);
 	_queue->ExecuteCommandList(commandList);
 	_queue->Flush();
@@ -185,7 +199,7 @@ std::unique_ptr<Texture> ResourcesModule::CreateNullTexture2D()
 	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
 
 	info.srvDesc = &srvDesc;
-	auto texture = std::make_unique<Texture>(info);
+	auto texture = std::make_unique<Texture>(*_device.Get(), info);
 	return texture;
 }
 
@@ -209,7 +223,7 @@ std::unique_ptr<RenderTexture> ResourcesModule::CreateRenderTexture(float window
 	info.initialState = D3D12_RESOURCE_STATE_COMMON;
 	info.desc = &resourceDesc;
 
-	auto texture = std::make_unique<RenderTexture>(info);
+	auto texture = std::make_unique<RenderTexture>(*_device.Get(), info);
 	return texture;
 }
 

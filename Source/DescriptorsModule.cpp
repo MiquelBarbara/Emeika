@@ -6,29 +6,20 @@
 
 DescriptorsModule::~DescriptorsModule()
 {
-    delete _offscreenRtv;
-    _offscreenRtv = nullptr;
-    delete _rtv;
-    _rtv = nullptr;
-    delete _dsv;
-    _dsv = nullptr;
-    delete _srv;
-    _srv = nullptr;
-    delete _samplers;
-    _samplers = nullptr;
+    for (auto& pair : m_DescriptorHeapMap) {
+        delete pair.second;
+        pair.second = nullptr;
+    }
     _defferedDescriptors.clear();
 }
 
 bool DescriptorsModule::init()
 {
     _device = app->GetD3D12Module()->GetDevice();
-
-    _rtv = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 256);
-    _dsv = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 256);
-    _srv = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 4096 * 8);
-    _samplers = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, SampleType::COUNT);
-
-    _offscreenRtv = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 256);
+    m_DescriptorHeapMap[D3D12_DESCRIPTOR_HEAP_TYPE_RTV] = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 256);
+    m_DescriptorHeapMap[D3D12_DESCRIPTOR_HEAP_TYPE_DSV] = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 256);
+    m_DescriptorHeapMap[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV] = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 4096 * 8);
+    m_DescriptorHeapMap[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER] = new DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER, SampleType::COUNT);
 
     CreateDefaultSamplers();
 	return true;
@@ -42,7 +33,7 @@ void DescriptorsModule::preRender()
 
         if (lastCompletedFrame > _defferedDescriptors[i].frame)
         {
-            GetSRV()->Free(_defferedDescriptors[i].handle);
+            m_DescriptorHeapMap[D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV]->Free(_defferedDescriptors[i].handle);
             _defferedDescriptors[i] = _defferedDescriptors.back();
             _defferedDescriptors.pop_back();
         }
@@ -105,7 +96,7 @@ void DescriptorsModule::CreateDefaultSamplers()
 
     for (uint32_t i = 0; i < COUNT; ++i)
     {
-        auto handle = _samplers->Allocate();
+        auto handle = m_DescriptorHeapMap[D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER]->Allocate();
         _device->CreateSampler(&samplers[i], handle.cpu);
     }
 }

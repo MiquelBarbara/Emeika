@@ -2,23 +2,14 @@
 #include "Application.h"
 #include "D3D12Module.h"
 #include "ResourcesModule.h"
+#include "DescriptorsModule.h"
 #include "Resources.h"
 #include "Globals.h"
 
-Texture::Texture(TextureInitInfo info)
+Texture::Texture(ID3D12Device4& device, TextureInitInfo info): Resource(device, *info.desc, &info.clearValue)
 {
-    auto device = app->GetD3D12Module()->GetDevice();
-
-    D3D12_CLEAR_VALUE* const clear_value
-    {
-        (info.desc &&
-            (info.desc->Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET ||
-            info.desc->Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL))
-            ? &info.clearValue : nullptr
-    };
-
-    if (info.resource) {
-        _resource = info.resource;
+    /*if (info.resource) {
+        m_Resource = info.resource;
     }
     else if (info.heap) {
         assert(!info.resource);
@@ -28,7 +19,7 @@ Texture::Texture(TextureInitInfo info)
             info.desc,
             info.initialState,
             clear_value,
-            IID_PPV_ARGS(&_resource)
+            IID_PPV_ARGS(&m_Resource)
         ));
     }
     else if (info.desc) {
@@ -40,25 +31,24 @@ Texture::Texture(TextureInitInfo info)
             info.desc,
             info.initialState,
             clear_value,
-            IID_PPV_ARGS(&_resource)
+            IID_PPV_ARGS(&m_Resource)
         ));
-    }
+    }*/
 
-    _srv = app->GetDescriptorsModule()->GetSRV()->Allocate();
-    device->CreateShaderResourceView(_resource.Get(), info.srvDesc, _srv.cpu);
-    _resource->SetName(L"Texture");
+    _srv = app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).Allocate();
+    device.CreateShaderResourceView(GetD3D12Resource().Get(), info.srvDesc, _srv.cpu);
 }
 
 void Texture::Release()
 {
     app->GetDescriptorsModule()->DefferDescriptorRelease((Handle)_srv.index);
-	app->GetResourcesModule()->DefferResourceRelease(_resource);
+	app->GetResourcesModule()->DefferResourceRelease(GetD3D12Resource());
 }
 
-RenderTexture::RenderTexture(TextureInitInfo info): _texture(info)
+RenderTexture::RenderTexture(ID3D12Device4& device, TextureInitInfo info): Texture(device, info)
 {
     assert(info.desc);
-    _mipCount = GetResource()->GetDesc().MipLevels;
+    _mipCount = GetD3D12ResourceDesc().MipLevels;
     assert(_mipCount && _mipCount <= Texture::maxMips);
 
     D3D12_RENDER_TARGET_VIEW_DESC desc{};
@@ -66,11 +56,9 @@ RenderTexture::RenderTexture(TextureInitInfo info): _texture(info)
     desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
     desc.Texture2D.MipSlice = 0;
 
-    auto device = app->GetD3D12Module()->GetDevice();
-
     for (int i{ 0 }; i < _mipCount; i++) {
-        _rtv[i] = app->GetDescriptorsModule()->GetOffscreenRTV()->Allocate();
-        device->CreateRenderTargetView(GetResource(), &desc, _rtv[i].cpu);
+        _rtv[i] = app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).Allocate();
+        device.CreateRenderTargetView(GetD3D12Resource().Get(), &desc, _rtv[i].cpu);
         ++desc.Texture2D.MipSlice;
     }
 }
@@ -79,32 +67,15 @@ RenderTexture::RenderTexture(TextureInitInfo info): _texture(info)
 void RenderTexture::Release()
 {
     for (uint32_t i = 0; i < _mipCount; ++i) {
-        app->GetDescriptorsModule()->GetOffscreenRTV()->Free(_rtv[i].index);
+        app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).Free(_rtv[i].index);
     }
     _mipCount = 0;
 }
 
 
-DepthBuffer::DepthBuffer(TextureInitInfo info)
+DepthBuffer::DepthBuffer(ID3D12Device4& device, TextureInitInfo info): Texture(device, info)
 {
     const DXGI_FORMAT format{ info.desc->Format };
-
-    D3D12_SHADER_RESOURCE_VIEW_DESC srv_desc{};
-    if (info.desc->Format == DXGI_FORMAT_D32_FLOAT) {
-        info.desc->Format = DXGI_FORMAT_R32_TYPELESS;
-        srv_desc.Format = DXGI_FORMAT_R32_FLOAT;
-    }
-
-    srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srv_desc.Texture2D.MipLevels = 1;
-    srv_desc.Texture2D.MostDetailedMip = 0;
-    srv_desc.Texture2D.PlaneSlice = 0;
-    srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
-
-    assert(!info.srvDesc && !info.resource);
-    info.srvDesc = &srv_desc;
-    _texture = Texture{ info };
 
     D3D12_DEPTH_STENCIL_VIEW_DESC dsv_desc{};
     dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -112,16 +83,13 @@ DepthBuffer::DepthBuffer(TextureInitInfo info)
     dsv_desc.Format = format;
     dsv_desc.Texture2D.MipSlice = 0;
 
-    _dsv = app->GetDescriptorsModule()->GetDSV()->Allocate();
-
-    auto device = app->GetD3D12Module()->GetDevice();
-
-    device->CreateDepthStencilView(GetResource(), &dsv_desc, _dsv.cpu);
+    _dsv = app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).Allocate();
+    device.CreateDepthStencilView(GetD3D12Resource().Get(), &dsv_desc, _dsv.cpu);
 }
 
 void DepthBuffer::Release()
 {
-    app->GetDescriptorsModule()->GetDSV()->Free(_dsv.index);
+    app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV).Free(_dsv.index);
 }
 
 void Resource::SetName(const std::wstring& name)
@@ -130,19 +98,26 @@ void Resource::SetName(const std::wstring& name)
     m_Resource->SetName(name.c_str());
 }
 
-Resource::Resource(ID3D12Device4& device, const D3D12_RESOURCE_DESC& resourceDesc, const D3D12_CLEAR_VALUE* clearValue)
+Resource::Resource(ID3D12Device4& device, const D3D12_RESOURCE_DESC& resourceDesc, const D3D12_CLEAR_VALUE* clearValue): device(device)
 {
-    if (clearValue) {
+    if (clearValue && 
+        (resourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET 
+            || resourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL)){
+
         m_ClearValue = std::make_unique<CD3DX12_CLEAR_VALUE>(*clearValue);
+    }
+    D3D12_RESOURCE_STATES initialState = D3D12_RESOURCE_STATE_COMMON;
+    if (resourceDesc.Flags & D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL) {
+        initialState = D3D12_RESOURCE_STATE_DEPTH_WRITE;
     }
 
     auto heap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
     device.CreateCommittedResource(
         &heap, D3D12_HEAP_FLAG_NONE, &resourceDesc,
-        D3D12_RESOURCE_STATE_COMMON, m_ClearValue.get(), IID_PPV_ARGS(&m_Resource));
+        initialState, m_ClearValue.get(), IID_PPV_ARGS(&m_Resource));
 }
 
-Resource::Resource(ID3D12Device4& device, ComPtr<ID3D12Resource> resource, const D3D12_CLEAR_VALUE* clearValue): m_Resource(resource)
+Resource::Resource(ID3D12Device4& device, ComPtr<ID3D12Resource> resource, const D3D12_CLEAR_VALUE* clearValue): m_Resource(resource), device(device)
 {
     if (clearValue)
     {

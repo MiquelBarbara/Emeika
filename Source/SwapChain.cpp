@@ -112,12 +112,12 @@ void SwapChain::Resize()
         // Recreate the render target views
         for (UINT n = 0; n < bufferCount; n++)
         {
-            app->GetDescriptorsModule()->GetRTV()->Free(m_renderTargets[n].rtv.index);
+            app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).Free(m_renderTargets[n].rtv.index);
             app->GetResourcesModule()->DefferResourceRelease(m_renderTargets[n].resource);
         }
         CreateRenderTargetViews(app->GetD3D12Module()->GetDevice());
         m_depthStencil = app->GetResourcesModule()->CreateDepthBuffer(windowWidth, windowHeight);
-        m_depthStencil->GetResource()->SetName(L"SwapChainDS");
+        m_depthStencil->SetName(L"SwapChainDS");
     }
 }
 
@@ -126,7 +126,7 @@ void SwapChain::CreateRenderTargetViews(ComPtr<ID3D12Device2> device)
 {    
     for (UINT n = 0; n < bufferCount; n++)
     {
-        auto rtvHandle = app->GetDescriptorsModule()->GetRTV()->Allocate();
+        auto rtvHandle = app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV).Allocate();
         m_renderTargets[n].rtv = rtvHandle;
         DXCall(m_swapChain->GetBuffer(n, IID_PPV_ARGS(&m_renderTargets[n].resource)));
         m_renderTargets[n].resource->SetName(L"BackBuffer");
