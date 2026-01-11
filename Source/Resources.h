@@ -74,7 +74,6 @@ public:
 	RenderTexture() = default;
 	explicit RenderTexture(ID3D12Device4& device, TextureInitInfo info);
 	
-
 	~RenderTexture() {
 		Release();
 	}
@@ -99,12 +98,6 @@ public:
 	DescriptorHandle DSV(){ return _dsv; }
 private:
 	DescriptorHandle _dsv{};
-};
-
-enum AttachmentPoint {
-	Color0,
-	DepthStencil,
-	COUNT
 };
 
 class RenderTarget {

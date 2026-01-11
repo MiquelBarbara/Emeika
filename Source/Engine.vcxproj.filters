@@ -139,9 +139,6 @@
     <ClCompile Include="Inspector.cpp">
       <Filter>Editor\EditorWindows\Inspector</Filter>
     </ClCompile>
-    <ClCompile Include="MeshRenderer.cpp">
-      <Filter>D3D12\Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="EditorMeshRenderer.cpp">
       <Filter>Editor\EditorComponents</Filter>
     </ClCompile>
@@ -320,9 +317,6 @@
     </ClInclude>
     <ClInclude Include="EditorComponent.h">
       <Filter>Editor\EditorComponents</Filter>
-    </ClInclude>
-    <ClInclude Include="MeshRenderer.h">
-      <Filter>D3D12\Rendering</Filter>
     </ClInclude>
     <ClInclude Include="EditorMeshRenderer.h">
       <Filter>Editor\EditorComponents</Filter>

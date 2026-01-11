@@ -24,6 +24,7 @@ struct DefferedResource {
 //Forward declarations
 class VertexBuffer;
 class IndexBuffer;
+class RingBuffer;
 
 // -----------------------------------------------------------------------------
 // ResourcesModule
@@ -46,6 +47,7 @@ public:
 	std::unique_ptr<Texture> CreateNullTexture2D();
 	std::unique_ptr<RenderTexture> CreateRenderTexture(float windowWidth, float windowHeight);
 	void DefferResourceRelease(ComPtr<ID3D12Resource> resource);
+	RingBuffer* CreateRingBuffer(size_t size);
 
 	// This function are well implemented since this is the only way to create Vertex and Index Buffers
 	VertexBuffer* CreateVertexBuffer(const void* data, size_t numVertices, size_t vertexStride);

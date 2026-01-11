@@ -37,7 +37,7 @@ public:
 	bool init() override;
 	void preRender() override;
 	bool cleanUp() override;
-	void CreateDefaultSamplers();
+
 
 	DescriptorHeap& GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE type) { return *m_DescriptorHeapMap[type]; }
 	void DefferDescriptorRelease(Handle handle);
@@ -47,5 +47,7 @@ private:
 
 	ComPtr<ID3D12Device4> _device{};
 	std::vector<DefferedDescriptor> _defferedDescriptors{};
+
+	void CreateDefaultSamplers();
 };
 

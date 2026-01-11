@@ -1,31 +1,20 @@
 #include "Globals.h"
 #include "RingBuffer.h"
-#include "Application.h"
-#include "ResourcesModule.h"
 
-RingBuffer::RingBuffer(uint32_t size)
+RingBuffer::RingBuffer(ID3D12Device4& device, ComPtr<ID3D12Resource> buffer, uint32_t size): Buffer(device, buffer), totalMemorySize(size)
 {
-	totalMemorySize = alignUp(size * (1 << 20), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
-
-	buffer = app->GetResourcesModule()->CreateUploadBuffer(totalMemorySize);
-
-	CD3DX12_RANGE readRange(0, 0);
-	buffer->Map(0, &readRange, reinterpret_cast<void**>(&mappedData));
+    CD3DX12_RANGE readRange(0, 0);
+    buffer->Map(0, &readRange, reinterpret_cast<void**>(&mappedData));
 }
 
 RingBuffer::~RingBuffer() {
-	if (buffer && mappedData)
-	{
-		CD3DX12_RANGE writtenRange(0, totalMemorySize);
-		buffer->Unmap(0, &writtenRange);
-		mappedData = nullptr;
-	}
+    CD3DX12_RANGE writtenRange(0, totalMemorySize);
+    m_Resource->Unmap(0, &writtenRange);
+    mappedData = nullptr;
 }
 
 D3D12_GPU_VIRTUAL_ADDRESS RingBuffer::Allocate(const void* srcData, size_t size, UINT currentFrame)
 {
-    if (!mappedData || !buffer)
-        return 0;
 
     // Align the size
     size = alignUp(size, D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
@@ -71,7 +60,7 @@ D3D12_GPU_VIRTUAL_ADDRESS RingBuffer::Allocate(const void* srcData, size_t size,
 
     memcpy(mappedData + allocationOffset, srcData, size);
     allocationQueue.push({ currentFrame, allocationOffset, size });
-    return buffer->GetGPUVirtualAddress() + allocationOffset;
+    return m_Resource->GetGPUVirtualAddress() + allocationOffset;
 }
 
 

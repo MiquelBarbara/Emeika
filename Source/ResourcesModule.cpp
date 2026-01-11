@@ -8,6 +8,7 @@
 
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
+#include "RingBuffer.h"
 
 ResourcesModule::~ResourcesModule()
 {
@@ -233,6 +234,13 @@ void ResourcesModule::DefferResourceRelease(ComPtr<ID3D12Resource> resource)
 	defferedResource.frame = app->GetD3D12Module()->GetCurrentFrame();
 	defferedResource.resource = resource;
 	_defferedResources.push_back(defferedResource);
+}
+
+RingBuffer* ResourcesModule::CreateRingBuffer(size_t size)
+{
+	size_t totalMemorySize = alignUp(size * (1 << 20), D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
+	ComPtr<ID3D12Resource> buffer = app->GetResourcesModule()->CreateUploadBuffer(totalMemorySize);
+	return new RingBuffer(*_device.Get(), buffer, totalMemorySize);
 }
 
 VertexBuffer* ResourcesModule::CreateVertexBuffer(const void* data, size_t numVertices, size_t vertexStride)

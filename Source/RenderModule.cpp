@@ -27,7 +27,7 @@ bool RenderModule::postInit()
     app->GetCameraModule()->SetAspectRatio(static_cast<float>(size.x), static_cast<float>(size.y));
 
     scene = new Emeika::Scene();
-    ringBuffer = new RingBuffer(10);
+    ringBuffer = app->GetResourcesModule()->CreateRingBuffer(10);
     return true;
 }
 
