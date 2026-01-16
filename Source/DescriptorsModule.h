@@ -37,22 +37,15 @@ public:
 	bool init() override;
 	void preRender() override;
 	bool cleanUp() override;
-	void CreateDefaultSamplers();
 
-	constexpr DescriptorHeap* GetRTV() const { return _rtv; }
-	constexpr DescriptorHeap* GetDSV() const { return _dsv; }
-	constexpr DescriptorHeap* GetSRV() const { return _srv; }
-	constexpr DescriptorHeap* GetSamplers() const { return _samplers; }
+	DescriptorHeap& GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE type) { return *m_DescriptorHeapMap[type]; }
 
-	constexpr DescriptorHeap* GetOffscreenRTV() const { return _offscreenRtv; }
 	void DefferDescriptorRelease(Handle handle);
 
 private:
-	DescriptorHeap* _rtv{};
-	DescriptorHeap* _dsv{};
-	DescriptorHeap* _srv{};
-	DescriptorHeap* _samplers{};
-	DescriptorHeap* _offscreenRtv{};
+	void CreateDefaultSamplers();
+
+	std::unordered_map< D3D12_DESCRIPTOR_HEAP_TYPE, DescriptorHeap*> m_DescriptorHeapMap;
 
 	ComPtr<ID3D12Device4> _device{};
 	std::vector<DefferedDescriptor> _defferedDescriptors{};

@@ -50,32 +50,30 @@ protected:
 	D3D12_FEATURE_DATA_FORMAT_SUPPORT m_FormatSupport;
 	std::unique_ptr<D3D12_CLEAR_VALUE> m_ClearValue;
 	std::wstring m_Name;
+	ID3D12Device4& device;
 };
 
 
-class Texture {
+class Texture : public Resource {
 public:
 	constexpr static uint32_t maxMips{ 14 };
 	Texture() = default;
-	explicit Texture(TextureInitInfo info);
+	explicit Texture(ID3D12Device4& device, TextureInitInfo info);
 
 	~Texture() {
 		Release();
 	}
 	void Release();
-	ID3D12Resource* GetResource() { return _resource.Get(); }
 	DescriptorHandle SRV() { return _srv; }
 private:
-	ComPtr<ID3D12Resource> _resource{ nullptr };
 	DescriptorHandle _srv{};
 };
 
 
-class RenderTexture {
+class RenderTexture : public Texture {
 public:
 	RenderTexture() = default;
-	explicit RenderTexture(TextureInitInfo info);
-	
+	explicit RenderTexture(ID3D12Device4& device, TextureInitInfo info);
 
 	~RenderTexture() {
 		Release();
@@ -84,29 +82,23 @@ public:
 	void Release();
 	uint32_t MipCount() const { return _mipCount; }
 	DescriptorHandle RTV(uint32_t mipIndex) const { assert(mipIndex < _mipCount); return _rtv[mipIndex]; }
-	DescriptorHandle SRV() { return _texture.SRV(); }
-	ID3D12Resource*  GetResource() { return _texture.GetResource(); }
 private:
 
-	Texture _texture;
 	DescriptorHandle _rtv[Texture::maxMips]{};
 	uint32_t _mipCount{ 0 };
 };
 
-class DepthBuffer {
+class DepthBuffer : public Texture {
 public:
 	DepthBuffer() = default;
-	explicit DepthBuffer(TextureInitInfo info);
+	explicit DepthBuffer(ID3D12Device4& device, TextureInitInfo info);
 
 	~DepthBuffer() {
 		Release();
 	}
 	void Release();
 	DescriptorHandle DSV(){ return _dsv; }
-	DescriptorHandle SRV() { return _texture.SRV(); }
-	ID3D12Resource* GetResource() { return _texture.GetResource(); }
 private:
-	Texture _texture;
 	DescriptorHandle _dsv{};
 };
 

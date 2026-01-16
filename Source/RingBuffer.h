@@ -2,6 +2,10 @@
 #include <queue>
 #include <d3d12.h>
 
+#include "Buffer.h"
+
+class ResourcesModule;
+
 struct AllocationInfo
 {
     UINT frameIndex;
@@ -9,10 +13,9 @@ struct AllocationInfo
     size_t size;
 };
 
-class RingBuffer
+class RingBuffer : public Buffer 
 {
 public:
-    RingBuffer(uint32_t sizeInMB);
     ~RingBuffer();
 
     D3D12_GPU_VIRTUAL_ADDRESS Allocate(const void* data, size_t size, UINT currentFrame);
@@ -21,12 +24,12 @@ public:
 
     size_t GetTotalSize() const { return totalMemorySize; }
 
-    ID3D12Resource* GetResource() const { return buffer.Get(); }
-
+    friend class ResourcesModule;
+protected:
+    RingBuffer(ID3D12Device4& device, ComPtr<ID3D12Resource> buffer, uint32_t sizeInMB);
 private:
     std::queue<AllocationInfo> allocationQueue;
 
-    ComPtr<ID3D12Resource> buffer;
     uint8_t* mappedData = nullptr;
     size_t totalMemorySize = 0;
     size_t head = 0; //Oldest allocation

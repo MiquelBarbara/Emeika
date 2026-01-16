@@ -27,7 +27,7 @@ bool RenderModule::postInit()
     app->GetCameraModule()->SetAspectRatio(static_cast<float>(size.x), static_cast<float>(size.y));
 
     scene = new Emeika::Scene();
-    ringBuffer = new RingBuffer(10);
+    ringBuffer = app->GetResourcesModule()->CreateRingBuffer(10);
     return true;
 }
 
@@ -43,20 +43,19 @@ void RenderModule::preRender()
         app->GetD3D12Module()->GetCommandQueue()->Flush();
         size = newSize;
         screenRT = app->GetResourcesModule()->CreateRenderTexture(newSize.x, newSize.y);
-        screenRT->GetResource()->SetName(L"ScreenRT");
+        screenRT->SetName(L"ScreenRT");
         screenDS = app->GetResourcesModule()->CreateDepthBuffer(newSize.x, newSize.y);
-        screenDS->GetResource()->SetName(L"ScreenDS");
+        screenDS->SetName(L"ScreenDS");
         app->GetCameraModule()->Resize(newSize.x, newSize.y);
     }
 
     // Transition scene texture to render target
-    TransitionResource(m_commandList, screenRT->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
+    TransitionResource(m_commandList, screenRT->GetD3D12Resource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
     // Render the scene to texture
     RenderScene(m_commandList, screenRT->RTV(0).cpu, screenDS->DSV().cpu, size.x, size.y);
 
     // Transition back to shader resource state
-    TransitionResource(m_commandList, screenRT->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    TransitionResource(m_commandList, screenRT->GetD3D12Resource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
     TransitionResource(m_commandList, _swapChain->GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
     RenderBackground(m_commandList, _swapChain->GetCurrentRenderTargetView().cpu, _swapChain->GetDepthStencilView(), _swapChain->GetViewport().Width, _swapChain->GetViewport().Height);
@@ -123,14 +122,14 @@ void RenderModule::RenderScene(ID3D12GraphicsCommandList4* commandList, D3D12_CP
     commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 
     //Set input assembler
-    ID3D12DescriptorHeap* descriptorHeaps[] = { app->GetDescriptorsModule()->GetSRV()->GetHeap(), app->GetDescriptorsModule()->GetSamplers()->GetHeap() };
+    ID3D12DescriptorHeap* descriptorHeaps[] = { app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).GetHeap(), app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER).GetHeap() };
     commandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
     SceneData& sceneData = scene->GetData();
     sceneData.view = app->GetCameraModule()->GetPosition();
 
     commandList->SetGraphicsRootConstantBufferView(1, ringBuffer->Allocate(&sceneData, sizeof(SceneData), app->GetD3D12Module()->GetCurrentFrame()));
-    commandList->SetGraphicsRootDescriptorTable(4, app->GetDescriptorsModule()->GetSamplers()->GetGPUHandle(_sampleType));
+    commandList->SetGraphicsRootDescriptorTable(4, app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER).GetGPUHandle(_sampleType));
 
     //Scene models
     scene->Render(commandList, app->GetCameraModule()->GetViewMatrix(), app->GetCameraModule()->GetProjectionMatrix());

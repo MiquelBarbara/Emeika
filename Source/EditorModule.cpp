@@ -146,7 +146,9 @@ EditorModule::~EditorModule()
 bool EditorModule::postInit()
 {
 	D3D12Module* _d3d12 = app->GetD3D12Module();
-	_gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle(), app->GetDescriptorsModule()->GetSRV()->GetCPUHandle(0), app->GetDescriptorsModule()->GetSRV()->GetGPUHandle(0));
+    _gui = new ImGuiPass(_d3d12->GetDevice(), _d3d12->GetWindowHandle(), 
+        app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).GetCPUHandle(0), 
+        app->GetDescriptorsModule()->GetHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).GetGPUHandle(0));    
     SceneEditor* scene = new SceneEditor();
     _sceneView = scene;
     _editorWindows.push_back(scene);
