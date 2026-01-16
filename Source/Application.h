@@ -17,6 +17,7 @@ class ShaderDescriptorsModule;
 class DescriptorsModule;
 class TimeModule;
 class RenderModule;
+class GameCoreModule;
 
 class Application
 {
@@ -38,6 +39,7 @@ public:
     DescriptorsModule* GetDescriptorsModule() { return _descriptorsModule; }
     TimeModule*                GetTimeModule() { return _timeModule; }
     RenderModule* GetRenderModule() { return _renderModule; }
+    GameCoreModule*            GetGameCoreModule() { return _gameCoreModule; }
 
     bool                        isPaused() const { return paused; }
     bool                        setPaused(bool p) { paused = p; return paused; }
@@ -52,6 +54,7 @@ private:
     DescriptorsModule* _descriptorsModule = nullptr;
     TimeModule* _timeModule = nullptr;
     RenderModule* _renderModule = nullptr;
+    GameCoreModule* _gameCoreModule = nullptr;
 
     bool      paused = false;
 

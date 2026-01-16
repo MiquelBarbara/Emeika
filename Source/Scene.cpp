@@ -8,9 +8,8 @@
 #include "Application.h"
 #include "RenderModule.h"
 
-using namespace Emeika;
 
-Scene::Scene() 
+Emeika::Scene::Scene() 
 {
     GameObject* duck = new GameObject("Duck");
 
@@ -41,7 +40,7 @@ Emeika::Scene::~Scene()
     }
 }
 
-void Scene::Add(GameObject* gameObject)
+void Emeika::Scene::Add(GameObject* gameObject)
 {
     if (!gameObject) {
         int size = gameObjects.size();
@@ -50,11 +49,12 @@ void Scene::Add(GameObject* gameObject)
     gameObjects.emplace_back(gameObject);
 }
 
-void Scene::Remove(GameObject* gameObject)
+void Emeika::Scene::Remove(GameObject* gameObject)
 {
+	gameObjects.erase(std::remove(gameObjects.begin(), gameObjects.end(), gameObject), gameObjects.end());
 }
 
-void Scene::Render(ID3D12GraphicsCommandList* commandList, Matrix& viewMatrix, Matrix& projectionMatrix)
+void Emeika::Scene::Render(ID3D12GraphicsCommandList* commandList, Matrix& viewMatrix, Matrix& projectionMatrix)
 {
     for(GameObject* gameobject : gameObjects)
     {

@@ -31,23 +31,116 @@ void Hierarchy::Render()
 	//TODO: Load the assets by dragging it in the hierarchy
 	scene = app->GetRenderModule()->GetScene();
 
-	// Scene tree node
-	if (ImGui::TreeNode("Scene#1")) {
-		// Game Objects tree
-		auto gameObjects = scene->GetGameObjects();
-		for (int i = 0; i < gameObjects.size(); ++i) {
-			if (ImGui::TreeNode(gameObjects[i]->GetName())) {
-				if (OnSelectedGameObject.size() > 0) {
-					for (auto event : OnSelectedGameObject) {
-						event(gameObjects[i]);
-					}
-				}
-				ImGui::TreePop();
+	CreateTreeNode(scene);
+
+	ImGui::End();
+}
+
+void Hierarchy::CreateTreeNode(GameObject* gameObject)
+{
+	//First check if the game object has children
+	std::vector<GameObject*> children = gameObject->GetChildren();
+	int gameObjectNodeFlag = 0;
+	if (children.empty()) {
+		gameObjectNodeFlag = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+	} else {
+		gameObjectNodeFlag = ImGuiTreeNodeFlags_OpenOnArrow;
+	}
+
+	if (ImGui::TreeNodeEx(gameObject->GetName(), gameObjectNodeFlag)) {
+
+		if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+			// Notify all listeners about the selected game object
+			for (auto event : OnSelectedGameObject) {
+				event(gameObject);
 			}
 		}
+
+		//Drag source
+		if (ImGui::BeginDragDropSource())
+		{
+			ImGui::SetDragDropPayload("GAME_OBJECT",&gameObject,sizeof(GameObject*));
+			ImGui::Text("%s", gameObject->GetName());
+			ImGui::EndDragDropSource();
+		}
+
+		//Drop target
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAME_OBJECT"))
+			{
+				//Payoload object dropped in this target
+				GameObject* droppedObject = *(GameObject**)payload->Data;
+
+				// Safety checks
+				if (droppedObject != gameObject &&
+					!gameObject->IsChildOf(droppedObject))
+				{
+					Reparent(droppedObject, gameObject);
+				}
+			}
+			ImGui::EndDragDropTarget();
+		}
+		
+		if(gameObjectNodeFlag != (ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen))
+		{
+			ImGui::TreePop();
+			//Create children nodes
+			for (GameObject* child : children) {
+				CreateTreeNode(child);
+			}
+		}
+	}
+}
+
+void Hierarchy::Reparent(GameObject* child, GameObject* newParent)
+{
+	GameObject* oldParent = child->GetParent();
+
+	// 1. Remove from old parent OR scene root
+	if (oldParent)
+	{
+		oldParent->RemoveChild(child);
+	}
+	else
+	{
+		scene->Remove(child);
+	}
+
+	// 2. Set new parent
+	child->SetParent(newParent);
+
+	// 3. Add to new parent OR scene root
+	if (newParent)
+	{
+		newParent->AddChild(child);
+	}
+	else
+	{
+		scene->Add(child);
+	}
+}
+
+void Hierarchy::CreateTreeNode(Emeika::Scene* scene)
+{
+	if (ImGui::TreeNodeEx(scene->GetName())) {
+
+		if (ImGui::BeginDragDropTarget())
+		{
+			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("GAME_OBJECT"))
+			{
+				GameObject* droppedObject = *(GameObject**)payload->Data;
+				Reparent(droppedObject, nullptr);
+			}
+			ImGui::EndDragDropTarget();
+		}
+
+		for (GameObject* gameObject : scene->GetGameObjects()) {
+			CreateTreeNode(gameObject);
+		}
+
 		ImGui::TreePop();
 	}
-	ImGui::End();
 }
 
 void Hierarchy::AddGameObject()

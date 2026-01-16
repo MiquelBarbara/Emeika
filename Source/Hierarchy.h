@@ -14,7 +14,11 @@ public:
 	void Render() override;
 	const char* GetWindowName() const override { return "Hierarchy"; }
 	void AddGameObject();
+
 private:
+	void CreateTreeNode(Emeika::Scene* scene);
+	void CreateTreeNode(GameObject* gameObject);
+	void Reparent(GameObject* child, GameObject* newParent);
 	//TODO: This should be a vector
 	Emeika::Scene* scene;
 	std::vector<std::function<void(GameObject*)>> OnSelectedGameObject;

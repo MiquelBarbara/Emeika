@@ -5,7 +5,6 @@
 #include "EditorWindow.h"
 #include "SceneEditor.h"
 #include <vector>
-#include "GameObjectManager.h"
 
 class ImGuiPass;
 
@@ -48,9 +47,5 @@ private:
     bool _showMainDockspace = true;
 
     bool _firstFrame = true;
-
-	//For now the GameObjectManager will be stored here
-	GameObjectManager* gameMaster = nullptr;;
-
 };
 

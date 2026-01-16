@@ -134,8 +134,6 @@ EditorModule::EditorModule()
     _editorWindows.push_back(_logger = new Logger());
     _editorWindows.push_back(_hardwareWindow = new HardwareWindow());
     _editorWindows.push_back(_performanceWindow = new PerformanceWindow());
-
-    gameMaster = new GameObjectManager();
 }
 
 EditorModule::~EditorModule()

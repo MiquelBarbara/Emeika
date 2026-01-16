@@ -130,9 +130,6 @@
     <ClCompile Include="GameObject.cpp">
       <Filter>GameEntity</Filter>
     </ClCompile>
-    <ClCompile Include="GameObjectManager.cpp">
-      <Filter>GameEntity</Filter>
-    </ClCompile>
     <ClCompile Include="Hierarchy.cpp">
       <Filter>Editor\EditorWindows\Hierarchy</Filter>
     </ClCompile>
@@ -156,6 +153,9 @@
     </ClCompile>
     <ClCompile Include="LightEditor.cpp">
       <Filter>Editor\EditorComponents</Filter>
+    </ClCompile>
+    <ClCompile Include="GameCoreModule.cpp">
+      <Filter>GameEntity</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -309,9 +309,6 @@
     <ClInclude Include="Id.h">
       <Filter>GameEntity</Filter>
     </ClInclude>
-    <ClInclude Include="GameObjectManager.h">
-      <Filter>GameEntity</Filter>
-    </ClInclude>
     <ClInclude Include="Hierarchy.h">
       <Filter>Editor\EditorWindows\Hierarchy</Filter>
     </ClInclude>
@@ -339,6 +336,12 @@
     </ClInclude>
     <ClInclude Include="LightEditor.h">
       <Filter>Editor\EditorComponents</Filter>
+    </ClInclude>
+    <ClInclude Include="GameCoreModule.h">
+      <Filter>GameEntity</Filter>
+    </ClInclude>
+    <ClInclude Include="EmeikaEngine.h">
+      <Filter>GameEntity</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

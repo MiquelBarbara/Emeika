@@ -140,7 +140,8 @@ CameraCommand* SceneEditor::CreateMovementCommand(CameraCommand::Type type, Keyb
             if (m_Input->IsKeyDown(Keyboard::LeftShift)) {
                 speed *= 2.0f;
             }
-            camera->Move(direction * speed);
+            Vector3 moveDir = direction.x * camera->GetRight() + direction.y * camera->GetUp() + direction.z * camera->GetForward();
+            camera->Move(moveDir * speed);
         }
     );
     return command;

@@ -189,10 +189,11 @@
     <ClInclude Include="EditorModule.h" />
     <ClInclude Include="EditorTransform.h" />
     <ClInclude Include="EditorWindow.h" />
+    <ClInclude Include="EmeikaEngine.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="GameObject.h" />
-    <ClInclude Include="GameObjectManager.h" />
+    <ClInclude Include="GameCoreModule.h" />
     <ClInclude Include="GamePad.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="HardwareWindow.h" />
@@ -311,7 +312,7 @@
     <ClCompile Include="EditorWindow.cpp" />
     <ClCompile Include="Engine.cpp" />
     <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="GameObjectManager.cpp" />
+    <ClCompile Include="GameCoreModule.cpp" />
     <ClCompile Include="GamePad.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

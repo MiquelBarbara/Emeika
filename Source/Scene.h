@@ -27,7 +27,9 @@ namespace Emeika {
 		void Render(ID3D12GraphicsCommandList* commandList, Matrix& viewMatrix, Matrix& projectionMatrix);
 
 		SceneData& GetData();
+		const char* GetName() { return (char*)_name.c_str(); }
 	private:
+		std::string _name = "SampleScene";
 		std::vector<GameObject*> gameObjects;
 		SceneData sceneData;
 	};

@@ -72,6 +72,7 @@ public:
 	constexpr Vector3& GetRight() { return _right; }
 	constexpr Vector3& GetUp() { return _up; }
 	constexpr Vector3& GetTarget() { return _target; }
+	constexpr Vector3& GetForward() { return _forward; }
 
 
 	//Camera Manipulation
